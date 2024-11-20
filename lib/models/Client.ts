@@ -6,9 +6,16 @@ const clientSchema = new Schema(
       type: String,
       required: true,
     },
+
     email: {
       type: String,
       required: true,
+      unique: true,
+    },
+
+    phoneNumber: {
+      type: Number,
+      require: true,
       unique: true,
     },
 
@@ -45,4 +52,4 @@ const clientSchema = new Schema(
   }
 );
 
-export const client = models.client || model("client", clientSchema);
+export const Client = models.Client || model("Client", clientSchema);

@@ -1,12 +1,13 @@
+import bcrypt from "bcrypt";
 import connect from "@/lib/db";
-import { client } from "@/lib/models/Client";
+import { Client } from "@/lib/models/Client";
 import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async () => {
   try {
     await connect();
 
-    const clientData = await client.find();
+    const clientData = await Client.find();
 
     return NextResponse.json(clientData);
   } catch (error: any) {
@@ -19,12 +20,21 @@ export const POST = async (req: NextRequest) => {
     await connect();
 
     const data = await req.json();
+    const saltRounds = parseInt(process.env.SALT_ID!, 10);
+    if (data.password) {
+      data.password = await bcrypt.hash(data.password, saltRounds);
+    }
 
-    const addClient = await new client(data);
+    const addClient = new Client(data);
     await addClient.save();
+
     return NextResponse.json({ message: "Client added successfully" });
   } catch (error: any) {
-    console.error("Error : " + error.message);
+    console.error("Error: " + error.message);
+    return NextResponse.json(
+      { message: "An error occurred", error: error.message },
+      { status: 500 }
+    );
   }
 };
 
@@ -43,7 +53,7 @@ export const DELETE = async (req: NextRequest) => {
 
     await connect();
 
-    const deletedClient = await client.findByIdAndDelete(id);
+    const deletedClient = await Client.findByIdAndDelete(id);
 
     if (!deletedClient) {
       return NextResponse.json(
@@ -81,7 +91,7 @@ export const PUT = async (req: NextRequest) => {
 
     const { name, city, address, area } = await req.json();
 
-    const updatedUser = await client.findByIdAndUpdate(
+    const updatedUser = await Client.findByIdAndUpdate(
       id,
       {
         name,
