@@ -2,9 +2,28 @@ import connect from "@/lib/db";
 import { NextResponse } from "next/server";
 import { User } from "@/lib/models/Users";
 
-export const GET = async () => {
+export const GET = async (req: Request) => {
   try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
     await connect();
+
+    if (id) {
+      const user = await User.findById(id);
+      if (!user) {
+        return NextResponse.json(
+          {
+            message: "user not found",
+          },
+          {
+            status: 404,
+          }
+        );
+      }
+
+      return NextResponse.json(user);
+    }
 
     const allUsers = await User.find();
 

@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import { NextResponse } from "next/server";
-import jwt  from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { User } from "@/lib/models/Users";
 import { Client } from "@/lib/models/Client";
 import connect from "@/lib/db";
@@ -71,9 +71,6 @@ export const POST = async (req: Request) => {
         status: 200,
       }
     );
-
-
-
   } catch (error: any) {
     console.log("Error : " + error.message);
     return NextResponse.json(

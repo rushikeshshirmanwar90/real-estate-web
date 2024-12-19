@@ -3,13 +3,35 @@ import connect from "@/lib/db";
 import { Client } from "@/lib/models/Client";
 import { NextRequest, NextResponse } from "next/server";
 
-export const GET = async () => {
+export const GET = async (req: Response) => {
   try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
     await connect();
 
-    const clientData = await Client.find();
+    if (!id) {
+      const clientData = await Client.find();
 
-    return NextResponse.json(clientData);
+      if (!clientData) {
+        return NextResponse.json(
+          { message: "Client not found" },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json(clientData, {
+        status: 200,
+      });
+    } else {
+      const client = await Client.findById(id);
+      if (!client) {
+        return NextResponse.json(
+          { message: "Client not found" },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json(client);
+    }
   } catch (error: any) {
     console.error("Error : " + error.message);
   }
