@@ -1,10 +1,18 @@
-import AppSidebar from "@/components/app-sidebar";
+"use client";
+import Model from "@/components/ui/model";
 import React from "react";
 
 const page = () => {
   return (
     <div>
-      <AppSidebar />
+      <Model
+        title="Test Title"
+        description="Test Description"
+        isOpen={true}
+        onClose={() => {}}
+      >
+        This is Test Text
+      </Model>
     </div>
   );
 };
