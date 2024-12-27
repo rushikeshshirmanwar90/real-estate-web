@@ -19,13 +19,12 @@ interface loginProps {
     isLogin: boolean;
 }
 
-
 const Login: React.FC<loginProps> = ({ isLogin }) => {
     // TODO : Change the way of sending data
     const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
 
-    const handleSubmit = (e: any) => {
+    const handleSubmit = async (e: any) => {
         e.preventDefault();
         handleLogin(email, password);
     }

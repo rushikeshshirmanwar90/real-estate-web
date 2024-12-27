@@ -1,6 +1,7 @@
 import { Projects } from "@/lib/models/Project";
 import connect from "@/lib/db";
 import { NextResponse } from "next/server";
+import { validateClient } from "@/components/utils/validateClient";
 
 export const GET = async (req: Request) => {
   try {
@@ -44,34 +45,44 @@ export const GET = async (req: Request) => {
 
 export const POST = async (req: Request) => {
   try {
-    const body = await req.json();
+    const isClient = await validateClient();
+    if (isClient) {
+      const body = await req.json();
+      await connect();
+      const newProject = await new Projects(body);
 
-    await connect();
+      newProject.save();
 
-    const newProject = await new Projects(body);
+      if (!newProject) {
+        return NextResponse.json(
+          {
+            message: "can't able to add the project",
+          },
+          {
+            status: 400,
+          }
+        );
+      }
 
-    newProject.save();
-
-    if (!newProject) {
       return NextResponse.json(
         {
-          message: "can't able to add the project",
+          message: "Project created successfully",
+          project: newProject,
+        },
+        {
+          status: 201,
+        }
+      );
+    } else {
+      return NextResponse.json(
+        {
+          message: "client not found",
         },
         {
           status: 400,
         }
       );
     }
-
-    return NextResponse.json(
-      {
-        message: "Project created successfully",
-        project: newProject,
-      },
-      {
-        status: 201,
-      }
-    );
   } catch (error: any) {
     console.log(error.message);
     return NextResponse.json(
@@ -80,7 +91,7 @@ export const POST = async (req: Request) => {
         error: error.message,
       },
       {
-        status: 500, // Internal Server Error
+        status: 500,
       }
     );
   }
