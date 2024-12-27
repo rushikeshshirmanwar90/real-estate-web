@@ -1,9 +1,7 @@
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import AppSidebar from "@/components/app-sidebar";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -18,8 +16,9 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Real Estate App",
-  description: "Real Estate App",
+  title: "Real Estate Admin Page",
+  description:
+    "This is the Admin Page of the Real Estate Application where you can manage all the data",
 };
 
 export default function RootLayout({
@@ -28,11 +27,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <main>{children}</main>
+        <main>
+          {" "}
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {children}
+          </ThemeProvider>
+        </main>
       </body>
     </html>
   );
