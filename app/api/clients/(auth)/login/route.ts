@@ -17,12 +17,13 @@ export const POST = async (req: NextRequest, res: NextResponse) => {
 
     const { email, password } = await req.json();
 
+    // Check if email exists
     const user = await Client.findOne({ email });
 
     if (!user) {
       return NextResponse.json(
         {
-          message: "given emailId not found..!",
+          message: "Given emailId not found..!",
         },
         {
           status: 401, // Unauthorized
@@ -30,6 +31,7 @@ export const POST = async (req: NextRequest, res: NextResponse) => {
       );
     }
 
+    // Compare the password
     const isValidPassword = await bcrypt.compare(password, user.password);
 
     if (!isValidPassword) {
@@ -44,7 +46,6 @@ export const POST = async (req: NextRequest, res: NextResponse) => {
     }
 
     const userId = user._id;
-
     const payload = { email, userId };
 
     const token = jwt.sign(payload, JWT_SECRET, {
@@ -58,16 +59,28 @@ export const POST = async (req: NextRequest, res: NextResponse) => {
 
     return NextResponse.json(
       {
-        message: "login successfully..!",
+        message: "Login successful..!",
       },
       {
         status: 200,
       }
     );
   } catch (error: any) {
+    console.error("Login error:", error); 
+    if (error.message.includes("buffering timed out")) {
+      return NextResponse.json(
+        {
+          message: "Database connection timed out. Please try again later.",
+        },
+        {
+          status: 500,
+        }
+      );
+    }
+
     return NextResponse.json(
       {
-        message: "Can't able to login" + error.message,
+        message: "Can't log in: " + error.message,
       },
       {
         status: 500,

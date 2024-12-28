@@ -45,12 +45,12 @@ export const GET = async (req: Request) => {
 
 export const POST = async (req: Request) => {
   try {
-    const isClient = await validateClient();
-    if (isClient) {
+    await connect();
+    const isValidClient = await validateClient();
+    if (isValidClient) {
       const body = await req.json();
-      await connect();
-      const newProject = await new Projects(body);
 
+      const newProject = await new Projects(body);
       newProject.save();
 
       if (!newProject) {
@@ -63,7 +63,6 @@ export const POST = async (req: Request) => {
           }
         );
       }
-
       return NextResponse.json(
         {
           message: "Project created successfully",
@@ -96,6 +95,7 @@ export const POST = async (req: Request) => {
     );
   }
 };
+
 
 export const DELETE = async (req: Request) => {
   try {
