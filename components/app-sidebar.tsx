@@ -29,8 +29,6 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { ADDRCONFIG } from "node:dns";
-import { Cross2Icon, PlusCircledIcon } from "@radix-ui/react-icons";
 
 // This is sample data.
 const data = {
@@ -58,7 +56,7 @@ const data = {
   ],
   navMain: [
     {
-      title: "Manage Data",
+      title: "Projects",
       url: "#",
       icon: PlusSquareIcon,
       isActive: true,
@@ -68,16 +66,8 @@ const data = {
           url: "/add-project",
         },
         {
-          title: "Add Building",
-          url: "#",
-        },
-        {
-          title: "Add Flats",
-          url: "#",
-        },
-        {
-          title: "Add Staff",
-          url: "#",
+          title: "View Projects",
+          url: "/projects",
         },
       ],
     },

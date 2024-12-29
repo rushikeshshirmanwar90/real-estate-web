@@ -36,10 +36,15 @@ export const GET = async (req: Request) => {
   } catch (error: any) {
     console.log(error.message);
 
-    return NextResponse.json({
-      message: "can't able to get the Projects",
-      error: error.message,
-    });
+    return NextResponse.json(
+      {
+        message: "can't able to get the Projects",
+        error: error.message,
+      },
+      {
+        status: 500,
+      }
+    );
   }
 };
 
@@ -96,7 +101,6 @@ export const POST = async (req: Request) => {
   }
 };
 
-
 export const DELETE = async (req: Request) => {
   try {
     await connect();
@@ -106,6 +110,7 @@ export const DELETE = async (req: Request) => {
     const projectId = searchParams.get("id");
 
     const deletedProject = await Projects.findByIdAndDelete(projectId);
+    // const deletedProject = await Projects.deleteMany();
 
     if (!deletedProject) {
       return NextResponse.json(

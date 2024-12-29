@@ -17,6 +17,7 @@ import {
     FormMessage,
 } from "@/components/ui/form"
 import { formSchema, type FormValues } from './schema'
+import { toast } from 'sonner'
 
 export default function ApartmentForm() {
     const [isLoading, setIsLoading] = useState(false)
@@ -70,7 +71,6 @@ export default function ApartmentForm() {
                 return null;
             }
         });
-
         const urls = (await Promise.all(uploadPromises)).filter(Boolean) as string[];
         setUploadedImages((prev) => [...prev, ...urls]);
         const currentImages = form.getValues('images') || [];
@@ -88,7 +88,6 @@ export default function ApartmentForm() {
 
     const onSubmit = async (data: FormValues) => {
         setIsLoading(true)
-
         try {
             const response = await fetch('http://localhost:3000/api/project', {
                 method: 'POST',
@@ -97,10 +96,16 @@ export default function ApartmentForm() {
                 },
                 body: JSON.stringify(data),
             })
-
             if (!response.ok) throw new Error('Submission failed')
-
             console.log('Apartment added successfully')
+            toast("Project Added successfully", {
+                description: `${data.name} is added to database successfully`,
+                action: {
+                    label: "Okay",
+                    onClick: () => { }
+                },
+                position: "top-center"
+            })
         } catch (error: any) {
             console.log('Error:', error.message)
         } finally {
@@ -112,7 +117,7 @@ export default function ApartmentForm() {
         <div className="min-h-screen p-4">
             <Card className="max-w-4xl mx-auto">
                 <CardHeader>
-                    <CardTitle>Add New Apartment Complex</CardTitle>
+                    <CardTitle>Add New Project</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <Form {...form}>
@@ -290,4 +295,3 @@ export default function ApartmentForm() {
         </div>
     )
 }
-
