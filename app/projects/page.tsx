@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import ProjectGrid from './components/project-gride'
 import { ProjectProps } from './types/project-props'
+import domain from '@/components/utils/domain';
 
 export default function Page() {
     const [projects, setProjects] = useState<ProjectProps[]>([]);
@@ -9,7 +10,7 @@ export default function Page() {
 
     useEffect(() => {
         const getProjectsData = async () => {
-            const res = await fetch(`http://localhost:3000/api/project`);
+            const res = await fetch(`${domain}/api/project`);
             const data = await res.json();
             console.table(data);
             setProjects(data);

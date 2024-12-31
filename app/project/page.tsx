@@ -18,9 +18,11 @@ import {
 } from "@/components/ui/form"
 import { formSchema, type FormValues } from './schema'
 import { toast } from 'sonner'
+import domain from '@/components/utils/domain'
+import { handleImageUpload, removeImage } from './functions/all-functions'
 
-export default function ApartmentForm() {
-    const [isLoading, setIsLoading] = useState(false)
+const ApartmentForm = () => {
+    const [isLoading, setIsLoading] = useState<boolean>(false)
     const [uploadedImages, setUploadedImages] = useState<string[]>([])
 
     const form = useForm<FormValues>({
@@ -34,62 +36,13 @@ export default function ApartmentForm() {
             area: '',
             address: '',
             description: '',
-            clientId: '64afc2e1d2b2346789abc002'
         }
     })
-
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files?.length) return;
-
-        setIsLoading(true);
-        const uploadedFiles = Array.from(e.target.files);
-        const uploadPromises = uploadedFiles.map(async (file) => {
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('upload_preset', 'realEstate');
-
-            console.log("Uploading file:", file);
-            console.log("FormData:", [...formData.entries()]);
-
-            try {
-                const response = await fetch(
-                    `https://api.cloudinary.com/v1_1/dlcq8i2sc/image/upload`,
-                    {
-                        method: 'POST',
-                        body: formData,
-                    }
-                );
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    console.error('Cloudinary error:', errorData);
-                    return null;
-                }
-                const data = await response.json();
-                return data.secure_url;
-            } catch (error) {
-                console.error('Upload failed:', error);
-                return null;
-            }
-        });
-        const urls = (await Promise.all(uploadPromises)).filter(Boolean) as string[];
-        setUploadedImages((prev) => [...prev, ...urls]);
-        const currentImages = form.getValues('images') || [];
-        form.setValue('images', [...currentImages, ...urls]);
-        setIsLoading(false);
-    };
-    const removeImage = (index: number) => {
-        setUploadedImages(prev => prev.filter((_, i) => i !== index))
-        const currentImages = form.getValues('images') || []
-        form.setValue(
-            'images',
-            currentImages.filter((_, i) => i !== index)
-        )
-    }
 
     const onSubmit = async (data: FormValues) => {
         setIsLoading(true)
         try {
-            const response = await fetch('http://localhost:3000/api/project', {
+            const response = await fetch(`${domain}/api/project`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -112,6 +65,8 @@ export default function ApartmentForm() {
             setIsLoading(false)
         }
     }
+
+
 
     return (
         <div className="min-h-screen p-4">
@@ -171,7 +126,7 @@ export default function ApartmentForm() {
                                                     variant="destructive"
                                                     size="icon"
                                                     className="absolute top-2 right-2 h-6 w-6"
-                                                    onClick={() => removeImage(index)}
+                                                    onClick={() => removeImage(index, form, setUploadedImages)}
                                                 >
                                                     <X className="h-4 w-4" />
                                                 </Button>
@@ -182,7 +137,9 @@ export default function ApartmentForm() {
                                                 type="file"
                                                 accept="image/*"
                                                 multiple
-                                                onChange={handleImageUpload}
+                                                onChange={(e) => {
+                                                    handleImageUpload(e, setIsLoading, setUploadedImages, form)
+                                                }}
                                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                                 disabled={isLoading}
                                             />
@@ -198,7 +155,7 @@ export default function ApartmentForm() {
                                     <FormField
                                         control={form.control}
                                         name="images"
-                                        render={({ field }) => (
+                                        render={() => (
                                             <FormMessage />
                                         )}
                                     />
@@ -206,6 +163,7 @@ export default function ApartmentForm() {
                             </div>
 
                             <div className="grid gap-6 md:grid-cols-3">
+
                                 <FormField
                                     control={form.control}
                                     name="state"
@@ -219,6 +177,7 @@ export default function ApartmentForm() {
                                         </FormItem>
                                     )}
                                 />
+
                                 <FormField
                                     control={form.control}
                                     name="city"
@@ -232,6 +191,7 @@ export default function ApartmentForm() {
                                         </FormItem>
                                     )}
                                 />
+
                                 <FormField
                                     control={form.control}
                                     name="area"
@@ -295,3 +255,5 @@ export default function ApartmentForm() {
         </div>
     )
 }
+
+export default ApartmentForm

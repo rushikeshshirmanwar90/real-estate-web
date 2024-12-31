@@ -63,7 +63,7 @@ const data = {
       items: [
         {
           title: "Add Project",
-          url: "/add-project",
+          url: "/project",
         },
         {
           title: "View Projects",

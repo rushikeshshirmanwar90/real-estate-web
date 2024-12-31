@@ -1,8 +1,8 @@
-import domain from "@/components/domain";
+import domain from "@/components/utils/domain";
 
 export const handleLogin = async (email: string, password: string) => {
     try {
-        const res = await fetch(`http://localhost:3000/api/clients/login`, {
+        const res = await fetch(`${domain}/api/clients/login`, {
             method: "POST",
             body: JSON.stringify({
                 email,

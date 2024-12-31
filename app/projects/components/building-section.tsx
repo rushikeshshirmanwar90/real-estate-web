@@ -16,13 +16,8 @@ import { PlusSquare, Edit, Trash2, Home } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FormEvent } from 'react';
+import { BuildingProps } from '../types/building-props';
 
-interface BuildingProps {
-    _id: string;
-    name: string;
-    totalFlats: number;
-    projectId: string | undefined;
-}
 
 interface ProjectProps {
     _id: string;
@@ -32,7 +27,7 @@ interface ProjectProps {
 interface BuildingsSectionProps {
     project: ProjectProps | undefined;
     buildings: BuildingProps[];
-    onAddBuilding: (newBuilding: BuildingProps) => void;
+    onAddBuilding: (newBuilding: BuildingProps) => Promise<void>;
     onDeleteBuilding: (index: number) => void;
 }
 

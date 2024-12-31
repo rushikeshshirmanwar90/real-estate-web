@@ -1,47 +1,41 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-
+import { useParams, useSearchParams } from 'next/navigation';
 import ProjectCarousel from '../components/project-carousel';
 import ProjectInfo from '../components/project-info';
 import BuildingsSection from '../components/building-section';
 import { BuildingProps } from '../types/building-props';
 import { ProjectProps } from '../types/project-props';
+import domain from '@/components/utils/domain';
 
 const ProjectDetails = () => {
     const params = useParams();
+    const searchParams = useSearchParams();
+    let projectId: string = "";
+    let mode: string | null = "";
 
-    const tmpData: ProjectProps = {
-        _id: "",
-        name: "",
-        totalBuilding: 1,
-        images: [""],
-        state: "",
-        city: "",
-        area: "",
-        address: "",
-        description: "",
-        clientId: "",
-        createdAt: ""
+    if (params) {
+        projectId = String(params.id);
+        mode = searchParams.get("mode");
     }
 
+    console.log(mode);
     const [isAddingBuilding, setIsAddingBuilding] = useState(false);
     const [buildings, setBuildings] = useState<BuildingProps[]>([]);
-    const [projectId, setProjectId] = useState<string>("");
     const [loading, setLoading] = useState<boolean>(true);
     const [project, setProject] = useState<ProjectProps>();
 
-    const projectIdFromParams = params.projectId;
-
     useEffect(() => {
         const getProjectData = async () => {
-            console.log(projectIdFromParams)
-
+            const res = await fetch(`${domain}/api/project?id=${projectId}`);
+            const data = await res.json();
+            setProject(data);
+            setLoading(false);
         }
         getProjectData();
     }, [loading, projectId])
 
-    const handleAddBuilding =  (building: BuildingProps) => {
+    const handleAddBuilding = async (building: BuildingProps) => {
         setBuildings(prev => [...prev, building]);
         setIsAddingBuilding(false);
     };
@@ -51,6 +45,9 @@ const ProjectDetails = () => {
     };
 
     return (
+
+        
+
         <div className="container mx-auto py-8 pb-16 space-y-8">
             <ProjectCarousel images={project?.images} />
             <div className='px-10' >
@@ -62,8 +59,9 @@ const ProjectDetails = () => {
                     onAddBuilding={handleAddBuilding}
                     onDeleteBuilding={handleDeleteBuilding}
                 />
-            </div>  
+            </div>
         </div>
+
     );
 }
 
