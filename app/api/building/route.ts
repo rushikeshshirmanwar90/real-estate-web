@@ -7,10 +7,11 @@ export const GET = async (req: Response) => {
     await connect();
 
     const { searchParams } = new URL(req.url);
+    const projectId = searchParams.get("projectId");
     const id = searchParams.get("id");
 
     if (!id) {
-      const buildings = await Building.find();
+      const buildings = await Building.find({ projectId: projectId });
 
       if (!buildings) {
         return NextResponse.json(

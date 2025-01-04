@@ -1,7 +1,6 @@
 'use client'
 import Image from "next/image"
 import Link from 'next/link'
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
     Carousel,
@@ -10,9 +9,20 @@ import {
     CarouselNext,
     CarouselPrevious,
 } from "@/components/ui/carousel"
-
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { ProjectProps } from '../types/project-props'
-import { Building2, Calendar, MapPin, Edit, Trash } from 'lucide-react'
+import { Building2, Calendar, MapPin, Edit, Trash2 } from 'lucide-react'
+import { deleteProject } from "@/functions/project/crud"
 
 const ProjectGrid = ({ projects }: { projects: ProjectProps[] }) => {
     return (
@@ -29,11 +39,35 @@ const ProjectGrid = ({ projects }: { projects: ProjectProps[] }) => {
                                             <div className="relative h-64">
                                                 <div className="bg-slate-950 h-[2.2rem] w-[5rem] absolute top-0 right-0 z-50 rounded-lg">
                                                     <div className="flex items-center justify-between px-2 mt-2">
+                                                        <Link href={`project?id=${project._id}`}>
+                                                            <div>
+                                                                <Edit size={20} />
+                                                            </div>
+                                                        </Link>
                                                         <div>
-                                                            <Edit size={20} />
-                                                        </div>
-                                                        <div>
-                                                            <Trash size={20} color="red" />
+                                                            <AlertDialog>
+                                                                <AlertDialogTrigger asChild className="w-[1.3rem] h-[1.3rem]">
+                                                                    <Trash2 size={20} className="h-4 w-4 text-destructive" />
+                                                                </AlertDialogTrigger>
+                                                                <AlertDialogContent>
+                                                                    <AlertDialogHeader>
+                                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                                        <AlertDialogDescription>
+                                                                            This action cannot be undone. This will permanently
+                                                                            delete the building data.
+                                                                        </AlertDialogDescription>
+                                                                    </AlertDialogHeader>
+                                                                    <AlertDialogFooter>
+                                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                        <AlertDialogAction
+                                                                            onClick={() => deleteProject(project._id)}
+                                                                            className="bg-destructive text-destructive-foreground"
+                                                                        >
+                                                                            Delete
+                                                                        </AlertDialogAction>
+                                                                    </AlertDialogFooter>
+                                                                </AlertDialogContent>
+                                                            </AlertDialog>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -52,7 +86,7 @@ const ProjectGrid = ({ projects }: { projects: ProjectProps[] }) => {
                             </Carousel>
                         </div>
 
-                        <Link href={`/projects/${project._id}?mode=edit`}>
+                        <Link href={`/projects/${project._id}`}>
 
                             <CardHeader>
                                 <CardTitle className='w-[80%]'>{project.name}</CardTitle>

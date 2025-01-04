@@ -7,47 +7,53 @@ import BuildingsSection from '../components/building-section';
 import { BuildingProps } from '../types/building-props';
 import { ProjectProps } from '../types/project-props';
 import domain from '@/components/utils/domain';
+import { getSingleProject } from '@/functions/project/crud';
+import { getBuildings } from '../functions/building-crud';
 
 const ProjectDetails = () => {
     const params = useParams();
     const searchParams = useSearchParams();
     let projectId: string = "";
-    let mode: string | null = "";
 
     if (params) {
         projectId = String(params.id);
-        mode = searchParams.get("mode");
     }
 
-    console.log(mode);
-    const [isAddingBuilding, setIsAddingBuilding] = useState(false);
     const [buildings, setBuildings] = useState<BuildingProps[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
+    const [loading, setLoading] = useState<boolean>();
     const [project, setProject] = useState<ProjectProps>();
+    const [randomNums, setRandomNums] = useState<number>(123456);
 
+
+    // FETCH THE BUILDING DATA
     useEffect(() => {
-        const getProjectData = async () => {
-            const res = await fetch(`${domain}/api/project?id=${projectId}`);
-            const data = await res.json();
+        setLoading(true)
+        const getData = async () => {
+            const data = await getBuildings(projectId)
+            setBuildings(data);
+        }
+        getData();
+        setLoading(false);
+    }, [projectId, loading, randomNums])
+
+
+    // FETCH THE PROJECT DATA
+    useEffect(() => {
+        const getProjectData = async (projectId: string) => {
+            const data = await getSingleProject(projectId);
             setProject(data);
             setLoading(false);
         }
-        getProjectData();
+        getProjectData(projectId);
     }, [loading, projectId])
 
-    const handleAddBuilding = async (building: BuildingProps) => {
-        setBuildings(prev => [...prev, building]);
-        setIsAddingBuilding(false);
-    };
-
-    const handleDeleteBuilding = (index: number) => {
-        setBuildings(prev => prev.filter((_, i) => i !== index));
-    };
+    // JAVASCRIPT FUNCTION GENERATE RANDOM FUNCTIONS
+    const generateRandomNumber = () => {
+        const num = Math.floor(Math.random() * 1000000);
+        setRandomNums(num);
+    }
 
     return (
-
-        
-
         <div className="container mx-auto py-8 pb-16 space-y-8">
             <ProjectCarousel images={project?.images} />
             <div className='px-10' >
@@ -56,8 +62,7 @@ const ProjectDetails = () => {
                 <BuildingsSection
                     project={project}
                     buildings={buildings}
-                    onAddBuilding={handleAddBuilding}
-                    onDeleteBuilding={handleDeleteBuilding}
+                    applyChanges={generateRandomNumber}
                 />
             </div>
         </div>

@@ -1,7 +1,3 @@
-import { toast } from 'sonner'
-import domain from '@/components/utils/domain'
-import { FormValues } from '../schema';
-
 export const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, setIsLoading: React.Dispatch<React.SetStateAction<boolean>>, setUploadedImages: React.Dispatch<React.SetStateAction<string[]>>, form: any) => {
     if (!e.target.files?.length) return;
     setIsLoading(true);

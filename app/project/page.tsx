@@ -1,13 +1,18 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { ImagePlus, Loader2, X } from 'lucide-react'
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { toast } from 'sonner'
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { ImagePlus, Loader2, X } from 'lucide-react'
+import { formSchema, type FormValues } from './schema'
+import { handleImageUpload, removeImage } from './functions/all-functions'
 import {
     Form,
     FormControl,
@@ -16,12 +21,12 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form"
-import { formSchema, type FormValues } from './schema'
-import { toast } from 'sonner'
-import domain from '@/components/utils/domain'
-import { handleImageUpload, removeImage } from './functions/all-functions'
+import { addProject, getSingleProject, updateProject } from '@/functions/project/crud'
 
-const ApartmentForm = () => {
+const ProjectForm = () => {
+    const searchParams = useSearchParams()
+    const projectId = searchParams.get('id')
+
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const [uploadedImages, setUploadedImages] = useState<string[]>([])
 
@@ -29,50 +34,88 @@ const ApartmentForm = () => {
         resolver: zodResolver(formSchema),
         defaultValues: {
             name: '',
-            totalBuilding: 0,
+            totalBuilding: 1,
             images: [],
             state: '',
             city: '',
             area: '',
             address: '',
             description: '',
+            clientId: '64afc2e1d2b2346789abc002'
         }
     })
 
-    const onSubmit = async (data: FormValues) => {
+    const onSubmit = async (formData: FormValues) => {
+        console.log("working")
         setIsLoading(true)
         try {
-            const response = await fetch(`${domain}/api/project`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            })
-            if (!response.ok) throw new Error('Submission failed')
-            console.log('Apartment added successfully')
-            toast("Project Added successfully", {
-                description: `${data.name} is added to database successfully`,
-                action: {
-                    label: "Okay",
-                    onClick: () => { }
-                },
-                position: "top-center"
-            })
-        } catch (error: any) {
-            console.log('Error:', error.message)
+            if (projectId) {
+                const data = await updateProject(formData, projectId)
+                if (!data) {
+                    toast.error("Can't update project")
+                } else {
+                    toast.success("Project updated successfully!", {
+                        description: `${formData.name} has been updated.`,
+                    })
+                }
+            } else {
+                const data = await addProject(formData)
+                if (!data) {
+                    toast.error("Failed to add project")
+                } else {
+                    toast.success("Project created successfully!", {
+                        description: `${data.name} has been created.`,
+                    })
+                    form.reset()
+                    setUploadedImages([])
+                }
+            }
+        } catch (error) {
+            console.error("Error submitting form:", error)
+            toast.error("Failed to submit project.")
         } finally {
             setIsLoading(false)
         }
     }
 
 
+    // const onSubmit = () => {
+    //     console.log("WOrking")
+    // }
+
+    useEffect(() => {
+        if (projectId) {
+            setIsLoading(true)
+            getSingleProject(projectId)
+                .then((project) => {
+                    if (project) {
+                        form.reset({
+                            name: project.name,
+                            totalBuilding: project.totalBuilding,
+                            images: project.images || [],
+                            state: project.state,
+                            city: project.city,
+                            area: project.area,
+                            address: project.address,
+                            description: project.description,
+                            clientId: '64afc2e1d2b2346789abc002'
+                        })
+                        setUploadedImages(project.images || [])
+                    }
+                })
+                .catch((error) => {
+                    console.error("Failed to fetch project data:", error)
+                    toast.error("Failed to fetch project data.")
+                })
+                .finally(() => setIsLoading(false))
+        }
+    }, [projectId, form])
 
     return (
         <div className="min-h-screen p-4">
             <Card className="max-w-4xl mx-auto">
                 <CardHeader>
-                    <CardTitle>Add New Project</CardTitle>
+                    <CardTitle>{projectId ? 'Edit Project' : 'Add New Project'}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <Form {...form}>
@@ -137,9 +180,7 @@ const ApartmentForm = () => {
                                                 type="file"
                                                 accept="image/*"
                                                 multiple
-                                                onChange={(e) => {
-                                                    handleImageUpload(e, setIsLoading, setUploadedImages, form)
-                                                }}
+                                                onChange={(e) => handleImageUpload(e, setIsLoading, setUploadedImages, form)}
                                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                                 disabled={isLoading}
                                             />
@@ -163,7 +204,6 @@ const ApartmentForm = () => {
                             </div>
 
                             <div className="grid gap-6 md:grid-cols-3">
-
                                 <FormField
                                     control={form.control}
                                     name="state"
@@ -242,10 +282,10 @@ const ApartmentForm = () => {
                                 {isLoading ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Submitting...
+                                        {projectId ? 'Updating...' : 'Submitting...'}
                                     </>
                                 ) : (
-                                    'Add Property'
+                                    projectId ? 'Update Project' : 'Add Property'
                                 )}
                             </Button>
                         </form>
@@ -256,4 +296,4 @@ const ApartmentForm = () => {
     )
 }
 
-export default ApartmentForm
+export default ProjectForm
