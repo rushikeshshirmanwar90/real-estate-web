@@ -1,7 +1,7 @@
 import { Projects } from "@/lib/models/Project";
 import connect from "@/lib/db";
 import { NextResponse } from "next/server";
-import { validateClient } from "@/components/utils/validateClient";
+import { validateClient } from "@/components/functions/validateClient";
 
 export const GET = async (req: Request) => {
   try {

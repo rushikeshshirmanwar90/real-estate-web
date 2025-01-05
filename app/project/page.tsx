@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { ImagePlus, Loader2, X } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from 'sonner'
@@ -9,10 +9,8 @@ import { toast } from 'sonner'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { formSchema, type FormValues } from './schema'
-import { handleImageUpload, removeImage } from './functions/all-functions'
 import {
     Form,
     FormControl,
@@ -22,6 +20,7 @@ import {
     FormMessage,
 } from "@/components/ui/form"
 import { addProject, getSingleProject, updateProject } from '@/functions/project/crud'
+import ImageHandler from '@/components/image-handler'
 
 const ProjectForm = () => {
     const searchParams = useSearchParams()
@@ -77,11 +76,6 @@ const ProjectForm = () => {
             setIsLoading(false)
         }
     }
-
-
-    // const onSubmit = () => {
-    //     console.log("WOrking")
-    // }
 
     useEffect(() => {
         if (projectId) {
@@ -153,55 +147,7 @@ const ProjectForm = () => {
                                 />
                             </div>
 
-                            <div>
-                                <Label>Property Images</Label>
-                                <div className="mt-2 space-y-4">
-                                    <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                                        {uploadedImages.map((url, index) => (
-                                            <div key={index} className="relative aspect-square">
-                                                <img
-                                                    src={url}
-                                                    alt={`Property ${index + 1}`}
-                                                    className="object-cover w-full h-full rounded-lg"
-                                                />
-                                                <Button
-                                                    type="button"
-                                                    variant="destructive"
-                                                    size="icon"
-                                                    className="absolute top-2 right-2 h-6 w-6"
-                                                    onClick={() => removeImage(index, form, setUploadedImages)}
-                                                >
-                                                    <X className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        ))}
-                                        <div className="aspect-square relative">
-                                            <Input
-                                                type="file"
-                                                accept="image/*"
-                                                multiple
-                                                onChange={(e) => handleImageUpload(e, setIsLoading, setUploadedImages, form)}
-                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                                disabled={isLoading}
-                                            />
-                                            <div className="h-full border-2 border-dashed rounded-lg flex items-center justify-center">
-                                                {isLoading ? (
-                                                    <Loader2 className="h-6 w-6 animate-spin" />
-                                                ) : (
-                                                    <ImagePlus className="h-6 w-6" />
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <FormField
-                                        control={form.control}
-                                        name="images"
-                                        render={() => (
-                                            <FormMessage />
-                                        )}
-                                    />
-                                </div>
-                            </div>
+                            <ImageHandler form={form} isLoading={isLoading} setIsLoading={setIsLoading} setUploadedImages={setUploadedImages} uploadedImages={uploadedImages} title='Property Images' />
 
                             <div className="grid gap-6 md:grid-cols-3">
                                 <FormField

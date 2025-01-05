@@ -72,6 +72,11 @@ export const POST = async (req: Response) => {
         }
       );
     }
+
+    return NextResponse.json({
+      message: "Flat Added successfully",
+      newFlats,
+    });
   } catch (error: any) {
     console.log(error.message);
     return NextResponse.json(

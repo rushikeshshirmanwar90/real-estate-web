@@ -1,18 +1,16 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
-import ProjectCarousel from '../components/project-carousel';
-import ProjectInfo from '../components/project-info';
-import BuildingsSection from '../components/building-section';
+import { useParams } from 'next/navigation';
+import ProjectCarousel from './components/project-carousel';
+import ProjectInfo from './components/project-info';
+import BuildingsSection from './components/building-section';
 import { BuildingProps } from '../types/building-props';
 import { ProjectProps } from '../types/project-props';
-import domain from '@/components/utils/domain';
 import { getSingleProject } from '@/functions/project/crud';
 import { getBuildings } from '../functions/building-crud';
 
 const ProjectDetails = () => {
     const params = useParams();
-    const searchParams = useSearchParams();
     let projectId: string = "";
 
     if (params) {

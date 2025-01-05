@@ -4,8 +4,9 @@ import { PlusSquare } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { postBuilding } from '../functions/building-crud';
-import { BuildingProps } from '../types/building-props';
+import { postBuilding } from '../../../functions/building-crud';
+import { BuildingProps } from '../../../types/building-props';
+import { toast } from 'sonner';
 
 interface addBuildingModelProps {
     projectId: string | undefined,
@@ -23,6 +24,9 @@ const AddBuildingModel: React.FC<addBuildingModelProps> = ({ projectId, applyCha
         };
         await postBuilding(newBuilding)
         applyChanges();
+        toast.success("Building Added successfully!", {
+            description: `${newBuilding.name}  Building added successfully.`,
+        })
     };
 
 

@@ -1,4 +1,4 @@
-import { ProjectProps } from "../types/project-props";
+import { ProjectProps } from "../../types/project-props";
 
 const ProjectInfo: React.FC<{ project: ProjectProps | undefined }> = ({ project }) => {
     return (

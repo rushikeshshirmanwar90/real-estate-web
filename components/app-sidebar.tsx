@@ -16,9 +16,9 @@ import {
   User2,
 } from "lucide-react";
 
-import { NavMain } from "@/components/nav-main";
-import { NavCrm } from "@/components/nav-crm";
-import { NavUser } from "@/components/nav-user";
+import { NavMain } from "@/components/nav/nav-main";
+import { NavCrm } from "@/components/nav/nav-crm";
+import { NavUser } from "@/components/nav/nav-user";
 import { TeamSwitcher } from "@/components/team-switcher";
 import {
   Sidebar,
