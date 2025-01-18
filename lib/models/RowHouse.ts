@@ -12,19 +12,14 @@ const RowHouseSchema = new Schema(
       require: true,
     },
 
-    total: {
+    totalRowHouseTypes: {
       type: Number,
       require: true,
     },
 
     images: {
       type: [String],
-      require: true,
-    },
-
-    BHK: {
-      type: Number,
-      require: true,
+      require: false,
     },
   },
   {
