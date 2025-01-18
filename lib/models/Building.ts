@@ -17,6 +17,25 @@ const buildingSchema = new Schema(
       ref: "Projects",
       require: true,
     },
+
+    MoreSection: {
+      type: [
+        {
+          name: {
+            type: String,
+            require: true,
+          },
+          description: {
+            type: String,
+            require: true,
+          },
+          images: {
+            type: [String],
+            require: true,
+          },
+        },
+      ],
+    },
   },
   {
     timestamps: true,

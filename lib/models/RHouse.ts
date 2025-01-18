@@ -26,21 +26,21 @@ const RHouseSchema = new Schema({
       {
         name: {
           type: String,
-          required: true,
+          require: true,
         },
 
         description: {
           type: String,
-          required: false,
+          require: false,
         },
 
         images: {
           type: [String],
-          required: true,
+          require: true,
         },
       },
     ],
-    required: false,
+    require: false,
   },
 });
 
