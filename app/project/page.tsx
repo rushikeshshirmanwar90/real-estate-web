@@ -19,6 +19,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { addProject, getSingleProject, updateProject } from '@/functions/project/crud'
 import ImageHandler from '@/components/image-handler'
 
@@ -40,12 +41,12 @@ const ProjectForm = () => {
             area: '',
             address: '',
             description: '',
+            projectType: '',
             clientId: '64afc2e1d2b2346789abc002'
         }
     })
 
     const onSubmit = async (formData: FormValues) => {
-        console.log("working")
         setIsLoading(true)
         try {
             if (projectId) {
@@ -92,6 +93,7 @@ const ProjectForm = () => {
                             area: project.area,
                             address: project.address,
                             description: project.description,
+                            projectType: project.projectType,
                             clientId: '64afc2e1d2b2346789abc002'
                         })
                         setUploadedImages(project.images || [])
@@ -138,7 +140,7 @@ const ProjectForm = () => {
                                                 <Input
                                                     type="number"
                                                     {...field}
-                                                    onChange={e => field.onChange(parseInt(e.target.value))}
+                                                    onChange={(e) => field.onChange(parseInt(e.target.value))}
                                                 />
                                             </FormControl>
                                             <FormMessage />
@@ -147,7 +149,40 @@ const ProjectForm = () => {
                                 />
                             </div>
 
-                            <ImageHandler form={form} isLoading={isLoading} setIsLoading={setIsLoading} setUploadedImages={setUploadedImages} uploadedImages={uploadedImages} title='Property Images' />
+                            <FormField
+                                control={form.control}
+                                name="projectType"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Project Type</FormLabel>
+                                        <FormControl>
+                                            <Select
+                                                value={field.value}
+                                                onValueChange={field.onChange}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select project type" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="Completed">Completed</SelectItem>
+                                                    <SelectItem value="Ongoing">Ongoing</SelectItem>
+                                                    <SelectItem value="Upcoming">Upcoming</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <ImageHandler
+                                form={form}
+                                isLoading={isLoading}
+                                setIsLoading={setIsLoading}
+                                setUploadedImages={setUploadedImages}
+                                uploadedImages={uploadedImages}
+                                title="Property Images"
+                            />
 
                             <div className="grid gap-6 md:grid-cols-3">
                                 <FormField
@@ -163,7 +198,6 @@ const ProjectForm = () => {
                                         </FormItem>
                                     )}
                                 />
-
                                 <FormField
                                     control={form.control}
                                     name="city"
@@ -177,7 +211,6 @@ const ProjectForm = () => {
                                         </FormItem>
                                     )}
                                 />
-
                                 <FormField
                                     control={form.control}
                                     name="area"

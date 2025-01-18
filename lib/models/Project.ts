@@ -7,11 +7,6 @@ const projectSchema = new Schema(
       require: true,
     },
 
-    totalBuilding: {
-      type: Number,
-      require: true,
-    },
-
     images: {
       type: [String],
       require: true,
@@ -45,6 +40,17 @@ const projectSchema = new Schema(
     clientId: {
       type: Schema.Types.ObjectId,
       ref: "Client",
+      require: true,
+    },
+
+    projectType: {
+      type: String,
+      require: true,
+      enum: ["On-Going", "up-coming", "completed"],
+    },
+
+    totalSections: {
+      type: Number,
       require: true,
     },
   },

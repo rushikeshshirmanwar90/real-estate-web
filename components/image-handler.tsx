@@ -1,11 +1,9 @@
 import React from 'react'
 import { ImagePlus, Loader2, X } from 'lucide-react'
-
 import { Label } from './ui/label'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { FormField, FormMessage } from './ui/form'
-
 import { handleImageUpload, removeImage } from '../components/functions/image-handling'
 
 interface ImageHandlerProps {
@@ -76,7 +74,6 @@ const ImageHandler: React.FC<ImageHandlerProps> = ({
                     />
                 </div>
             </div>
-
         </div>
     )
 }

@@ -1,4 +1,11 @@
-import { FormEvent, useState } from 'react';
+'use client';
+
+import { FormEvent, useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'sonner';
+import { useSearchParams } from 'next/navigation';
+import { Home, Loader2 } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -7,159 +14,205 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from 'sonner';
-import { Home } from 'lucide-react';
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from '@/components/ui/form';
+import { formSchema, type FlatFormValues } from '@/app/project/schema';
+import ImageHandler from '@/components/image-handler';
 
-interface FlatProps {
-    name: string;
-    building: string | undefined;
-    BHK: number;
-    area: number;
-    description?: string;
-    total: number;
-    booked: number;
-    images: string[];
-    ytLink?: string;
-}
+const AddFlatForm = () => {
+    const searchParams = useSearchParams();
+    const flatId = searchParams.get('id');
+    const [isLoading, setIsLoading] = useState(false);
+    const [uploadedImages, setUploadedImages] = useState<string[]>([]);
 
-interface AddFlatProps {
-    buildingId: string | undefined;
-    onSuccess: () => void;
-}
+    const form = useForm<FlatFormValues>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            name: '',
+            BHK: 1,
+            area: 0,
+            total: 1,
+            booked: 0,
+            description: '',
+            images: [],
+            ytLink: '',
+            buildingId: 'f',
+        },
+    });
 
-const AddFlat = ({ buildingId, onSuccess }: AddFlatProps) => {
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [images, setImages] = useState<string[]>([]);
+    const onSubmit = (formData: FlatFormValues) => {
+        setIsLoading(true);
+        console.log(formData)
+    }
 
-    const handleAddFlat = async (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-
-        try {
-            const formData = new FormData(e.currentTarget);
-            const flatData: FlatProps = {
-                name: formData.get('name') as string,
-                building: buildingId,
-                BHK: Number(formData.get('BHK')),
-                area: Number(formData.get('area')),
-                description: formData.get('description') as string,
-                total: Number(formData.get('total')),
-                booked: Number(formData.get('booked')),
-                images: images,
-                ytLink: formData.get('ytLink') as string,
-            };
-
-            const response = await fetch('/api/flats', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(flatData),
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to add flat');
-            }
-
-            toast.success('Flat added successfully!', {
-                description: `${flatData.name} has been added to the building.`,
-            });
-            onSuccess();
-        } catch (error) {
-            toast.error('Failed to add flat', {
-                description: 'Please try again later.',
-            });
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (files) {
-            const imageUrls = Array.from(files).map((file) => URL.createObjectURL(file));
-            setImages((prev) => [...prev, ...imageUrls]);
-        }
-    };
 
     return (
-        <Dialog>
-            <DialogTrigger asChild>
-                <Button variant="outline" className='w-full'>
-                    <Home className="w-4 h-4 mr-2" />
-                    Add Flat Details
-                </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                    <DialogTitle>Add New Flat</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleAddFlat} className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="name">Flat Name/Number</Label>
-                        <Input id="name" name="name" required />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="BHK">BHK</Label>
-                            <Input id="BHK" name="BHK" type="number" required min="1" />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="area">Area (sq ft)</Label>
-                            <Input id="area" name="area" type="number" required min="1" />
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="total">Total Units</Label>
-                            <Input id="total" name="total" type="number" required min="1" />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="booked">Booked Units</Label>
-                            <Input id="booked" name="booked" type="number" required min="0" />
-                        </div>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="description">Description</Label>
-                        <Textarea id="description" name="description" />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="images">Images</Label>
-                        <Input
-                            id="images"
-                            name="images"
-                            type="file"
-                            accept="image/*"
-                            multiple
-                            onChange={handleImageUpload}
-                        />
-                        {images.length > 0 && (
-                            <div className="grid grid-cols-3 gap-2 mt-2">
-                                {images.map((url, index) => (
-                                    <img
-                                        key={index}
-                                        src={url}
-                                        alt={`Preview ${index + 1}`}
-                                        className="w-full h-20 object-cover rounded-md"
-                                    />
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="ytLink">YouTube Video Link (Optional)</Label>
-                        <Input id="ytLink" name="ytLink" type="url" />
-                    </div>
-                    <Button type="submit" className="w-full" disabled={isSubmitting}>
-                        {isSubmitting ? 'Adding...' : 'Add Flat'}
+        <div className="p-4">
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Button variant="outline" className="w-full">
+                        <Home className="w-4 h-4 mr-2" />
+                        Add Flat Details
                     </Button>
-                </form>
-            </DialogContent>
-        </Dialog>
+                </DialogTrigger>
+
+                <DialogContent className="max-w-screen-lg max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Add Flat Details</DialogTitle>
+                    </DialogHeader>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{flatId ? 'Edit Flat' : 'Add New Flat'}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <Form {...form}>
+                                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                                    <div className="grid gap-6 md:grid-cols-3"> {/* Better grid */}
+                                        <FormField
+                                            control={form.control}
+                                            name="name"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Flat Name/Number</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="BHK"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>BHK</FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            type="number"
+                                                            {...field}
+                                                            onChange={(e) => field.onChange(parseInt(e.target.value))}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="area"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Area (sq ft)</FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            type="number"
+                                                            {...field}
+                                                            onChange={(e) => field.onChange(parseInt(e.target.value))}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                    <div className="grid gap-6 md:grid-cols-3">
+                                        <FormField
+                                            control={form.control}
+                                            name="total"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Total Units</FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            type="number"
+                                                            {...field}
+                                                            onChange={(e) => field.onChange(parseInt(e.target.value))}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="booked"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Booked Units</FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            type="number"
+                                                            {...field}
+                                                            onChange={(e) => field.onChange(parseInt(e.target.value))}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                    <FormField
+                                        control={form.control}
+                                        name="description"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Description</FormLabel>
+                                                <FormControl>
+                                                    <Textarea {...field} className="h-32" />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <ImageHandler
+                                        form={form}
+                                        isLoading={isLoading}
+                                        setIsLoading={setIsLoading}
+                                        setUploadedImages={setUploadedImages}
+                                        uploadedImages={uploadedImages}
+                                        title="Flat Images"
+                                    />
+
+                                    <FormField
+                                        control={form.control}
+                                        name="ytLink"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>YouTube Video Link (Optional)</FormLabel>
+                                                <FormControl>
+                                                    <Input type="url" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <Button type="submit" className="w-full" disabled={isLoading}>
+                                        {isLoading ? (
+                                            <>
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                {flatId ? 'Updating...' : 'Submitting...'}
+                                            </>
+                                        ) : flatId ? 'Update Flat' : 'Add Flat'}
+                                    </Button>
+                                </form>
+                            </Form>
+                        </CardContent>
+                    </Card>
+                </DialogContent>
+            </Dialog>
+        </div>
     );
 };
 
-export default AddFlat;
+export default AddFlatForm;

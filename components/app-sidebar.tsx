@@ -112,17 +112,17 @@ const data = {
   crm: [
     {
       name: "Dashboard",
-      url: "#",
+      url: "/",
       icon: PieChart,
     },
     {
       name: "Users",
-      url: "#",
+      url: "/users",
       icon: User2,
     },
     {
       name: "Channel Partners",
-      url: "#",
+      url: "/broker",
       icon: HandshakeIcon,
     },
   ],
