@@ -35,6 +35,7 @@ const buildingSchema = new Schema(
           },
         },
       ],
+      require: false,
     },
   },
   {
