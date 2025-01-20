@@ -21,6 +21,38 @@ const RowHouseSchema = new Schema(
       type: [String],
       require: false,
     },
+    
+    totalHouse: {
+      type: Number,
+      require: true,
+    },
+
+    description: {
+      type: String,
+      require: false,
+    },
+
+    MoreSection: {
+      type: [
+        {
+          name: {
+            type: String,
+            require: true,
+          },
+
+          description: {
+            type: String,
+            require: false,
+          },
+
+          images: {
+            type: [String],
+            require: true,
+          },
+        },
+      ],
+      require: false,
+    },
   },
   {
     timestamps: true,

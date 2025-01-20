@@ -1,4 +1,4 @@
-import { FormValues } from "@/app/project/schema";
+import { FormValues } from "@/app/project-form/schema";
 import domain from "@/components/utils/domain";
 
 export const getSingleProject = async (projectId: string) => {

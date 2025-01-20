@@ -5,12 +5,12 @@ const SectionSchema = new Schema(
     name: {
       type: String,
       require: true,
-        },
+    },
 
     type: {
       type: String,
       require: true,
-      enum: ["row-house", "buildings"],
+      enum: ["row-house", "buildings", "other"],
     },
 
     projectId: {
