@@ -1,17 +1,11 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
-import { AppSidebar } from "@/components/app-sidebar";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
-import { ModeToggle } from "@/components/theme-toggle";
 import { Toaster } from "@/components/ui/sonner"
 import NextTopLoader from 'nextjs-toploader';
+import SideBarItems from "@/components/SideBarItems";
+import SideBar from "@/components/SideBar";
+import { Building2Icon, ChartPieIcon, LayoutDashboard } from "lucide-react";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -41,40 +35,32 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <SidebarProvider>
-            <AppSidebar />
-            <SidebarInset>
-              <header className="flex h-16 shrink-0 items-center gap-2 border-b">
-                <div className="flex items-center gap-2 px-3">
-                  <SidebarTrigger />
-                  <Separator orientation="vertical" className="mr-2 h-4" />
-                </div>
-                <ModeToggle />
-              </header>
-              <main>
-                <NextTopLoader
-                  color="#2299DD"
-                  initialPosition={0.08}
-                  crawlSpeed={200}
-                  height={3}
-                  crawl={true}
-                  showSpinner={true}
-                  easing="ease"
-                  speed={200}
-                  shadow="0 0 10px #2299DD,0 0 5px #2299DD"
-                />
-                {children}
-              </main>
-              <Toaster />
-            </SidebarInset>
-          </SidebarProvider>
-        </ThemeProvider>
+
+        <main className="flex gap-2 w-full" >
+          <NextTopLoader
+            color="#2299DD"
+            initialPosition={0.08}
+            crawlSpeed={200}
+            height={3}
+            crawl={true}
+            showSpinner={true}
+            easing="ease"
+            speed={200}
+            shadow="0 0 10px #2299DD,0 0 5px #2299DD"
+          />
+
+          <SideBar>
+            <div className="mt-4 w-full">
+              <SideBarItems link="/projects" active={false} alert={true} icon={<LayoutDashboard size={20} />} text="Dashboard" />
+              <SideBarItems link="/" active={true} alert={true} icon={<Building2Icon size={20} />} text="Projects" />
+              <SideBarItems link="/" active={false} alert={true} icon={<ChartPieIcon size={20} />} text="Analytics" />
+            </div>
+          </SideBar>
+          <div className="w-[79vw]" >
+            {children}
+          </div>
+        </main>
+        <Toaster />
       </body>
     </html>
   );

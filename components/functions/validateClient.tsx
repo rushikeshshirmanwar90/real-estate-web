@@ -2,7 +2,6 @@ import { cookies } from "next/headers";
 import { Client } from "@/lib/models/Client";
 import jwt from "jsonwebtoken"
 
-
 interface cookieDataProps {
     email: string;
     userId: string;

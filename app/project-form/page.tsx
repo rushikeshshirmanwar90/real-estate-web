@@ -1,278 +1,92 @@
-'use client'
-import { useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { toast } from 'sonner'
+"use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { formSchema, type FormValues } from './schema'
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/components/ui/form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { addProject, getSingleProject, updateProject } from '@/functions/project/crud'
-import ImageHandler from '@/components/image-handler'
 
-const ProjectForm = () => {
-    const searchParams = useSearchParams()
-    const projectId = searchParams.get('id')
+import type { FormData } from "./types"
+import { EditableSectionCard } from "@/components/editable-info-card"
+import TopHeader from "@/components/TopHeader"
 
-    const [isLoading, setIsLoading] = useState<boolean>(false)
-    const [uploadedImages, setUploadedImages] = useState<string[]>([])
-
-    const form = useForm<FormValues>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-            name: '',
-            totalBuilding: 1,
-            images: [],
-            state: '',
-            city: '',
-            area: '',
-            address: '',
-            description: '',
-            projectType: '',
-            clientId: '64afc2e1d2b2346789abc002'
-        }
+export default function MultiSectionForm() {
+    const [formData, setFormData] = useState<FormData>({
+        images: [],
+        basicInfo: {
+            name: "",
+            description: "",
+        },
+        address: {
+            streetAddress: "",
+            area: "",
+            state: "",
+            city: "",
+        },
     })
 
-    const onSubmit = async (formData: FormValues) => {
-        setIsLoading(true)
-        try {
-            if (projectId) {
-                const data = await updateProject(formData, projectId)
-                if (!data) {
-                    toast.error("Can't update project")
-                } else {
-                    toast.success("Project updated successfully!", {
-                        description: `${formData.name} has been updated.`,
-                    })
-                }
-            } else {
-                const data = await addProject(formData)
-                if (!data) {
-                    toast.error("Failed to add project")
-                } else {
-                    toast.success("Project created successfully!", {
-                        description: `${data.name} has been created.`,
-                    })
-                    form.reset()
-                    setUploadedImages([])
-                }
-            }
-        } catch (error) {
-            console.error("Error submitting form:", error)
-            toast.error("Failed to submit project.")
-        } finally {
-            setIsLoading(false)
-        }
+    const handleImagesChange = (images: string[]) => {
+        setFormData((prev) => ({ ...prev, images }))
     }
 
-    useEffect(() => {
-        if (projectId) {
-            setIsLoading(true)
-            getSingleProject(projectId)
-                .then((project) => {
-                    if (project) {
-                        form.reset({
-                            name: project.name,
-                            totalBuilding: project.totalBuilding,
-                            images: project.images || [],
-                            state: project.state,
-                            city: project.city,
-                            area: project.area,
-                            address: project.address,
-                            description: project.description,
-                            projectType: project.projectType,
-                            clientId: '64afc2e1d2b2346789abc002'
-                        })
-                        setUploadedImages(project.images || [])
-                    }
-                })
-                .catch((error) => {
-                    console.error("Failed to fetch project data:", error)
-                    toast.error("Failed to fetch project data.")
-                })
-                .finally(() => setIsLoading(false))
-        }
-    }, [projectId, form])
+    const handleBasicInfoChange = (key: string, value: string) => {
+        setFormData((prev) => ({
+            ...prev,
+            basicInfo: { ...prev.basicInfo, [key]: value },
+        }))
+    }
+
+    const handleAddressChange = (key: string, value: string) => {
+        setFormData((prev) => ({
+            ...prev,
+            address: { ...prev.address, [key]: value },
+        }))
+    }
+
+    const isFormValid = () => {
+        const { basicInfo, address } = formData
+        return (
+            basicInfo.name.trim() !== "" &&
+            basicInfo.description.trim() !== "" &&
+            address.streetAddress.trim() !== "" &&
+            address.area.trim() !== "" &&
+            address.state.trim() !== "" &&
+            address.city.trim() !== ""
+        )
+    }
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault()
+        console.log("Form Data:", formData)
+    }
 
     return (
-        <div className="min-h-screen p-4">
-            <Card className="max-w-4xl mx-auto">
-                <CardHeader>
-                    <CardTitle>{projectId ? 'Edit Project' : 'Add New Project'}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                            <div className="grid gap-6 md:grid-cols-2">
-                                <FormField
-                                    control={form.control}
-                                    name="name"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Property Name</FormLabel>
-                                            <FormControl>
-                                                <Input {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="totalBuilding"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Total Buildings</FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    type="number"
-                                                    {...field}
-                                                    onChange={(e) => field.onChange(parseInt(e.target.value))}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
+        <>
 
-                            <FormField
-                                control={form.control}
-                                name="projectType"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Project Type</FormLabel>
-                                        <FormControl>
-                                            <Select
-                                                value={field.value}
-                                                onValueChange={field.onChange}
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select project type" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="Completed">Completed</SelectItem>
-                                                    <SelectItem value="Ongoing">Ongoing</SelectItem>
-                                                    <SelectItem value="Upcoming">Upcoming</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+            <TopHeader buttonText="Save" tagTitle="Project" title="Setup project" buttonDisable={!isFormValid()} />
 
-                            <ImageHandler
-                                form={form}
-                                isLoading={isLoading}
-                                setIsLoading={setIsLoading}
-                                setUploadedImages={setUploadedImages}
-                                uploadedImages={uploadedImages}
-                                title="Property Images"
-                            />
+            <form onSubmit={handleSubmit} className="mx-auto max-w-4xl space-y-6 p-6">
+                <EditableSectionCard title="Images" images={formData.images} onImagesChange={handleImagesChange} />
 
-                            <div className="grid gap-6 md:grid-cols-3">
-                                <FormField
-                                    control={form.control}
-                                    name="state"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>State</FormLabel>
-                                            <FormControl>
-                                                <Input {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="city"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>City</FormLabel>
-                                            <FormControl>
-                                                <Input {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="area"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Area</FormLabel>
-                                            <FormControl>
-                                                <Input {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
+                <EditableSectionCard
+                    title="Basic Information"
+                    fields={[
+                        { key: "name", label: "Name", value: formData.basicInfo.name, type: "text" },
+                        { key: "description", label: "Description", value: formData.basicInfo.description, type: "textarea" },
+                    ]}
+                    onFieldChange={handleBasicInfoChange}
+                />
 
-                            <FormField
-                                control={form.control}
-                                name="address"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Full Address</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                <EditableSectionCard
+                    title="Address Information"
+                    fields={[
+                        { key: "streetAddress", label: "Street Address", value: formData.address.streetAddress, type: "text" },
+                        { key: "area", label: "Area", value: formData.address.area, type: "text" },
+                        { key: "state", label: "State", value: formData.address.state, type: "text" },
+                        { key: "city", label: "City", value: formData.address.city, type: "text" },
+                    ]}
+                    onFieldChange={handleAddressChange}
+                />
 
-                            <FormField
-                                control={form.control}
-                                name="description"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Description</FormLabel>
-                                        <FormControl>
-                                            <Textarea
-                                                {...field}
-                                                className="h-32"
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <Button type="submit" className="w-full" disabled={isLoading}>
-                                {isLoading ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        {projectId ? 'Updating...' : 'Submitting...'}
-                                    </>
-                                ) : (
-                                    projectId ? 'Update Project' : 'Add Property'
-                                )}
-                            </Button>
-                        </form>
-                    </Form>
-                </CardContent>
-            </Card>
-        </div>
+            </form>
+        </>
     )
 }
 
-export default ProjectForm
