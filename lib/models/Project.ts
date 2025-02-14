@@ -4,55 +4,65 @@ const projectSchema = new Schema(
   {
     name: {
       type: String,
-      require: true,
+      required: true,
     },
 
     images: {
       type: [String],
-      require: true,
+      required: true,
     },
 
     state: {
       type: String,
-      require: true,
+      required: true,
     },
 
     city: {
       type: String,
-      require: true,
+      required: true,
     },
 
     area: {
       type: String,
-      require: true,
+      required: true,
     },
 
     address: {
       type: String,
-      require: true,
+      required: true,
     },
 
     description: {
       type: String,
-      require: true,
+      required: true,
     },
 
     clientId: {
       type: Schema.Types.ObjectId,
       ref: "Client",
-      require: true,
+      required: true,
     },
 
     projectType: {
       type: String,
-      require: true,
-      enum: ["On-Going", "up-coming", "completed"],
+      required: true,
+      enum: ["ongoing", "upcoming", "completed"],
     },
 
-    totalSections: {
-      type: Number,
-      require: true,
-    },
+    section: [
+      {
+        name: {
+          type: String,
+          required: true,
+        },
+
+        type: {
+          type: String,
+          required: true,
+          enum: ["row-house", "buildings", "other"],
+        },
+      },
+    ],
   },
   {
     timestamps: true,

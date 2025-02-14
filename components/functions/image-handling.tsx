@@ -1,14 +1,15 @@
-export const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, setIsLoading: React.Dispatch<React.SetStateAction<boolean>>, setUploadedImages: React.Dispatch<React.SetStateAction<string[]>>, form: any) => {
+export const handleImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setImages: React.Dispatch<React.SetStateAction<string[]>>,
+    setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
+) => {
     if (!e.target.files?.length) return;
     setIsLoading(true);
-    const uploadedFiles = Array.from(e.target.files);
-    const uploadPromises = uploadedFiles.map(async (file) => {
+
+    const uploadPromises = Array.from(e.target.files).map(async (file) => {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('upload_preset', 'realEstate');
-
-        console.log("Uploading file:", file);
-        console.log("FormData:", [...formData.entries()]);
 
         try {
             const response = await fetch(
@@ -18,11 +19,13 @@ export const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, 
                     body: formData,
                 }
             );
+
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error('Cloudinary error:', errorData);
                 return null;
             }
+
             const data = await response.json();
             return data.secure_url;
         } catch (error) {
@@ -32,17 +35,16 @@ export const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, 
     });
 
     const urls = (await Promise.all(uploadPromises)).filter(Boolean) as string[];
-    setUploadedImages((prev: any) => [...prev, ...urls]);
-    const currentImages = form.getValues('images') || [];
-    form.setValue('images', [...currentImages, ...urls]);
+
+    setImages((prevImages) => [...prevImages, ...urls]);
     setIsLoading(false);
+
+    return urls;
 };
 
-export const removeImage = (index: number, form: any, setUploadedImages: React.Dispatch<React.SetStateAction<string[]>>) => {
-    setUploadedImages(prev => prev.filter((_, i) => i !== index))
-    const currentImages = form.getValues('images') || []
-    form.setValue(
-        'images',
-        currentImages.filter((_: any, i: any) => i !== index)
-    )
-}
+export const removeImage = (
+    index: number,
+    setImages: React.Dispatch<React.SetStateAction<string[]>>
+) => {
+    setImages((prevImages) => prevImages.filter((_, i) => i !== index));
+};

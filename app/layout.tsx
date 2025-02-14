@@ -51,12 +51,12 @@ export default function RootLayout({
 
           <SideBar>
             <div className="mt-4 w-full">
-              <SideBarItems link="/projects" active={false} alert={true} icon={<LayoutDashboard size={20} />} text="Dashboard" />
-              <SideBarItems link="/" active={true} alert={true} icon={<Building2Icon size={20} />} text="Projects" />
+              <SideBarItems link="/" active={false} alert={true} icon={<LayoutDashboard size={20} />} text="Dashboard" />
+              <SideBarItems link="/projects" active={true} alert={true} icon={<Building2Icon size={20} />} text="Projects" />
               <SideBarItems link="/" active={false} alert={true} icon={<ChartPieIcon size={20} />} text="Analytics" />
             </div>
           </SideBar>
-          <div className="w-[79vw]" >
+          <div className="w-[79vw] max-h-screen overflow-y-scroll" >
             {children}
           </div>
         </main>

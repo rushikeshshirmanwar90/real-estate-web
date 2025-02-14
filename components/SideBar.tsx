@@ -18,11 +18,11 @@ const SideBar: React.FC<{ children: any }> = ({ children }) => {
 
                 <div className='mt-auto bg-[#517675] border-t-2 border-t-[#073B3A] ' >
                     <div className='flex p-3' >
-                        <Image alt='avatar' src={'/assets/man.png'} width={40} height={25} />
+                        <Image alt='avatar' src={'/assets/man.png'} width={45} height={20} />
                         <div className='flex justify-between items-center w-full ml-3 pr-2'  >
                             <div>
                                 <h4 className='font-semibold'>Rushi Shrimanwar</h4>
-                                <span className='text-xs text-gray-600'>rushikeshshrimanwar@gmail.com</span>
+                                <span className='text-xs'>rushikeshshrimanwar@gmail.com</span>
                             </div>
                             <MoreVertical size={20} />
                         </div>

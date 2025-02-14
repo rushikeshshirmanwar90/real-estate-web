@@ -1,6 +1,7 @@
 import React from 'react'
 import Tag from './Tag'
 import { Button } from './ui/button'
+import Link from 'next/link'
 
 interface TopHeaderProps {
     tagTitle: string,
@@ -8,12 +9,13 @@ interface TopHeaderProps {
     buttonText: string,
     TagIcon?: any
     buttonDisable?: boolean
+    link?: string
 }
 
 const TopHeader: React.FC<TopHeaderProps> = ({
     buttonText,
     tagTitle, title,
-    TagIcon, buttonDisable = false
+    TagIcon, link, buttonDisable = false
 }) => {
     return (
         <div>
@@ -27,12 +29,28 @@ const TopHeader: React.FC<TopHeaderProps> = ({
                     </p>
                 </div>
                 <div>
-                    <Button variant={'ghost'} className='bg-[#FCC608]' disabled={buttonDisable }>
-                        <p className='text-lg font-medium px-4' >
-                            {buttonText}
-                        </p>
-                        {TagIcon}
-                    </Button>
+
+                    {
+                        !link ? (
+                            <Button variant={'ghost'} className='bg-[#FCC608] hover:bg-[#fcc708de]' disabled={buttonDisable}>
+                                <p className='text-lg font-medium px-4' >
+                                    {buttonText}
+                                </p>
+                                {TagIcon}
+                            </Button>
+                        ) : (
+                            <Link href={link} >
+                                <Button variant={'ghost'} className='bg-[#FCC608] hover:bg-[#fcc708de]' disabled={buttonDisable}>
+                                    <p className='text-lg font-medium px-4' >
+                                        {buttonText}
+                                    </p>
+                                    {TagIcon}
+                                </Button>
+                            </Link>
+                        )
+                    }
+
+
                 </div>
             </div>
         </div>
