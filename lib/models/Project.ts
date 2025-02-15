@@ -63,6 +63,20 @@ const projectSchema = new Schema(
         },
       },
     ],
+
+    amenities: [
+      {
+        icon: {
+          type: String,
+          required: true,
+        },
+
+        name: {
+          type: String,
+          required: true,
+        },
+      },
+    ],
   },
   {
     timestamps: true,

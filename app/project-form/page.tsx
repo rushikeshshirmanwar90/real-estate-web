@@ -5,7 +5,6 @@ import { EditableSectionCard } from "@/components/editable-info-card"
 import TopHeader from "@/components/TopHeader"
 import { Book, Image, MapPinCheck } from "lucide-react"
 import { Field } from "@/components/types/editable-card"
-import { Label } from "recharts"
 import AmenitiesSelector from "@/components/AmenitiesSelector"
 
 
@@ -62,10 +61,12 @@ export default function MultiSectionForm() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
+        console.log("clicked")
         console.log("Form Data:", formData)
     }
 
     const handleAmenitiesChange = (updatedAmenities: any) => {
+        console.log(selectedAmenities);
         setSelectedAmenities(updatedAmenities);
     };
 
