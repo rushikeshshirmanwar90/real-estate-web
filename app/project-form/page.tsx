@@ -14,6 +14,7 @@ import type { FormData } from "./types"
 import { addProject } from "@/functions/project/crud"
 import { getClientId } from "@/functions/getClientId"
 import { toast } from "react-toastify"
+import { successToast } from "@/components/toasts"
 
 
 const Page = () => {
@@ -153,15 +154,7 @@ const Page = () => {
         try {
             const result: FormData = await addProject(formData);
             if (result) {
-                toast('project added successfully', {
-                    position: "top-center",
-                    autoClose: 3000,
-                    draggable: true,
-                    pauseOnHover: false,
-                    progress: undefined,
-                    theme: "light",
-                    type: "success"
-                });
+                successToast("Project Added Successfully")
                 router.push("/projects")
             } else {
                 console.error("Failed to add project");

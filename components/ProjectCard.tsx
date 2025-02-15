@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+
 import {
     MapPin,
     Ruler,
@@ -37,6 +39,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { projectProps } from "@/app/projects/types/project-props"
+
+import { AmenitiesProps } from "./types/editable-card"
+import { DisplayIcon } from "./AmenitiesSelector"
+import { deleteProject } from "@/functions/project/crud"
+import { successToast } from "./toasts"
 
 interface Section {
     id: string
@@ -44,8 +52,16 @@ interface Section {
     type: "building" | "row house" | "other"
 }
 
-const ProjectCard = () => {
+interface ProjectCardProps {
+    projectInfo: projectProps,
+    refreshData: () => void
+}
+
+const ProjectCard: React.FC<ProjectCardProps> = ({ projectInfo, refreshData }) => {
     // Separate state for modals and dropdowns
+
+    const router = useRouter();
+
     const [isDropdownOpen, setIsDropdownOpen] = useState(false)
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
     const [isAddSectionModalOpen, setIsAddSectionModalOpen] = useState(false)
@@ -69,8 +85,10 @@ const ProjectCard = () => {
         setIsDeleteModalOpen(true)
     }
 
-    const handleDelete = () => {
-        setSections([])
+    const handleDelete = async () => {
+        await deleteProject(projectInfo._id)
+        refreshData();
+        successToast("Project Deleted Successfully")
         setIsDeleteModalOpen(false)
     }
 
@@ -80,6 +98,15 @@ const ProjectCard = () => {
                 id: Math.random().toString(36).substr(2, 9),
                 name: newSection.name,
                 type: newSection.type,
+            }
+            if (newSection.type == "building") {
+                router.push("building-form")
+            }
+            if (newSection.type == "row house") {
+                router.push("rowHouse-form")
+            }
+            if (newSection.type == "other") {
+                router.push("OtherForm")
             }
             setSections(prev => [...prev, newSectionEntry])
             setNewSection({ name: "", type: "" as Section["type"] })
@@ -98,20 +125,20 @@ const ProjectCard = () => {
                 {/* Image Section */}
                 <div className="w-1/2 relative">
                     <img
-                        src="https://res.cloudinary.com/dlcq8i2sc/image/upload/v1736101192/zecgarxhsduxqobi1szb.jpg"
+                        src={`${projectInfo?.images[0]}`}
                         alt="Luxury Suite Villa"
-                        className="w-full h-[400px] object-cover"
+                        className="w-full h-[350px] object-cover"
                     />
                     <div className="absolute top-4 left-4 bg-white text-gray-800 text-sm font-bold px-3 py-1 rounded-lg shadow">
-                        OnGoing
+                        {projectInfo?.projectType}
                     </div>
                 </div>
 
                 {/* Content Section */}
-                <div className="w-1/2 p-5 flex flex-col justify-between">
+                <div className="w-1/2 p-5 flex flex-col gap-5">
                     <div>
                         <div className="flex justify-between">
-                            <h2 className="text-xl font-semibold text-gray-900">Luxury Suite Villa</h2>
+                            <h2 className="text-xl font-semibold text-gray-900">{projectInfo?.projectType}</h2>
                             <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -135,32 +162,28 @@ const ProjectCard = () => {
                         </div>
 
                         <p className="text-gray-600 flex items-center gap-2 mt-1">
-                            <MapPin className="text-red-500 w-4 h-4" /> Los Angeles City, CA, USA
+                            <MapPin className="text-red-500 w-4 h-4" /> {projectInfo?.name}
                         </p>
 
                         <p className="text-gray-500 text-sm mt-3">
-                            Lorem ipsum dolor sit amet consectetur adipisicing elit. Enim iste quis natus.
+                            {projectInfo?.description}
                         </p>
 
                         <div className="mt-3 flex items-center gap-4">
                             <div className="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-lg text-gray-700">
-                                <Ruler className="w-4 h-4" /> 1200 sq
+                                <Ruler className="w-4 h-4" /> {projectInfo?.area} sq
                             </div>
                         </div>
 
                         <div className="mt-3 flex gap-2 flex-wrap">
-                            <div className="bg-gray-100 px-3 py-2 rounded-lg flex items-center gap-2 text-gray-700">
-                                <WavesIcon className="w-4 h-4" /> Swimming Pool
-                            </div>
-                            <div className="bg-gray-100 px-3 py-2 rounded-lg flex items-center gap-2 text-gray-700">
-                                <Wifi className="w-4 h-4" /> Wifi
-                            </div>
-                            <div className="bg-gray-100 px-3 py-2 rounded-lg flex items-center gap-2 text-gray-700">
-                                <SquareParking className="w-4 h-4" /> Parking area
-                            </div>
-                            <div className="bg-gray-100 px-3 py-2 rounded-lg flex items-center gap-2 text-gray-700">
-                                <VolleyballIcon className="w-4 h-4" /> Playing Ground
-                            </div>
+
+                            {
+                                projectInfo?.amenities.map((item: AmenitiesProps) => (
+                                    <div className="bg-gray-100 px-3 py-2 rounded-lg flex items-center gap-2 text-gray-700">
+                                        <DisplayIcon iconName={item.icon} size={20} color="black" /> {item.name}
+                                    </div>
+                                ))
+                            }
                         </div>
                     </div>
 

@@ -1,14 +1,20 @@
+import { AmenitiesProps } from "@/components/types/editable-card";
 
-export interface ProjectProps {
+export interface projectProps {
     _id: string
-    name: string
-    totalBuilding: number
-    images: string[]
-    state: string
-    city: string
-    area: string
-    address: string
-    description: string
-    clientId: string
-    createdAt: string
+    images: string[];
+    name: string;
+    description: string;
+    projectType: string;
+    area: number;
+    address: string;
+    state: string;
+    city: string;
+    amenities: AmenitiesProps[];
+    clientId: string;
+    section: {
+        sectionId: string,
+        name: string,
+        type: string
+    }[]
 }

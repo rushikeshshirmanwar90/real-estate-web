@@ -51,15 +51,19 @@ const projectSchema = new Schema(
 
     section: [
       {
+        sectionId: {
+          type: Schema.Types.ObjectId,
+          refPath: "section.$.type",
+          required: true,
+        },
         name: {
           type: String,
           required: true,
         },
-
         type: {
           type: String,
           required: true,
-          enum: ["row-house", "buildings", "other"],
+          enum: ["RowHouse", "Buildings", "OtherSection"],
         },
       },
     ],

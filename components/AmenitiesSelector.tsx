@@ -34,7 +34,7 @@ import {
     Music
 } from "lucide-react";
 
-interface AmenityItem {
+export interface AmenityItem {
     name: string;
     icon: string;
 }
@@ -65,9 +65,9 @@ const iconComponents = {
     X
 };
 
-const DisplayIcon = ({ iconName }: { iconName: string }) => {
+export const DisplayIcon = ({ iconName, size = 32, color = "white" }: { iconName: string, size?: number, color?: string }) => {
     const IconComponent = iconComponents[iconName as keyof typeof iconComponents];
-    return IconComponent ? <IconComponent size={32} color="white" /> : <X size={32} />;
+    return IconComponent ? <IconComponent size={size} color={color} /> : <X size={size} />;
 };
 
 const AmenitiesSelector: React.FC<AmenitiesSelectorProps> = ({
