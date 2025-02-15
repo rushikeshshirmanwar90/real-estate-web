@@ -1,4 +1,3 @@
-
 interface FieldOption {
     label: string
     value: string
@@ -19,4 +18,9 @@ export interface EditableSectionCardProps {
     icon?: any
     onFieldChange?: (key: string, value: string | number) => void
     onImagesChange?: (images: string[]) => void
+}
+
+export interface AmenitiesProps {
+    name: string,
+    icon: string
 }

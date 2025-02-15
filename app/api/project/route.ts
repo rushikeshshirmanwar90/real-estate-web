@@ -2,6 +2,7 @@ import { Projects } from "@/lib/models/Project";
 import connect from "@/lib/db";
 import { NextResponse } from "next/server";
 import { validateClient } from "@/components/functions/validateClient";
+import { ObjectId } from "mongodb";
 
 export const GET = async (req: Request) => {
   try {
@@ -17,7 +18,7 @@ export const GET = async (req: Request) => {
       return NextResponse.json(project);
     }
 
-    const projects = await Projects.find().sort({ createdAt: -1 });
+    const projects = await Projects.find();
 
     if (!projects) {
       return NextResponse.json(
@@ -47,25 +48,29 @@ export const GET = async (req: Request) => {
     );
   }
 };
-
 export const POST = async (req: Request) => {
   try {
     await connect();
     const isValidClient = await validateClient();
+
     if (isValidClient) {
       const body = await req.json();
 
-      const newProject = await new Projects(body);
-      newProject.save();
+      // Ensure clientId is converted to ObjectId before saving
+      const formattedBody = {
+        ...body,
+        clientId: new ObjectId(body.clientId),
+      };
+
+      const newProject = await new Projects(formattedBody);
+      await newProject.save();
 
       if (!newProject) {
         return NextResponse.json(
           {
-            message: "can't able to add the project",
+            message: "Unable to add the project",
           },
-          {
-            status: 400,
-          }
+          { status: 400 }
         );
       }
       return NextResponse.json(
@@ -73,30 +78,24 @@ export const POST = async (req: Request) => {
           message: "Project created successfully",
           project: newProject,
         },
-        {
-          status: 201,
-        }
-      );
-    } else {
-      return NextResponse.json(
-        {
-          message: "client not found",
-        },
-        {
-          status: 400,
-        }
+        { status: 201 }
       );
     }
+
+    return NextResponse.json(
+      {
+        message: "Client not found",
+      },
+      { status: 400 }
+    );
   } catch (error: any) {
     console.log(error.message);
     return NextResponse.json(
       {
-        message: "can't able to create the Project",
+        message: "Unable to create the Project",
         error: error.message,
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 };

@@ -1,5 +1,6 @@
 import { FormValues } from "@/app/project-form/schema";
 import domain from "@/components/utils/domain";
+import { FormData } from "@/app/project-form/types";
 
 export const getSingleProject = async (projectId: string) => {
     const res = await fetch(`${domain}/api/project?id=${projectId}`);
@@ -30,11 +31,29 @@ export const updateProject = async (updatedData: FormValues, projectId: string) 
     return data;
 }
 
-export const addProject = async (data: FormValues) => {
-    const res = await fetch(`${domain}/api/project`, {
-        method: "POST",
-        body: JSON.stringify(data),
-    })
-    const newData = await res.json();
-    return newData;
-}
+export const addProject = async (data: FormData) => {
+    try {
+        console.log('Sending data:', JSON.stringify(data, null, 2));
+
+        const res = await fetch(`${domain}/api/project`, {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (!res.ok) {
+            const errorData = await res.json();
+            console.error('API Error:', errorData);
+            throw new Error(`API Error: ${errorData.message}`);
+        }
+
+        const newData = await res.json();
+        return newData;
+    } catch (error) {
+        console.error('Error in addProject:', error);
+        return null;
+    }
+};
+

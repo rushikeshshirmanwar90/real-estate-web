@@ -49,8 +49,6 @@ const TopHeader: React.FC<TopHeaderProps> = ({
                             </Link>
                         )
                     }
-
-
                 </div>
             </div>
         </div>

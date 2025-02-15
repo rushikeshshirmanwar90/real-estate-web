@@ -121,7 +121,11 @@ const AmenitiesSelector: React.FC<AmenitiesSelectorProps> = ({
 
     const renderSelectedAmenities = () => {
         if (!Array.isArray(selectedAmenities) || selectedAmenities.length === 0) {
-            return null;
+            return (
+                <div>
+                    No Amenities
+                </div>
+            );
         }
 
         return (
@@ -132,6 +136,7 @@ const AmenitiesSelector: React.FC<AmenitiesSelectorProps> = ({
                         className="relative border  rounded-lg p-3 flex flex-col items-center"
                     >
                         <Button
+                            type="button"
                             variant="destructive"
                             size="icon"
                             className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
@@ -186,6 +191,7 @@ const AmenitiesSelector: React.FC<AmenitiesSelectorProps> = ({
                             Amenities
                         </h2>
                         <Button
+                            type="button"
                             variant="outline"
                             onClick={() => setIsModalOpen(true)}
                             className="bg-[#517675] text-[#073B3A] border-2 border-[#073B3A] font-semibold hover:bg-[#073B3A] hover:text-[#517675]"

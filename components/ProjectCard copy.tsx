@@ -45,51 +45,32 @@ interface Section {
 }
 
 const ProjectCard = () => {
-    // Separate state for modals and dropdowns
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false)
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-    const [isAddSectionModalOpen, setIsAddSectionModalOpen] = useState(false)
-
-    // Section state
+    const [showDeleteAlert, setShowDeleteAlert] = useState(false)
+    const [showAddSection, setShowAddSection] = useState(false)
     const [sections, setSections] = useState<Section[]>([])
     const [newSection, setNewSection] = useState({
         name: "",
         type: "" as Section["type"],
     })
 
-    const handleOpenAddSection = (e: React.MouseEvent) => {
-        e.preventDefault()
-        setIsDropdownOpen(false)
-        setIsAddSectionModalOpen(true)
-    }
-
-    const handleOpenDelete = (e: React.MouseEvent) => {
-        e.preventDefault()
-        setIsDropdownOpen(false)
-        setIsDeleteModalOpen(true)
-    }
-
     const handleDelete = () => {
-        setSections([])
-        setIsDeleteModalOpen(false)
+        // Add your delete logic here
+        console.log("Project deleted")
+        setShowDeleteAlert(false)
     }
 
     const handleAddSection = () => {
         if (newSection.name && newSection.type) {
-            const newSectionEntry = {
-                id: Math.random().toString(36).substr(2, 9),
-                name: newSection.name,
-                type: newSection.type,
-            }
-            setSections(prev => [...prev, newSectionEntry])
+            setSections([
+                ...sections,
+                {
+                    id: Math.random().toString(36).substr(2, 9),
+                    ...newSection,
+                },
+            ])
             setNewSection({ name: "", type: "" as Section["type"] })
-            setIsAddSectionModalOpen(false)
+            setShowAddSection(false)
         }
-    }
-
-    const handleCloseAddSection = () => {
-        setNewSection({ name: "", type: "" as Section["type"] })
-        setIsAddSectionModalOpen(false)
     }
 
     return (
@@ -112,11 +93,9 @@ const ProjectCard = () => {
                     <div>
                         <div className="flex justify-between">
                             <h2 className="text-xl font-semibold text-gray-900">Luxury Suite Villa</h2>
-                            <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                        <Ellipsis className="h-4 w-4" />
-                                    </Button>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-100">
+                                    <Ellipsis className="h-4 w-4" />
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
                                     <DropdownMenuLabel>Project Activity</DropdownMenuLabel>
@@ -124,16 +103,18 @@ const ProjectCard = () => {
                                     <DropdownMenuItem>
                                         <Pencil className="mr-2 h-4 w-4" /> Edit Project
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={handleOpenDelete}>
+                                    <DropdownMenuItem onClick={() => setShowDeleteAlert(true)}>
                                         <Trash className="mr-2 h-4 w-4" /> Delete Project
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={handleOpenAddSection}>
+                                    <DropdownMenuItem onClick={(e: any) => {
+                                        e.preventDefault();
+                                        setShowAddSection(true)
+                                    }}>
                                         <PlusSquareIcon className="mr-2 h-4 w-4" /> Add Section
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
-
                         <p className="text-gray-600 flex items-center gap-2 mt-1">
                             <MapPin className="text-red-500 w-4 h-4" /> Los Angeles City, CA, USA
                         </p>
@@ -164,9 +145,10 @@ const ProjectCard = () => {
                         </div>
                     </div>
 
-                    <Button className="w-full mt-3 bg-[#073B3A] hover:bg-[#073b3aed]">
+                    {/* Button */}
+                    <button className="bg-[#073B3A] text-white text-center py-2 rounded-xl mt-3 hover:bg-[#073b3aed] transition">
                         View Project
-                    </Button>
+                    </button>
                 </div>
             </div>
 
@@ -191,7 +173,7 @@ const ProjectCard = () => {
             )}
 
             {/* Delete Alert Dialog */}
-            <AlertDialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+            <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
@@ -201,14 +183,16 @@ const ProjectCard = () => {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                        <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600">
+                            Delete
+                        </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
 
             {/* Add Section Dialog */}
-            <Dialog open={isAddSectionModalOpen} onOpenChange={setIsAddSectionModalOpen}>
-                <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
+            <Dialog open={showAddSection} onOpenChange={setShowAddSection}>
+                <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Add New Section</DialogTitle>
                     </DialogHeader>
@@ -221,6 +205,7 @@ const ProjectCard = () => {
                                 onChange={(e) => setNewSection({ ...newSection, name: e.target.value })}
                                 placeholder="Enter section name"
                             />
+                            
                         </div>
                         <div className="grid gap-2">
                             <label htmlFor="type">Section Type</label>
@@ -240,7 +225,7 @@ const ProjectCard = () => {
                         </div>
                     </div>
                     <div className="flex justify-end gap-3">
-                        <Button variant="outline" onClick={handleCloseAddSection}>
+                        <Button variant="outline" onClick={() => setShowAddSection(false)}>
                             Cancel
                         </Button>
                         <Button onClick={handleAddSection}>Add Section</Button>
