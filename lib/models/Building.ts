@@ -7,9 +7,13 @@ const buildingSchema = new Schema(
       required: true,
     },
 
-    totalFlats: {
+    description: {
+      type: String,
+    },
+
+    area: {
       type: Number,
-      required: true,
+      require: true,
     },
 
     projectId: {
@@ -18,25 +22,73 @@ const buildingSchema = new Schema(
       require: true,
     },
 
-    MoreSection: {
-      type: [
-        {
-          name: {
-            type: String,
-            require: true,
-          },
-          description: {
-            type: String,
-            require: true,
-          },
-          images: {
-            type: [String],
-            require: true,
-          },
-        },
-      ],
-      require: false,
+    images: {
+      type: [String],
+      required: true,
     },
+
+    section: [
+      {
+        name: {
+          type: String,
+          required: true,
+        },
+        description: {
+          type: String,
+        },
+        images: [String],
+      },
+    ],
+
+    flatInfo: [
+      {
+        title: {
+          type: String,
+          required: true,
+        },
+
+        description: {
+          type: String,
+        },
+
+        images: {
+          type: [String],
+          required: true,
+        },
+
+        totalFlats: {
+          type: Number,
+          required: true,
+        },
+
+        totalBookedFlats: {
+          type: Number,
+          required: true,
+        },
+
+        totalArea: {
+          type: Number,
+          required: true,
+        },
+
+        video: {
+          type: String,
+        },
+      },
+    ],
+
+    amenities: [
+      {
+        icon: {
+          type: String,
+          required: true,
+        },
+        name: {
+          type: String,
+          required: true,
+        },
+      },
+    ],
   },
   {
     timestamps: true,

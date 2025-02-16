@@ -22,7 +22,7 @@ export const deleteProject = async (projectId: string) => {
     return data;
 }
 
-export const updateProject = async (updatedData: FormValues, projectId: string) => {
+export const updateProject = async (updatedData: FormData, projectId: string) => {
     const res = await fetch(`${domain}/api/project?id=${projectId}`, {
         method: "PUT",
         body: JSON.stringify(updatedData),
@@ -33,8 +33,6 @@ export const updateProject = async (updatedData: FormValues, projectId: string) 
 
 export const addProject = async (data: FormData) => {
     try {
-        console.log('Sending data:', JSON.stringify(data, null, 2));
-
         const res = await fetch(`${domain}/api/project`, {
             method: "POST",
             headers: {

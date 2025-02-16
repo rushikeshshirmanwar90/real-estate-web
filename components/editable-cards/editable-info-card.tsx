@@ -7,8 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ImagePlus, Pencil, X, Check, Loader2 } from "lucide-react"
-import { handleImageUpload } from "./functions/image-handling"
-import type { EditableSectionCardProps, Field } from "./types/editable-card"
+import { handleImageUpload } from "../functions/image-handling"
+import type { EditableSectionCardProps, Field } from "../types/editable-card"
 
 export function EditableSectionCard({
     title,
@@ -233,10 +233,10 @@ export function EditableSectionCard({
             </CardContent>
             {isEditing && (
                 <CardFooter className="border-t border-white/10 bg-white/5 gap-4 justify-end pt-3">
-                    <Button type="button"     onClick={handleCancel} className="text-white hover:bg-white/10">
+                    <Button type="button" onClick={handleCancel} className="text-white hover:bg-white/10">
                         <X className="h-4 w-4 mr-2" /> Cancel
                     </Button>
-                    <Button type="button"  onClick={handleSave} className="bg-white/10 hover:bg-white/20 text-white">
+                    <Button type="button" onClick={handleSave} className="bg-white/10 hover:bg-white/20 text-white">
                         <Check className="h-4 w-4 mr-2" /> Save Changes
                     </Button>
                 </CardFooter>

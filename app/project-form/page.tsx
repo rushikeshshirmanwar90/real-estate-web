@@ -1,26 +1,26 @@
 "use client"
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Book, Image, MapPinCheck } from "lucide-react"
 
 import TopHeader from "@/components/TopHeader"
-import AmenitiesSelector from "@/components/AmenitiesSelector"
-import { EditableSectionCard } from "@/components/editable-info-card"
+import AmenitiesSelector from "@/components/editable-cards/AmenitiesSelector"
+import { EditableSectionCard } from "@/components/editable-cards/editable-info-card"
 
-import { useToast } from "@/hooks/use-toast"
 import { AmenitiesProps, Field } from "@/components/types/editable-card"
 import type { FormData } from "./types"
 
-import { addProject } from "@/functions/project/crud"
+import { addProject, updateProject } from "@/functions/project/crud"
 import { getClientId } from "@/functions/getClientId"
-import { toast } from "react-toastify"
 import { successToast } from "@/components/toasts"
 
 
 const Page = () => {
 
     const router = useRouter();
+    const searchParams = useSearchParams();
 
+    const [projectId, setProjectId] = useState<string | null>("");
     const [selectedAmenities, setSelectedAmenities] = useState<AmenitiesProps[]>([]);
     const [formData, setFormData] = useState<FormData>({
         images: [],
@@ -36,23 +36,46 @@ const Page = () => {
     });
 
 
-    useEffect(() => {
-        const fetchClientId = async () => {
-            try {
-                const id = await getClientId();
-                if (id) {
-                    setFormData(prev => ({
-                        ...prev,
-                        clientId: id
-                    }));
-                }
-            } catch (error) {
-                console.error("Error fetching client ID:", error);
+
+    const fetchClientId = async () => {
+        try {
+            const id = await getClientId();
+            if (id) {
+                setFormData(prev => ({
+                    ...prev,
+                    clientId: id
+                }));
             }
-        };
+        } catch (error) {
+            console.error("Error fetching client ID:", error);
+        }
+    };
+    useEffect(() => {
+        const params = Object.fromEntries(searchParams.entries());
+        // If we have params, update the form with them
+        if (Object.keys(params).length > 0) {
+            setFormData(prev => ({
+                ...prev,
+                _id: params._id || prev._id,
+                name: params.name || prev.name,
+                description: params.description || prev.description,
+                projectType: params.projectType || prev.projectType,
+                area: Number(params.area) || prev.area,
+                address: params.address || prev.address,
+                state: params.state || prev.state,
+                city: params.city || prev.city,
+                images: params.images ? JSON.parse(params.images) : prev.images,
+                amenities: params.amenities ? JSON.parse(params.amenities) : prev.amenities,
+            }));
+
+            if (params.amenities) {
+                setSelectedAmenities(JSON.parse(params.amenities));
+            }
+            setProjectId(params._id)
+        }
 
         fetchClientId();
-    }, []);
+    }, [searchParams]);
 
     const handleImagesChange = (images: string[]) => {
         setFormData((prev) => ({ ...prev, images }))
@@ -152,9 +175,9 @@ const Page = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const result: FormData = await addProject(formData);
+            const result: FormData = projectId ? await updateProject(formData, projectId) : await addProject(formData)
             if (result) {
-                successToast("Project Added Successfully")
+                successToast("Project Added successfully")
                 router.push("/projects")
             } else {
                 console.error("Failed to add project");
@@ -167,7 +190,7 @@ const Page = () => {
     return (
         <>
             <form onSubmit={handleSubmit} className="mx-auto space-y-6 p-6">
-                <TopHeader buttonText="Save" tagTitle="Project" title="Setup project" buttonDisable={!isFormValid()} />
+                <TopHeader buttonText={`${projectId ? "Update Project" : "Add Project"}`} tagTitle="Project" title={`${projectId ? "Update The project" : "Set up project"}`} buttonDisable={!isFormValid()} />
                 <div className="flex flex-col justify-between gap-10" >
                     <div className="flex justify-between gap-10  w-full" >
                         <div className="w-[50%]">

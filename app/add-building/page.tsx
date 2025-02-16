@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { EditableSectionCard } from "@/components/editable-info-card"
+import { EditableSectionCard } from "@/components/editable-cards/editable-info-card"
 import TopHeader from "@/components/TopHeader"
 import { Building, Book } from "lucide-react"
 

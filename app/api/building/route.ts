@@ -11,7 +11,7 @@ export const GET = async (req: Response) => {
     const id = searchParams.get("id");
 
     if (!id) {
-      const buildings = await Building.find({ projectId: projectId });
+      const buildings = await Building.find();
 
       if (!buildings) {
         return NextResponse.json(
@@ -21,22 +21,21 @@ export const GET = async (req: Response) => {
           { status: 404 }
         );
       }
-
       return NextResponse.json(buildings);
-    } else {
-      const building = await Building.findById(id);
-
-      if (!building) {
-        return NextResponse.json(
-          {
-            message: "Invalid Building id",
-          },
-          { status: 404 }
-        );
-      }
-
-      return NextResponse.json(building);
     }
+    const building = await Building.findById(id);
+
+    if (!building) {
+      return NextResponse.json(
+        {
+          message: "Invalid Building id",
+        },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(building);
+
   } catch (error: any) {
     console.log(error.message);
     return NextResponse.json(

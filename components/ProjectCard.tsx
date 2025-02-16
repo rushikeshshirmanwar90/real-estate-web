@@ -34,6 +34,15 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+    CarouselNext,
+    CarouselPrevious,
+} from "@/components/ui/carousel"
+import Autoplay from "embla-carousel-autoplay"
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
@@ -42,9 +51,10 @@ import { Badge } from "@/components/ui/badge"
 import { projectProps } from "@/app/projects/types/project-props"
 
 import { AmenitiesProps } from "./types/editable-card"
-import { DisplayIcon } from "./AmenitiesSelector"
+import { DisplayIcon } from "./editable-cards/AmenitiesSelector"
 import { deleteProject } from "@/functions/project/crud"
 import { successToast } from "./toasts"
+import Image from "next/image"
 
 interface Section {
     id: string
@@ -92,6 +102,21 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ projectInfo, refreshData }) =
         setIsDeleteModalOpen(false)
     }
 
+    const handleEdit = () => {
+        const queryData = {
+            ...projectInfo,
+            images: JSON.stringify(projectInfo.images),
+            amenities: JSON.stringify(projectInfo.amenities)
+        };
+
+        const query = new URLSearchParams(
+            Object.entries(queryData).map(([key, value]) => [key, String(value)])
+        ).toString();
+
+        router.push(`/project-form?${query}`);
+    };
+
+
     const handleAddSection = () => {
         if (newSection.name && newSection.type) {
             const newSectionEntry = {
@@ -124,11 +149,32 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ projectInfo, refreshData }) =
             <div className="flex">
                 {/* Image Section */}
                 <div className="w-1/2 relative">
-                    <img
-                        src={`${projectInfo?.images[0]}`}
-                        alt="Luxury Suite Villa"
-                        className="w-full h-[350px] object-cover"
-                    />
+
+                    <Carousel
+                        plugins={[
+                            Autoplay({
+                                delay: 2000,
+                            }),
+                        ]}>
+                        <CarouselContent>
+                            {
+                                projectInfo.images.map((item: string) => (
+                                    <CarouselItem>
+                                        <Image
+                                            src={`${item}`}
+                                            alt="Project Image"
+                                            className="w-full h-[350px] object-cover"
+                                            width={500}
+                                            height={500}
+                                        />
+                                    </CarouselItem>
+                                ))
+                            }
+                        </CarouselContent>
+                    </Carousel>
+
+
+
                     <div className="absolute top-4 left-4 bg-white text-gray-800 text-sm font-bold px-3 py-1 rounded-lg shadow">
                         {projectInfo?.projectType}
                     </div>
@@ -138,7 +184,10 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ projectInfo, refreshData }) =
                 <div className="w-1/2 p-5 flex flex-col gap-5">
                     <div>
                         <div className="flex justify-between">
-                            <h2 className="text-xl font-semibold text-gray-900">{projectInfo?.projectType}</h2>
+
+                            {/* PROJECT NAME  */}
+                            <h2 className="text-xl font-semibold text-gray-900">{projectInfo?.name}</h2>
+
                             <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -148,7 +197,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ projectInfo, refreshData }) =
                                 <DropdownMenuContent>
                                     <DropdownMenuLabel>Project Activity</DropdownMenuLabel>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem>
+                                    <DropdownMenuItem onClick={handleEdit} >
                                         <Pencil className="mr-2 h-4 w-4" /> Edit Project
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={handleOpenDelete}>
@@ -162,7 +211,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ projectInfo, refreshData }) =
                         </div>
 
                         <p className="text-gray-600 flex items-center gap-2 mt-1">
-                            <MapPin className="text-red-500 w-4 h-4" /> {projectInfo?.name}
+                            <MapPin className="text-red-500 w-4 h-4" /> {projectInfo?.address}
                         </p>
 
                         <p className="text-gray-500 text-sm mt-3">
