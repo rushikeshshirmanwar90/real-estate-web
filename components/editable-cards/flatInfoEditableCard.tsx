@@ -8,27 +8,7 @@ import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { ImagePlus, Pencil, X, Check, Loader2, Building2 } from "lucide-react"
-
-const handleImageUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-    onUpload: (urls: string[]) => void,
-    setLoading: (loading: boolean) => void,
-) => {
-    const files = e.target.files
-    if (!files?.length) return
-
-    setLoading(true)
-    try {
-        // For now, we'll use URL.createObjectURL for local preview
-        // In production, you'd want to upload these to your server/storage
-        const urls = Array.from(files).map((file) => URL.createObjectURL(file))
-        onUpload(urls)
-    } catch (error) {
-        console.error("Error uploading images:", error)
-    } finally {
-        setLoading(false)
-    }
-}
+import { handleImageUpload } from "../functions/image-handling"
 
 interface FlatInfo {
     title: string
@@ -41,18 +21,41 @@ interface FlatInfo {
 }
 
 interface FlatInfoEditableCardProps {
-    flatInfos: FlatInfo[]
+    flatInfos: FlatInfo[] | undefined
     onFlatInfoChange: (flatInfos: FlatInfo[]) => void
 }
 
 export function FlatInfoEditableCard({ flatInfos = [], onFlatInfoChange }: FlatInfoEditableCardProps) {
     const [isEditing, setIsEditing] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
-    const [tempFlatInfos, setTempFlatInfos] = useState<FlatInfo[]>(flatInfos)
+    const [tempFlatInfos, setTempFlatInfos] = useState<FlatInfo[]>(
+        flatInfos.map(flat => ({
+            ...flat,
+            images: flat.images || [] // Ensure images array exists
+        }))
+    )
     const hasData = flatInfos.length > 0
 
+    const handleFlatImages = async (flatIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
+        const urls = await handleImageUpload(e, setTempFlatInfos, setIsLoading)
+        if (urls && urls.length > 0) {
+            setTempFlatInfos((prev) =>
+                prev.map((flat, i) =>
+                    i === flatIndex
+                        ? { ...flat, images: [...(flat.images || []), ...urls] }
+                        : flat
+                )
+            )
+        }
+    }
+
     const handleEdit = () => {
-        setTempFlatInfos([...flatInfos])
+        setTempFlatInfos(
+            flatInfos.map(flat => ({
+                ...flat,
+                images: flat.images || [] // Ensure images array exists
+            }))
+        )
         setIsEditing(true)
     }
 
@@ -62,7 +65,12 @@ export function FlatInfoEditableCard({ flatInfos = [], onFlatInfoChange }: FlatI
     }
 
     const handleCancel = () => {
-        setTempFlatInfos([...flatInfos])
+        setTempFlatInfos(
+            flatInfos.map(flat => ({
+                ...flat,
+                images: flat.images || [] // Ensure images array exists
+            }))
+        )
         setIsEditing(false)
     }
 
@@ -72,7 +80,7 @@ export function FlatInfoEditableCard({ flatInfos = [], onFlatInfoChange }: FlatI
             {
                 title: "",
                 description: "",
-                images: [],
+                images: [], // Initialize with empty array
                 totalFlats: 0,
                 totalBookedFlats: 0,
                 totalArea: 0,
@@ -89,20 +97,13 @@ export function FlatInfoEditableCard({ flatInfos = [], onFlatInfoChange }: FlatI
         setTempFlatInfos(tempFlatInfos.map((flatInfo, i) => (i === index ? { ...flatInfo, [field]: value } : flatInfo)))
     }
 
-    const handleFlatInfoImages = (flatIndex: number, images: string[]) => {
-        setTempFlatInfos(tempFlatInfos.map((flatInfo, i) => (i === flatIndex ? { ...flatInfo, images } : flatInfo)))
-    }
-
     const removeImage = (flatIndex: number, imageIndex: number) => {
-        setTempFlatInfos(
-            tempFlatInfos.map((flatInfo, i) =>
+        setTempFlatInfos((prev) =>
+            prev.map((flat, i) =>
                 i === flatIndex
-                    ? {
-                        ...flatInfo,
-                        images: flatInfo.images.filter((_, imgIndex) => imgIndex !== imageIndex),
-                    }
-                    : flatInfo,
-            ),
+                    ? { ...flat, images: (flat.images || []).filter((_, imgIdx) => imgIdx !== imageIndex) }
+                    : flat
+            )
         )
     }
 
@@ -171,7 +172,7 @@ export function FlatInfoEditableCard({ flatInfos = [], onFlatInfoChange }: FlatI
                                             <Input
                                                 type="number"
                                                 value={flatInfo.totalFlats}
-                                                onChange={(e) => updateFlatInfo(index, "totalFlats", Number.parseInt(e.target.value))}
+                                                onChange={(e) => updateFlatInfo(index, "totalFlats", Number(e.target.value))}
                                                 className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                                                 required
                                                 min={0}
@@ -182,7 +183,7 @@ export function FlatInfoEditableCard({ flatInfos = [], onFlatInfoChange }: FlatI
                                             <Input
                                                 type="number"
                                                 value={flatInfo.totalBookedFlats}
-                                                onChange={(e) => updateFlatInfo(index, "totalBookedFlats", Number.parseInt(e.target.value))}
+                                                onChange={(e) => updateFlatInfo(index, "totalBookedFlats", Number(e.target.value))}
                                                 className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                                                 required
                                                 min={0}
@@ -193,7 +194,7 @@ export function FlatInfoEditableCard({ flatInfos = [], onFlatInfoChange }: FlatI
                                             <Input
                                                 type="number"
                                                 value={flatInfo.totalArea}
-                                                onChange={(e) => updateFlatInfo(index, "totalArea", Number.parseInt(e.target.value))}
+                                                onChange={(e) => updateFlatInfo(index, "totalArea", Number(e.target.value))}
                                                 className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                                                 required
                                                 min={0}
@@ -232,7 +233,7 @@ export function FlatInfoEditableCard({ flatInfos = [], onFlatInfoChange }: FlatI
                                     </div>
                                 )}
                                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                                    {flatInfo.images.map((image, imageIndex) => (
+                                    {(flatInfo.images || []).map((image, imageIndex) => (
                                         <div key={imageIndex} className="relative aspect-square">
                                             <img
                                                 src={image || "/placeholder.svg"}
@@ -266,13 +267,7 @@ export function FlatInfoEditableCard({ flatInfos = [], onFlatInfoChange }: FlatI
                                                 className="hidden"
                                                 accept="image/*"
                                                 multiple
-                                                onChange={(e) => {
-                                                    handleImageUpload(
-                                                        e,
-                                                        (images) => handleFlatInfoImages(index, [...flatInfo.images, ...images]),
-                                                        setIsLoading,
-                                                    )
-                                                }}
+                                                onChange={(e) => handleFlatImages(index, e)}
                                             />
                                         </label>
                                     )}

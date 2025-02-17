@@ -55,11 +55,13 @@ import { DisplayIcon } from "./editable-cards/AmenitiesSelector"
 import { deleteProject } from "@/functions/project/crud"
 import { successToast } from "./toasts"
 import Image from "next/image"
+import Building from "./Building"
+import { deleteSectionAndBuilding } from "@/functions/project/deleteSection"
 
 interface Section {
-    id: string
-    name: string
-    type: "building" | "row house" | "other"
+    _id: string,
+    name: string,
+    type: string
 }
 
 interface ProjectCardProps {
@@ -75,6 +77,8 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ projectInfo, refreshData }) =
     const [isDropdownOpen, setIsDropdownOpen] = useState(false)
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
     const [isAddSectionModalOpen, setIsAddSectionModalOpen] = useState(false)
+    const [isBuildingModalOpen, setIsBuildingModalOpen] = useState(false)
+    const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null)
 
     // Section state
     const [sections, setSections] = useState<Section[]>([])
@@ -116,25 +120,14 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ projectInfo, refreshData }) =
         router.push(`/project-form?${query}`);
     };
 
-
     const handleAddSection = () => {
         if (newSection.name && newSection.type) {
-            const newSectionEntry = {
-                id: Math.random().toString(36).substr(2, 9),
-                name: newSection.name,
-                type: newSection.type,
+            if (newSection.type == 'building') {
+                const encodedName = encodeURIComponent(newSection.name)
+                const encodedProjectId = encodeURIComponent(projectInfo._id)
+                router.push(`/building-form?name=${encodedName}&projectId=${encodedProjectId}`)
             }
-            if (newSection.type == "building") {
-                router.push("building-form")
-            }
-            if (newSection.type == "row house") {
-                router.push("rowHouse-form")
-            }
-            if (newSection.type == "other") {
-                router.push("OtherForm")
-            }
-            setSections(prev => [...prev, newSectionEntry])
-            setNewSection({ name: "", type: "" as Section["type"] })
+
             setIsAddSectionModalOpen(false)
         }
     }
@@ -142,6 +135,19 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ projectInfo, refreshData }) =
     const handleCloseAddSection = () => {
         setNewSection({ name: "", type: "" as Section["type"] })
         setIsAddSectionModalOpen(false)
+    }
+
+    const handleOpenBuildingModal = (buildingId: string) => {
+        setSelectedBuildingId(buildingId)
+        setIsBuildingModalOpen(true)
+    }
+
+
+
+    const handleDeleteSection = () => {
+        const res = deleteSectionAndBuilding(projectInfo._id, selectedBuildingId);
+        refreshData();
+        setIsBuildingModalOpen(false)
     }
 
     return (
@@ -243,12 +249,16 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ projectInfo, refreshData }) =
             </div>
 
             {/* Sections Area */}
-            {sections.length > 0 && (
+            {projectInfo.section.length > 0 && (
                 <div className="p-5 border-t">
                     <h3 className="text-lg font-semibold mb-4">Project Sections</h3>
                     <div className="grid grid-cols-3 gap-4">
-                        {sections.map((section) => (
-                            <div key={section.id} className="p-4 border rounded-lg">
+                        {projectInfo.section.map((section) => (
+                            <div
+                                key={section.sectionId}
+                                className="p-4 border rounded-lg cursor-pointer"
+                                onClick={() => handleOpenBuildingModal(section.sectionId)}
+                            >
                                 <div className="flex items-center justify-between mb-2">
                                     <h4 className="font-medium">{section.name}</h4>
                                     <Badge variant="secondary">
@@ -319,6 +329,27 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ projectInfo, refreshData }) =
                     </div>
                 </DialogContent>
             </Dialog>
+
+
+            <Dialog open={isBuildingModalOpen} onOpenChange={setIsBuildingModalOpen}>
+                <DialogContent className="max-h-[90vh] flex flex-col p-0">
+                    <div className="flex-1 overflow-y-auto p-6">
+                        <div>
+                            <Building buildingId={selectedBuildingId} />
+                        </div>
+                    </div>
+                    <div className="flex justify-end gap-3 p-4 border-t bg-white">
+                        <Button variant="outline" onClick={() => setIsBuildingModalOpen(false)}>
+                            Close
+                        </Button>
+                        <Button>Edit</Button>
+                        <Button onClick={handleDeleteSection} variant="destructive">
+                            Delete
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
         </div>
     )
 }

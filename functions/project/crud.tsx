@@ -1,4 +1,3 @@
-import { FormValues } from "@/app/project-form/schema";
 import domain from "@/components/utils/domain";
 import { FormData } from "@/app/project-form/types";
 

@@ -1,32 +1,13 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { ImagePlus, Pencil, X, Check, Loader2, LayoutGrid } from "lucide-react"
-
-const handleImageUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-    onUpload: (urls: string[]) => void,
-    setLoading: (loading: boolean) => void,
-) => {
-    const files = e.target.files
-    if (!files?.length) return
-
-    setLoading(true)
-    try {
-        const urls = Array.from(files).map((file) => URL.createObjectURL(file))
-        onUpload(urls)
-    } catch (error) {
-        console.error("Error uploading images:", error)
-    } finally {
-        setLoading(false)
-    }
-}
+import { handleImageUpload } from "../functions/image-handling"
 
 interface Section {
     name: string
@@ -35,7 +16,7 @@ interface Section {
 }
 
 interface SectionEditableCardProps {
-    sections: Section[]
+    sections: Section[] | undefined
     onSectionsChange: (sections: Section[]) => void
 }
 
@@ -72,18 +53,22 @@ export function SectionEditableCard({ sections = [], onSectionsChange }: Section
         setTempSections(tempSections.map((section, i) => (i === index ? { ...section, [field]: value } : section)))
     }
 
-    const handleSectionImages = (sectionIndex: number, images: string[]) => {
-        setTempSections(tempSections.map((section, i) => (i === sectionIndex ? { ...section, images } : section)))
+    const handleSectionImages = async (sectionIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
+        const urls = await handleImageUpload(e, setTempSections, setIsLoading)
+        if (urls && urls.length > 0) {
+            setTempSections((prev) =>
+                prev.map((section, i) =>
+                    i === sectionIndex ? { ...section, images: [...(section.images || []), ...urls] } : section,
+                ),
+            )
+        }
     }
 
     const removeImage = (sectionIndex: number, imageIndex: number) => {
-        setTempSections(
-            tempSections.map((section, i) =>
+        setTempSections((prev) =>
+            prev.map((section, i) =>
                 i === sectionIndex
-                    ? {
-                        ...section,
-                        images: section.images?.filter((_, imgIndex) => imgIndex !== imageIndex),
-                    }
+                    ? { ...section, images: (section.images || []).filter((_, i) => i !== imageIndex) }
                     : section,
             ),
         )
@@ -111,108 +96,104 @@ export function SectionEditableCard({ sections = [], onSectionsChange }: Section
                     )}
                 </div>
             </CardHeader>
-            <CardContent className="p-6 space-y-6">
+            <CardContent className="p-6">
                 {!hasData && !isEditing ? (
                     <Button variant="ghost" className="text-white hover:bg-white/10 hover:text-white/90" onClick={handleEdit}>
                         <span className="mr-2 text-lg">+</span> Add Sections
                     </Button>
                 ) : (
-                    <div className="space-y-6">
-                        {(isEditing ? tempSections : sections).map((section, index) => (
-                            <div key={index} className="relative space-y-4 rounded-lg bg-white/5 p-4">
-                                {isEditing && (
-                                    <Button
-                                        variant="destructive"
-                                        size="icon"
-                                        className="absolute -right-2 -top-2 h-6 w-6 rounded-full"
-                                        onClick={() => removeSection(index)}
-                                    >
-                                        <X className="h-4 w-4" />
-                                    </Button>
-                                )}
-                                {isEditing ? (
-                                    <>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium text-white/90">Name</label>
-                                            <Input
-                                                value={section.name}
-                                                onChange={(e) => updateSection(index, "name", e.target.value)}
-                                                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                                                required
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium text-white/90">Description</label>
-                                            <Textarea
-                                                value={section.description}
-                                                onChange={(e) => updateSection(index, "description", e.target.value)}
-                                                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                                            />
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div className="space-y-2">
-                                        <div className="text-lg font-medium">{section.name}</div>
-                                        <div className="text-sm text-white/70">{section.description}</div>
-                                    </div>
-                                )}
-                                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                                    {(section.images || []).map((image, imageIndex) => (
-                                        <div key={imageIndex} className="relative aspect-square">
-                                            <img
-                                                src={image || "/placeholder.svg"}
-                                                alt={`Section ${index + 1} image ${imageIndex + 1}`}
-                                                className="h-full w-full rounded-lg object-cover"
-                                            />
-                                            {isEditing && (
-                                                <Button
-                                                    variant="destructive"
-                                                    size="icon"
-                                                    className="absolute -right-2 -top-2 h-6 w-6 rounded-full"
-                                                    onClick={() => removeImage(index, imageIndex)}
-                                                >
-                                                    <X className="h-4 w-4" />
-                                                </Button>
-                                            )}
-                                        </div>
-                                    ))}
+                    <div className="w-full">
+                        <div className="flex gap-6 overflow-x-auto pb-4">
+                            {(isEditing ? tempSections : sections).map((section, index) => (
+                                <div key={index} className="relative flex-none w-80 rounded-lg bg-white/5 p-4">
                                     {isEditing && (
-                                        <label className="flex aspect-square cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-white/20 hover:border-white/40">
-                                            <div className="flex flex-col items-center gap-2">
-                                                {isLoading ? (
-                                                    <Loader2 className="h-6 w-6 animate-spin" />
-                                                ) : (
-                                                    <ImagePlus className="h-8 w-8 text-white/60" />
-                                                )}
-                                                <span className="text-sm text-white/60">{isLoading ? "Adding Image" : "Add Image"}</span>
-                                            </div>
-                                            <input
-                                                type="file"
-                                                className="hidden"
-                                                accept="image/*"
-                                                multiple
-                                                onChange={(e) => {
-                                                    handleImageUpload(
-                                                        e,
-                                                        (images) => handleSectionImages(index, [...(section.images || []), ...images]),
-                                                        setIsLoading,
-                                                    )
-                                                }}
-                                            />
-                                        </label>
+                                        <Button
+                                            variant="destructive"
+                                            size="icon"
+                                            className="absolute -right-2 -top-2 h-6 w-6 rounded-full"
+                                            onClick={() => removeSection(index)}
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </Button>
                                     )}
+                                    {isEditing ? (
+                                        <>
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium text-white/90">Name</label>
+                                                <Input
+                                                    value={section.name}
+                                                    onChange={(e) => updateSection(index, "name", e.target.value)}
+                                                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="mt-4 space-y-2">
+                                                <label className="text-sm font-medium text-white/90">Description</label>
+                                                <Textarea
+                                                    value={section.description}
+                                                    onChange={(e) => updateSection(index, "description", e.target.value)}
+                                                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                                                />
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <div className="text-lg font-medium">{section.name}</div>
+                                            <div className="text-sm text-white/70">{section.description}</div>
+                                        </div>
+                                    )}
+                                    <div className="mt-4 grid grid-cols-2 gap-4">
+                                        {(section.images || []).map((image, imageIndex) => (
+                                            <div key={imageIndex} className="relative aspect-square">
+                                                <img
+                                                    src={image || "/placeholder.svg"}
+                                                    alt={`Section ${index + 1} image ${imageIndex + 1}`}
+                                                    className="h-full w-full rounded-lg object-cover"
+                                                />
+                                                {isEditing && (
+                                                    <Button
+                                                        variant="destructive"
+                                                        size="icon"
+                                                        className="absolute -right-2 -top-2 h-6 w-6 rounded-full"
+                                                        onClick={() => removeImage(index, imageIndex)}
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        ))}
+                                        {isEditing && (
+                                            <label className="flex aspect-square cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-white/20 hover:border-white/40">
+                                                <div className="flex flex-col items-center gap-2">
+                                                    {isLoading ? (
+                                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        <ImagePlus className="h-6 w-6 text-white/60" />
+                                                    )}
+                                                    <span className="text-sm text-white/60">{isLoading ? "Adding Image" : "Add Image"}</span>
+                                                </div>
+                                                <input
+                                                    type="file"
+                                                    className="hidden"
+                                                    accept="image/*"
+                                                    multiple
+                                                    onChange={(e) => handleSectionImages(index, e)}
+                                                />
+                                            </label>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
-                        {isEditing && (
-                            <Button
-                                variant="outline"
-                                onClick={addSection}
-                                className="w-full border-white/20 text-white hover:bg-white/10"
-                            >
-                                <span className="mr-2 text-lg">+</span> Add Section
-                            </Button>
-                        )}
+                            ))}
+                            {isEditing && (
+                                <Button
+                                    variant="outline"
+                                    onClick={addSection}
+                                    className="h-full min-w-48 border-white/20 text-white hover:bg-white/10"
+                                >
+                                    <span className="mr-2 text-lg">+</span> Add Section
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 )}
             </CardContent>
@@ -229,4 +210,3 @@ export function SectionEditableCard({ sections = [], onSectionsChange }: Section
         </Card>
     )
 }
-

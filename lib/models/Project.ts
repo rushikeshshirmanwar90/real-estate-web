@@ -52,9 +52,7 @@ const projectSchema = new Schema(
     section: [
       {
         sectionId: {
-          type: Schema.Types.ObjectId,
-          refPath: "section.$.type",
-          required: true,
+          type: String,
         },
         name: {
           type: String,

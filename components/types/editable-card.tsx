@@ -6,7 +6,7 @@ interface FieldOption {
 export interface Field {
     key: string
     label: string
-    value: string | number
+    value: string | number | undefined
     type: 'text' | 'textarea' | 'number' | 'select'
     options?: FieldOption[]
 }

@@ -1,4 +1,5 @@
 import { Building } from "@/lib/models/Building";
+import { Projects } from "@/lib/models/Project";
 import connect from "@/lib/db";
 import { NextResponse } from "next/server";
 
@@ -35,7 +36,6 @@ export const GET = async (req: Response) => {
     }
 
     return NextResponse.json(building);
-
   } catch (error: any) {
     console.log(error.message);
     return NextResponse.json(
@@ -56,39 +56,53 @@ export const POST = async (req: Response) => {
 
     const body = await req.json();
 
-    const newUser = await new Building(body);
-    newUser.save();
+    // Create a new building
+    const newBuilding = new Building(body);
+    const savedBuilding = await newBuilding.save();
 
-    if (!newUser) {
+    if (!savedBuilding) {
       return NextResponse.json(
-        {
-          message: "can't able to add new building",
+        { message: "Unable to add new building" },
+        { status: 400 }
+      );
+    }
+
+    const updatedProject = await Projects.findByIdAndUpdate(
+      savedBuilding.projectId,
+      {
+        $push: {
+          section: {
+            sectionId: savedBuilding._id,
+            name: savedBuilding.name,
+            type: "Buildings",
+          },
         },
-        {
-          status: 401,
-        }
+      },
+      { new: true }
+    );
+
+    if (!updatedProject) {
+      return NextResponse.json(
+        { message: "Project not found" },
+        { status: 404 }
       );
     }
 
     return NextResponse.json(
       {
-        message: "building added successfully",
-        data: newUser,
+        message: "Building added successfully",
+        data: savedBuilding,
       },
-      {
-        status: 200,
-      }
+      { status: 201 }
     );
   } catch (error: any) {
-    console.log(error.message);
+    console.error("Error adding building:", error);
     return NextResponse.json(
       {
-        message: "something wen't wrong, can't able to create the building",
+        message: "An error occurred while creating the building",
         error: error.message,
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 };
@@ -101,6 +115,7 @@ export const DELETE = async (req: Response) => {
     await connect();
 
     const deletedBuilding = await Building.findByIdAndDelete(id);
+    // const deletedBuilding = await Building.deleteMany();
 
     if (!deletedBuilding) {
       return NextResponse.json(
