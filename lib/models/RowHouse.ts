@@ -2,28 +2,8 @@ import { model, models, Schema } from "mongoose";
 
 const RowHouseSchema = new Schema(
   {
-    sectionId: {
-      type: Schema.Types.ObjectId,
-      ref: "Section",
-    },
-
     name: {
       type: String,
-      require: true,
-    },
-
-    totalRowHouseTypes: {
-      type: Number,
-      require: true,
-    },
-
-    images: {
-      type: [String],
-      require: false,
-    },
-    
-    totalHouse: {
-      type: Number,
       require: true,
     },
 
@@ -32,27 +12,44 @@ const RowHouseSchema = new Schema(
       require: false,
     },
 
-    MoreSection: {
-      type: [
-        {
-          name: {
-            type: String,
-            require: true,
-          },
-
-          description: {
-            type: String,
-            require: false,
-          },
-
-          images: {
-            type: [String],
-            require: true,
-          },
-        },
-      ],
+    images: {
+      type: [String],
       require: false,
     },
+
+    totalHouse: {
+      type: Number,
+      require: true,
+    },
+
+    bookedHouse: {
+      type: Number,
+      require: true,
+    },
+
+    area: {
+      type: Number,
+      require: true,
+    },
+
+    projectId: {
+      type: Schema.Types.ObjectId,
+      ref: "Projects",
+      require: true,
+    },
+
+    amenities: [
+      {
+        icon: {
+          type: String,
+          required: true,
+        },
+        name: {
+          type: String,
+          required: true,
+        },
+      },
+    ],
   },
   {
     timestamps: true,

@@ -1,7 +1,7 @@
 import { AmenitiesProps } from "@/components/types/editable-card"
 
 export interface FormData {
-    _id ?: string
+    _id?: string
     images: string[];
     name: string;
     description: string;
@@ -12,4 +12,6 @@ export interface FormData {
     city: string;
     amenities: AmenitiesProps[];
     clientId: string; // Update type to accept both ObjectId and string
+    longitude: number,
+    latitude: number,
 }

@@ -21,7 +21,6 @@ export interface Amenity {
 }
 
 export interface BuildingFormProps {
-    _id?: string
     name: string;
     description?: string;
     projectId: string;

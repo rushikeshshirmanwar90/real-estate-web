@@ -56,7 +56,6 @@ export const POST = async (req: Response) => {
 
     const body = await req.json();
 
-    // Create a new building
     const newBuilding = new Building(body);
     const savedBuilding = await newBuilding.save();
 
@@ -109,41 +108,47 @@ export const POST = async (req: Response) => {
 
 export const DELETE = async (req: Response) => {
   try {
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
-
     await connect();
 
-    const deletedBuilding = await Building.findByIdAndDelete(id);
-    // const deletedBuilding = await Building.deleteMany();
+    const { searchParams } = new URL(req.url);
+    const projectId = searchParams.get("projectId");
+    const sectionId = searchParams.get("sectionId");
 
-    if (!deletedBuilding) {
+    if (!projectId || !sectionId) {
       return NextResponse.json(
-        {
-          message: "invalid building",
-        },
-        {
-          status: 402,
-        }
+        { error: "Project ID and Section ID are required" },
+        { status: 400 }
       );
     }
 
-    return NextResponse.json(
+    const updatedProject = await Projects.findByIdAndUpdate(
+      projectId,
       {
-        message: "building deleted successfully",
-        data: deletedBuilding,
+        $pull: { section: { sectionId: sectionId } },
       },
-      {
-        status: 200,
-      }
+      { new: true }
     );
-  } catch (error: any) {
-    console.log(error.message);
+
+    if (!updatedProject) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
+
+    const deletedBuilding = await Building.findByIdAndDelete(sectionId);
+
+    if (!deletedBuilding) {
+      return NextResponse.json(
+        { error: "Building not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      message: "Section and building deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting section and building:", error);
     return NextResponse.json(
-      {
-        message: "can't able to delete the building",
-        error: error.message,
-      },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

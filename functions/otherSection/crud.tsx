@@ -1,9 +1,9 @@
-import { BuildingFormProps } from "@/app/building-form/types"
+import { OtherSectionProps } from "@/app/otherSection-form/types"
 import domain from "@/components/utils/domain"
 
-export const addBuilding = async (data: BuildingFormProps) => {
+export const addOtherSection = async (data: OtherSectionProps) => {
     try {
-        const res = await fetch(`${domain}/api/building`, {
+        const res = await fetch(`${domain}/api/otherSection`, {
             method: "POST",
             headers: {
                 'Content-Type': 'application/json'
@@ -20,14 +20,14 @@ export const addBuilding = async (data: BuildingFormProps) => {
         const newData = await res.json();
         return newData;
     } catch (error) {
-        console.error('Error in addProject:', error);
+        console.error('Error in Adding Other Section:', error);
         return null;
     }
 }
 
-export const deleteBuilding = async (projectId: string, sectionId: string | null | undefined) => {
+export const deleteOtherSection = async (projectId: string, sectionId: string | null) => {
     try {
-        const res = await fetch(`${domain}/api/building?projectId=${projectId}&sectionId=${sectionId}`, {
+        const res = await fetch(`${domain}/api/otherSection?projectId=${projectId}&sectionId=${sectionId}`, {
             method: "DELETE",
             headers: {
                 "Content-Type": "application/json",
@@ -37,13 +37,13 @@ export const deleteBuilding = async (projectId: string, sectionId: string | null
         const data = await res.json();
         return data;
     } catch (error) {
-        console.error("Error deleting section and building:", error);
+        console.error("Error deleting section and Other Section:", error);
         return null;
     }
 }
 
-export const updateBuilding = async (updatedData: BuildingFormProps, projectId: string) => {
-    const res = await fetch(`${domain}/api/building?id=${projectId}`, {
+export const updateOtherSection = async (updatedData: OtherSectionProps, projectId: string) => {
+    const res = await fetch(`${domain}/api/otherSection?id=${projectId}`, {
         method: "PUT",
         body: JSON.stringify(updatedData),
     })
@@ -51,14 +51,14 @@ export const updateBuilding = async (updatedData: BuildingFormProps, projectId: 
     return data;
 }
 
-export const getSingleBuilding = async (projectId: string | undefined | null) => {
-    const res = await fetch(`${domain}/api/building?id=${projectId}`);
+export const getSingleOtherSection = async (projectId: string | undefined | null) => {
+    const res = await fetch(`${domain}/api/otherSection?id=${projectId}`);
     const data = await res.json();
     return data;
 }
 
-export const getAllBuilding = async () => {
-    const res = await fetch(`${domain}/api/building`);
+export const getAllOtherSection = async () => {
+    const res = await fetch(`${domain}/api/otherSection`);
     const data = await res.json();
     return data;
 }

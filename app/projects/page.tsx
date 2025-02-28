@@ -17,7 +17,7 @@ export default function Page() {
     const fetchProjectData = async () => {
         setIsProjectLoading(true);
         try {
-            const res = await axios.get("http://localhost:3000/api/project");
+            const res = await axios.get("http://localhost:8080/api/project");
             const data = res.data;
             setProjectData(data);
         } catch (error) {

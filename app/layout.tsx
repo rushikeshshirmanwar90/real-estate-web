@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import { Toaster } from "@/components/ui/sonner"
 import NextTopLoader from 'nextjs-toploader';
 import SideBarItems from "@/components/SideBarItems";
 import SideBar from "@/components/SideBar";

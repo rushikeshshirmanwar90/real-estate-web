@@ -16,6 +16,11 @@ const OtherSectionSchema = new Schema({
     require: true,
   },
 
+  projectId: {
+    type: String,
+    require: true,
+  },
+
   description: {
     type: String,
     require: true,

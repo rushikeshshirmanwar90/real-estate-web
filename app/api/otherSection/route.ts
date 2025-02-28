@@ -1,6 +1,7 @@
 import connect from "@/lib/db";
+import { OtherSection } from "@/lib/models/OtherSection";
 import { Projects } from "@/lib/models/Project";
-import { RowHouse } from "@/lib/models/RowHouse";
+
 import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (req: NextRequest) => {
@@ -11,15 +12,15 @@ export const GET = async (req: NextRequest) => {
     let data;
 
     if (id) {
-      data = await RowHouse.findById(id);
+      data = await OtherSection.findById(id);
     } else {
-      data = await RowHouse.find();
+      data = await OtherSection.find();
     }
 
     if (!data) {
       return NextResponse.json(
         {
-          message: "can't able to find RowHouse",
+          message: "can't able to find OtherSection",
         },
         { status: 404 }
       );
@@ -47,16 +48,16 @@ export const GET = async (req: NextRequest) => {
 
 export const POST = async (req: NextRequest) => {
   try {
-    await connect();
     const data = await req.json();
+    await connect();
 
-    const newData = await new RowHouse(data);
+    const newData = await new OtherSection(data);
     const savedData = await newData.save();
 
     if (!newData) {
       return NextResponse.json(
         {
-          message: "can't able to add new RowHouse",
+          message: "can't able to add new OtherSection",
         },
         { status: 404 }
       );
@@ -69,7 +70,7 @@ export const POST = async (req: NextRequest) => {
           section: {
             sectionId: savedData._id,
             name: savedData.name,
-            type: "row house",
+            type: "other",
           },
         },
       },
@@ -78,7 +79,7 @@ export const POST = async (req: NextRequest) => {
 
     if (!updatedProject) {
       return NextResponse.json(
-        { message: "Project not found" },
+        { message: `Project not found :  ${savedData.name}` },
         { status: 404 }
       );
     }
@@ -125,8 +126,8 @@ export const DELETE = async (req: NextRequest) => {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
-    const deletedRowHouse = RowHouse.findByIdAndDelete(sectionId);
-    if (!deletedRowHouse) {
+    const deletedOtherSection = OtherSection.findByIdAndDelete(sectionId);
+    if (!deletedOtherSection) {
       return NextResponse.json(
         { message: "can't able to delete the row house" },
         { status: 404 }
@@ -135,7 +136,7 @@ export const DELETE = async (req: NextRequest) => {
 
     return NextResponse.json(
       {
-        deletedRowHouse,
+        deletedOtherSection,
       },
       { status: 200 }
     );
@@ -155,14 +156,14 @@ export const DELETE = async (req: NextRequest) => {
 
 export const PUT = async (req: NextRequest) => {
   const { searchParams } = new URL(req.url);
-  const rowHouseId = searchParams.get("rh");
+  const OtherSectionId = searchParams.get("rh");
   const newData = await req.json();
 
   try {
     await connect();
 
-    const newHouse = await RowHouse.findByIdAndUpdate(
-      rowHouseId,
+    const newHouse = await OtherSection.findByIdAndUpdate(
+      OtherSectionId,
       { newData },
       { new: true }
     );

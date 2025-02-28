@@ -1,15 +1,13 @@
 import Image from "next/image"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { getSingleBuilding } from "@/functions/building/crud"
 import { useEffect, useState } from "react"
 import { BuildingFormProps } from "@/app/building-form/types"
 import { AmenityItem, DisplayIcon } from "./editable-cards/AmenitiesSelector"
 
-
-const Building: React.FC<{ buildingId: string | null }> = ({ buildingId }) => {
+const Building: React.FC<{ buildingId: string | null | undefined }> = ({ buildingId }) => {
 
     const [buildingData, setBuildingData] = useState<BuildingFormProps>();
 
@@ -175,6 +173,5 @@ const Building: React.FC<{ buildingId: string | null }> = ({ buildingId }) => {
         </div>
     )
 }
-
 
 export default Building;

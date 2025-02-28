@@ -49,6 +49,16 @@ const projectSchema = new Schema(
       enum: ["ongoing", "upcoming", "completed"],
     },
 
+    longitude: {
+      type: Number,
+      required: true,
+    },
+
+    latitude: {
+      type: Number,
+      required: true,
+    },
+
     section: [
       {
         sectionId: {
@@ -61,7 +71,7 @@ const projectSchema = new Schema(
         type: {
           type: String,
           required: true,
-          enum: ["RowHouse", "Buildings", "OtherSection"],
+          enum: ["row house", "building", "other"],
         },
       },
     ],

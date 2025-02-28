@@ -32,7 +32,9 @@ const Page = () => {
         state: "",
         city: "",
         amenities: selectedAmenities,
-        clientId: ""
+        clientId: "",
+        longitude: 0,
+        latitude: 0,
     });
 
 

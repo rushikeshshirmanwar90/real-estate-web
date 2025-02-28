@@ -6,10 +6,7 @@ import { useRouter } from "next/navigation"
 import {
     MapPin,
     Ruler,
-    WavesIcon,
-    Wifi,
-    SquareParking,
-    ClubIcon as VolleyballIcon,
+    ClubIcon,
     Ellipsis,
     Trash,
     Pencil,
@@ -41,6 +38,10 @@ import {
     CarouselNext,
     CarouselPrevious,
 } from "@/components/ui/carousel"
+
+import RowHouse from "@/components/RowHouse"
+import OtherSection from "@/components/OtherSection"
+
 import Autoplay from "embla-carousel-autoplay"
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -56,7 +57,7 @@ import { deleteProject } from "@/functions/project/crud"
 import { successToast } from "./toasts"
 import Image from "next/image"
 import Building from "./Building"
-import { deleteSectionAndBuilding } from "@/functions/project/deleteSection"
+import { deleteBuilding } from "@/functions/building/crud"
 
 interface Section {
     _id: string,
@@ -69,6 +70,11 @@ interface ProjectCardProps {
     refreshData: () => void
 }
 
+interface selectedSectionProps {
+    id: string,
+    type: string
+}
+
 const ProjectCard: React.FC<ProjectCardProps> = ({ projectInfo, refreshData }) => {
     // Separate state for modals and dropdowns
 
@@ -77,8 +83,8 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ projectInfo, refreshData }) =
     const [isDropdownOpen, setIsDropdownOpen] = useState(false)
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
     const [isAddSectionModalOpen, setIsAddSectionModalOpen] = useState(false)
-    const [isBuildingModalOpen, setIsBuildingModalOpen] = useState(false)
-    const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null)
+    const [isSectionModelOpen, setIsSectionModelOpen] = useState(false)
+    const [selectedSection, setSelectedSection] = useState<selectedSectionProps>()
 
     // Section state
     const [sections, setSections] = useState<Section[]>([])
@@ -112,22 +118,25 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ projectInfo, refreshData }) =
             images: JSON.stringify(projectInfo.images),
             amenities: JSON.stringify(projectInfo.amenities)
         };
-
         const query = new URLSearchParams(
             Object.entries(queryData).map(([key, value]) => [key, String(value)])
         ).toString();
-
         router.push(`/project-form?${query}`);
     };
 
     const handleAddSection = () => {
         if (newSection.name && newSection.type) {
+            const encodedName = encodeURIComponent(newSection.name)
+            const encodedProjectId = encodeURIComponent(projectInfo._id)
             if (newSection.type == 'building') {
-                const encodedName = encodeURIComponent(newSection.name)
-                const encodedProjectId = encodeURIComponent(projectInfo._id)
                 router.push(`/building-form?name=${encodedName}&projectId=${encodedProjectId}`)
             }
-
+            if (newSection.type == 'row house') {
+                router.push(`/rowHouse-form?name=${encodedName}&projectId=${encodedProjectId}`)
+            }
+            if (newSection.type == 'other') {
+                router.push(`/otherSection-form?name=${encodedName}&projectId=${encodedProjectId}`)
+            }
             setIsAddSectionModalOpen(false)
         }
     }
@@ -137,17 +146,17 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ projectInfo, refreshData }) =
         setIsAddSectionModalOpen(false)
     }
 
-    const handleOpenBuildingModal = (buildingId: string) => {
-        setSelectedBuildingId(buildingId)
-        setIsBuildingModalOpen(true)
+    const handleOpenBuildingModal = (selectedSection: selectedSectionProps) => {
+        setSelectedSection(selectedSection)
+        setIsSectionModelOpen(true)
     }
 
 
 
     const handleDeleteSection = () => {
-        const res = deleteSectionAndBuilding(projectInfo._id, selectedBuildingId);
+        const res = deleteBuilding(projectInfo._id, selectedSection?.id);
         refreshData();
-        setIsBuildingModalOpen(false)
+        setIsSectionModelOpen(false)
     }
 
     return (
@@ -257,7 +266,13 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ projectInfo, refreshData }) =
                             <div
                                 key={section.sectionId}
                                 className="p-4 border rounded-lg cursor-pointer"
-                                onClick={() => handleOpenBuildingModal(section.sectionId)}
+                                onClick={() => {
+                                    const selectedSection: selectedSectionProps = {
+                                        id: section.sectionId,
+                                        type: section.type
+                                    }
+                                    handleOpenBuildingModal(selectedSection)
+                                }}
                             >
                                 <div className="flex items-center justify-between mb-2">
                                     <h4 className="font-medium">{section.name}</h4>
@@ -330,16 +345,22 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ projectInfo, refreshData }) =
                 </DialogContent>
             </Dialog>
 
-
-            <Dialog open={isBuildingModalOpen} onOpenChange={setIsBuildingModalOpen}>
+            <Dialog open={isSectionModelOpen} onOpenChange={setIsSectionModelOpen}>
                 <DialogContent className="max-h-[90vh] flex flex-col p-0">
                     <div className="flex-1 overflow-y-auto p-6">
-                        <div>
-                            <Building buildingId={selectedBuildingId} />
-                        </div>
+
+                        {
+                            selectedSection?.type == 'Buildings' ? (<div>
+                                <Building buildingId={selectedSection?.id} />
+                            </div>) : selectedSection?.type == 'row house' ? (
+                                <RowHouse sectionId={`${selectedSection?.id}`} />
+                            ) : (
+                                <OtherSection sectionId={`${selectedSection?.id}`} />
+                            )
+                        }
                     </div>
                     <div className="flex justify-end gap-3 p-4 border-t bg-white">
-                        <Button variant="outline" onClick={() => setIsBuildingModalOpen(false)}>
+                        <Button variant="outline" onClick={() => setIsSectionModelOpen(false)}>
                             Close
                         </Button>
                         <Button>Edit</Button>
