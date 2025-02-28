@@ -172,6 +172,18 @@ const Page = () => {
                 value: formData.city,
                 type: "text"
             },
+            {
+                key: "longitude",
+                label: "Enter the Longitude",
+                value: formData.longitude,
+                type: "number"
+            },
+            {
+                key: "latitude",
+                label: "Enter the Latitude",
+                value: formData.latitude,
+                type: "number"
+            },
         ]
 
     const handleSubmit = async (e: React.FormEvent) => {
