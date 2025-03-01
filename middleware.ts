@@ -1,20 +1,47 @@
-  import { NextResponse } from "next/server";
-  import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-  export function middleware(request: NextRequest) {
-    const token = request.cookies.get("client_auth_token")?.value;
+// Helper function to apply CORS headers
+function applyCorsHeaders(response: NextResponse) {
+  response.headers.set("Access-Control-Allow-Origin", "http://localhost:3000"); // Your frontend origin
+  response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"); // Allowed methods
+  response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization"); // Allowed headers
+  return response;
+}
 
-    if (token && request.nextUrl.pathname === "/login") {
-      return NextResponse.redirect(new URL("/", request.url));
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Handle CORS for /api/* routes
+  if (pathname.startsWith("/api/")) {
+    // Handle preflight OPTIONS request
+    if (request.method === "OPTIONS") {
+      return applyCorsHeaders(new NextResponse(null, { status: 204 }));
     }
 
-    if (!token && request.nextUrl.pathname !== "/login") {
-      return NextResponse.redirect(new URL("/login", request.url));
-    }
-
-    return NextResponse.next();
+    // Apply CORS headers to all API responses
+    const response = NextResponse.next();
+    return applyCorsHeaders(response);
   }
 
-  export const config = {
-    matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
-  };
+  // Existing authentication logic for non-API routes
+  const token = request.cookies.get("client_auth_token")?.value;
+
+  if (token && pathname === "/login") {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  if (!token && pathname !== "/login") {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  return NextResponse.next();
+}
+
+// Update matcher to include /api/* along with existing patterns
+export const config = {
+  matcher: [
+    "/api/:path*", // Match all API routes
+    "/((?!_next/static|_next/image|favicon.ico).*)", // Your existing matcher for pages
+  ],
+};
