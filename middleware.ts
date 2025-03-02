@@ -4,8 +4,14 @@ import type { NextRequest } from "next/server";
 // Helper function to apply CORS headers
 function applyCorsHeaders(response: NextResponse) {
   response.headers.set("Access-Control-Allow-Origin", "http://localhost:3000"); // Your frontend origin
-  response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"); // Allowed methods
-  response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization"); // Allowed headers
+  response.headers.set(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS"
+  ); // Allowed methods
+  response.headers.set(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  ); // Allowed headers
   return response;
 }
 
