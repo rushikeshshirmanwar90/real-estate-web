@@ -1,5 +1,5 @@
 import connect from "@/lib/db";
-import { FlatInfo } from "@/lib/models/FlatInfo";
+import RoomUpdate from "@/lib/models/RoomUpdate";
 import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (req: NextRequest) => {
@@ -9,29 +9,28 @@ export const GET = async (req: NextRequest) => {
     const { searchParams } = new URL(req.url);
     const flatId = searchParams.get("flatId");
 
-    let flatInfo;
-
+    let roomUpdates;
     if (flatId) {
-      flatInfo = await FlatInfo.findById(flatId);
+      roomUpdates = await RoomUpdate.findById(flatId);
     } else {
-      flatInfo = await FlatInfo.find();
+      roomUpdates = await RoomUpdate.find();
     }
 
-    if (!flatInfo) {
+    if (!roomUpdates) {
       return NextResponse.json(
         {
-          message: "No flat info found",
+          message: "No room updates found",
         },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(flatInfo);
+    return NextResponse.json(roomUpdates);
   } catch (error: any) {
     console.log(error.message);
     return NextResponse.json(
       {
-        message: "something wen't wrong, can't able to get the flat info",
+        message: "something wen't wrong, can't able to get the room updates",
         error: error.message,
       },
       {
@@ -47,24 +46,24 @@ export const POST = async (req: NextRequest) => {
 
     const body = await req.json();
 
-    const newFlatInfo = new FlatInfo(body);
-    const savedFlatInfo = await newFlatInfo.save();
+    const newRoomUpdate = new RoomUpdate(body);
+    const savedRoomUpdate = await newRoomUpdate.save();
 
-    if (!savedFlatInfo) {
+    if (!savedRoomUpdate) {
       return NextResponse.json(
         {
-          message: "Can't able to save the flat info",
+          message: "Can't able to save the room update",
         },
         { status: 400 }
       );
     }
 
-    return NextResponse.json(savedFlatInfo);
+    return NextResponse.json(savedRoomUpdate);
   } catch (error: any) {
     console.log(error.message);
     return NextResponse.json(
       {
-        message: "something wen't wrong, can't able to save the flat info",
+        message: "something wen't wrong, can't able to save the room update",
         error: error.message,
       },
       {
@@ -78,30 +77,30 @@ export const PUT = async (req: NextRequest) => {
   try {
     await connect();
 
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
     const body = await req.json();
 
-    const { searchParams } = new URL(req.url);
-    const flatId = searchParams.get("flatId");
-
-    const flatInfo = await FlatInfo.findByIdAndUpdate(flatId, body, {
+    const updatedRoomUpdate = await RoomUpdate.findByIdAndUpdate(id, body, {
       new: true,
     });
 
-    if (!flatInfo) {
+    if (!updatedRoomUpdate) {
       return NextResponse.json(
         {
-          message: "Can't able to update the flat info",
+          message: "Can't able to update the room update",
         },
         { status: 400 }
       );
     }
 
-    return NextResponse.json(flatInfo);
+    return NextResponse.json(updatedRoomUpdate);
   } catch (error: any) {
     console.log(error.message);
     return NextResponse.json(
       {
-        message: "something wen't wrong, can't able to update the flat info",
+        message: "something wen't wrong, can't able to update the room update",
         error: error.message,
       },
       {
@@ -115,28 +114,26 @@ export const DELETE = async (req: NextRequest) => {
   try {
     await connect();
 
-    const body = await req.json();
-
     const { searchParams } = new URL(req.url);
-    const flatId = searchParams.get("flatId");
+    const id = searchParams.get("id");
 
-    const flatInfo = await FlatInfo.findByIdAndDelete(flatId);
+    const deletedRoomUpdate = await RoomUpdate.findByIdAndDelete(id);
 
-    if (!flatInfo) {
+    if (!deletedRoomUpdate) {
       return NextResponse.json(
         {
-          message: "Can't able to delete the flat info",
+          message: "Can't able to delete the room update",
         },
         { status: 400 }
       );
     }
 
-    return NextResponse.json(flatInfo);
+    return NextResponse.json(deletedRoomUpdate);
   } catch (error: any) {
     console.log(error.message);
     return NextResponse.json(
       {
-        message: "something wen't wrong, can't able to delete the flat info",
+        message: "something wen't wrong, can't able to delete the room update",
         error: error.message,
       },
       {
