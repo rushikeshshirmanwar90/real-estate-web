@@ -100,14 +100,14 @@ export function EditableSectionCard({
                     </div>
                 ))}
                 {isEditing && (
-                    <label className="flex aspect-square cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-white/20 hover:border-white/40">
+                    <label className="flex aspect-square cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-border hover:border-muted-foreground">
                         <div className="flex flex-col items-center gap-2">
                             {isLoading ? (
                                 <Loader2 className="h-6 w-6 animate-spin" />
                             ) : (
-                                <ImagePlus className="h-8 w-8 text-white/60" />
+                                <ImagePlus className="h-8 w-8 text-muted-foreground" />
                             )}
-                            <span className="text-sm text-white/60">{isLoading ? "Adding Image" : "Add Image"}</span>
+                            <span className="text-sm text-muted-foreground">{isLoading ? "Adding Image" : "Add Image"}</span>
                         </div>
                         <input
                             type="file"
@@ -134,7 +134,6 @@ export function EditableSectionCard({
                         <Textarea
                             value={currentField.value as string}
                             onChange={(e) => handleTempFieldChange(field.key, e.target.value)}
-                            className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                             required
                         />
                     )
@@ -144,7 +143,6 @@ export function EditableSectionCard({
                             type="number"
                             value={currentField.value as number}
                             onChange={(e) => handleTempFieldChange(field.key, e.target.value)}
-                            className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                             required
                         />
                     )
@@ -154,7 +152,7 @@ export function EditableSectionCard({
                             value={String(currentField.value || "")}
                             onValueChange={(value) => handleTempFieldChange(field.key, value)}
                         >
-                            <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                            <SelectTrigger>
                                 <SelectValue placeholder="Select an option">
                                     {field.options?.find((opt) => String(opt.value) === String(currentField.value))?.label}
                                 </SelectValue>
@@ -173,7 +171,6 @@ export function EditableSectionCard({
                         <Input
                             value={currentField.value as string}
                             onChange={(e) => handleTempFieldChange(field.key, e.target.value)}
-                            className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                             required
                         />
                     )
@@ -181,8 +178,8 @@ export function EditableSectionCard({
         }
 
         return (
-            <div className="group rounded-lg bg-white/5 p-3 transition-all hover:bg-white/10">
-                <div className="text-xs font-medium uppercase tracking-wider text-white/60">{field.label}</div>
+            <div className="group rounded-lg bg-muted/30 p-3 transition-all hover:bg-muted/50">
+                <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{field.label}</div>
                 <div className="mt-1 text-lg font-medium">
                     {field.type === "select" && field.options
                         ? field.options.find((opt) => String(opt.value) === String(field.value))?.label || "-"
@@ -193,11 +190,11 @@ export function EditableSectionCard({
     }
 
     return (
-        <Card className="w-full overflow-hidden bg-gradient-to-br from-[#446B6B] to-[#2D4848] text-white shadow-xl">
-            <CardHeader className="border-b border-white/10 bg-white/5">
+        <Card className="w-full overflow-hidden bg-card shadow-xl">
+            <CardHeader className="border-b border-border bg-muted/30">
                 <div className="flex items-center justify-between">
                     <h2 className="text-2xl font-semibold tracking-tight flex items-center gap-3">
-                        {icon && <div className="border border-[#073B3A] bg-[#517675] p-2 rounded-full">{icon}</div>}
+                        {icon && <div className="border border-border bg-primary/10 p-2 rounded-full">{icon}</div>}
                         {title}
                     </h2>
                     {hasData && !isEditing && (
@@ -205,7 +202,7 @@ export function EditableSectionCard({
                             variant="ghost"
                             size="icon"
                             onClick={handleEdit}
-                            className="h-8 w-8 rounded-full text-white transition-colors hover:bg-white/10 hover:text-white/90"
+                            className="h-8 w-8 rounded-full transition-colors hover:bg-muted/50"
                         >
                             <Pencil className="h-4 w-4" />
                         </Button>
@@ -214,7 +211,7 @@ export function EditableSectionCard({
             </CardHeader>
             <CardContent className="p-6 space-y-6">
                 {!hasData && !isEditing ? (
-                    <Button variant="ghost" className="text-white hover:bg-white/10 hover:text-white/90" onClick={handleEdit}>
+                    <Button variant="ghost" className="hover:bg-muted/30" onClick={handleEdit}>
                         <span className="mr-2 text-lg">+</span> Add Information
                     </Button>
                 ) : (
@@ -223,7 +220,7 @@ export function EditableSectionCard({
                         <div className={isEditing ? "space-y-4" : "grid gap-4 sm:grid-cols-2"}>
                             {fields.map((field) => (
                                 <div key={field.key} className={isEditing ? "space-y-2" : ""}>
-                                    {isEditing && <label className="text-sm font-medium text-white/90">{field.label}</label>}
+                                    {isEditing && <label className="text-sm font-medium">{field.label}</label>}
                                     {renderField(field)}
                                 </div>
                             ))}
@@ -232,11 +229,11 @@ export function EditableSectionCard({
                 )}
             </CardContent>
             {isEditing && (
-                <CardFooter className="border-t border-white/10 bg-white/5 gap-4 justify-end pt-3">
-                    <Button type="button" onClick={handleCancel} className="text-white hover:bg-white/10">
+                <CardFooter className="border-t border-border bg-muted/30 gap-4 justify-end pt-3">
+                    <Button type="button" onClick={handleCancel} variant="outline">
                         <X className="h-4 w-4 mr-2" /> Cancel
                     </Button>
-                    <Button type="button" onClick={handleSave} className="bg-white/10 hover:bg-white/20 text-white">
+                    <Button type="button" onClick={handleSave}>
                         <Check className="h-4 w-4 mr-2" /> Save Changes
                     </Button>
                 </CardFooter>

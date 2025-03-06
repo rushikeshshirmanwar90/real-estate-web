@@ -1,5 +1,4 @@
 "use client"
-
 import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -75,12 +74,12 @@ export function SectionEditableCard({ sections = [], onSectionsChange }: Section
     }
 
     return (
-        <Card className="w-full overflow-hidden bg-gradient-to-br from-[#446B6B] to-[#2D4848] text-white shadow-xl">
-            <CardHeader className="border-b border-white/10 bg-white/5">
+        <Card className="w-full overflow-hidden bg-card shadow-xl">
+            <CardHeader className="border-b border-border bg-muted/30">
                 <div className="flex items-center justify-between">
                     <h2 className="text-2xl font-semibold tracking-tight flex items-center gap-3">
-                        <div className="border border-[#073B3A] bg-[#517675] p-2 rounded-full">
-                            <LayoutGrid size={20} color="#073B3A" />
+                        <div className="border border-border bg-primary/10 p-2 rounded-full">
+                            <LayoutGrid size={20} className="text-primary" />
                         </div>
                         Sections
                     </h2>
@@ -89,7 +88,7 @@ export function SectionEditableCard({ sections = [], onSectionsChange }: Section
                             variant="ghost"
                             size="icon"
                             onClick={handleEdit}
-                            className="h-8 w-8 rounded-full text-white transition-colors hover:bg-white/10 hover:text-white/90"
+                            className="h-8 w-8 rounded-full transition-colors hover:bg-muted/50"
                         >
                             <Pencil className="h-4 w-4" />
                         </Button>
@@ -98,14 +97,14 @@ export function SectionEditableCard({ sections = [], onSectionsChange }: Section
             </CardHeader>
             <CardContent className="p-6">
                 {!hasData && !isEditing ? (
-                    <Button variant="ghost" className="text-white hover:bg-white/10 hover:text-white/90" onClick={handleEdit}>
+                    <Button variant="ghost" className="hover:bg-muted/30" onClick={handleEdit}>
                         <span className="mr-2 text-lg">+</span> Add Sections
                     </Button>
                 ) : (
                     <div className="w-full">
                         <div className="flex gap-6 overflow-x-auto pb-4">
                             {(isEditing ? tempSections : sections).map((section, index) => (
-                                <div key={index} className="relative flex-none w-80 rounded-lg bg-white/5 p-4">
+                                <div key={index} className="relative flex-none w-80 rounded-lg bg-muted/30 p-4">
                                     {isEditing && (
                                         <Button
                                             variant="destructive"
@@ -119,27 +118,25 @@ export function SectionEditableCard({ sections = [], onSectionsChange }: Section
                                     {isEditing ? (
                                         <>
                                             <div className="space-y-2">
-                                                <label className="text-sm font-medium text-white/90">Name</label>
+                                                <label className="text-sm font-medium">Name</label>
                                                 <Input
                                                     value={section.name}
                                                     onChange={(e) => updateSection(index, "name", e.target.value)}
-                                                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                                                     required
                                                 />
                                             </div>
                                             <div className="mt-4 space-y-2">
-                                                <label className="text-sm font-medium text-white/90">Description</label>
+                                                <label className="text-sm font-medium">Description</label>
                                                 <Textarea
                                                     value={section.description}
                                                     onChange={(e) => updateSection(index, "description", e.target.value)}
-                                                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                                                 />
                                             </div>
                                         </>
                                     ) : (
                                         <div className="space-y-2">
                                             <div className="text-lg font-medium">{section.name}</div>
-                                            <div className="text-sm text-white/70">{section.description}</div>
+                                            <div className="text-sm text-muted-foreground">{section.description}</div>
                                         </div>
                                     )}
                                     <div className="mt-4 grid grid-cols-2 gap-4">
@@ -163,14 +160,16 @@ export function SectionEditableCard({ sections = [], onSectionsChange }: Section
                                             </div>
                                         ))}
                                         {isEditing && (
-                                            <label className="flex aspect-square cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-white/20 hover:border-white/40">
+                                            <label className="flex aspect-square cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-border hover:border-muted-foreground">
                                                 <div className="flex flex-col items-center gap-2">
                                                     {isLoading ? (
                                                         <Loader2 className="h-4 w-4 animate-spin" />
                                                     ) : (
-                                                        <ImagePlus className="h-6 w-6 text-white/60" />
+                                                        <ImagePlus className="h-6 w-6 text-muted-foreground" />
                                                     )}
-                                                    <span className="text-sm text-white/60">{isLoading ? "Adding Image" : "Add Image"}</span>
+                                                    <span className="text-sm text-muted-foreground">
+                                                        {isLoading ? "Adding Image" : "Add Image"}
+                                                    </span>
                                                 </div>
                                                 <input
                                                     type="file"
@@ -185,11 +184,7 @@ export function SectionEditableCard({ sections = [], onSectionsChange }: Section
                                 </div>
                             ))}
                             {isEditing && (
-                                <Button
-                                    variant="outline"
-                                    onClick={addSection}
-                                    className="h-full min-w-48 border-white/20 text-white hover:bg-white/10"
-                                >
+                                <Button variant="outline" onClick={addSection} className="h-full min-w-48">
                                     <span className="mr-2 text-lg">+</span> Add Section
                                 </Button>
                             )}
@@ -198,11 +193,11 @@ export function SectionEditableCard({ sections = [], onSectionsChange }: Section
                 )}
             </CardContent>
             {isEditing && (
-                <CardFooter className="border-t border-white/10 bg-white/5 gap-4 justify-end pt-3">
-                    <Button type="button" onClick={handleCancel} className="text-white hover:bg-white/10">
+                <CardFooter className="border-t border-border bg-muted/30 gap-4 justify-end pt-3">
+                    <Button type="button" onClick={handleCancel} variant="outline">
                         <X className="h-4 w-4 mr-2" /> Cancel
                     </Button>
-                    <Button type="button" onClick={handleSave} className="bg-white/10 hover:bg-white/20 text-white">
+                    <Button type="button" onClick={handleSave}>
                         <Check className="h-4 w-4 mr-2" /> Save Changes
                     </Button>
                 </CardFooter>
@@ -210,3 +205,4 @@ export function SectionEditableCard({ sections = [], onSectionsChange }: Section
         </Card>
     )
 }
+

@@ -1,25 +1,15 @@
-import bcrypt from "bcrypt";
 import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 import { User } from "@/lib/models/Users";
 import { Client } from "@/lib/models/Client";
 import connect from "@/lib/db";
-import { cookies } from "next/headers";
 
 export const POST = async (req: Request) => {
-  const SALT_ID = parseInt(process.env.SALT_ID!, 10);
   try {
-    const cookieStore = await cookies();
-
-    const JWT_SECRET = process.env.JWT_SECRET!;
-    const COOKIE_NAME = "user_auth_token";
-
     await connect();
 
     const body = await req.json();
 
     const clientId = body.clientId;
-
     const findClient = await Client.findById(clientId);
 
     if (!findClient) {
@@ -31,10 +21,6 @@ export const POST = async (req: Request) => {
           status: 403,
         }
       );
-    }
-
-    if (body.password) {
-      body.password = await bcrypt.hash(body.password, SALT_ID);
     }
 
     const newUser = new User(body);
@@ -49,19 +35,6 @@ export const POST = async (req: Request) => {
         { status: 500 }
       );
     }
-
-    const userId = newUser._id;
-    const email = body.email;
-
-    const payload = { email, userId };
-
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "1000d" });
-
-    cookieStore.set(COOKIE_NAME, token, {
-      httpOnly: true,
-      path: "/",
-      maxAge: 1000 * 60 * 60 * 24 * 1000,
-    });
 
     return NextResponse.json(
       {

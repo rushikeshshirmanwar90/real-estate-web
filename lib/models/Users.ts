@@ -23,17 +23,35 @@ const userSchema = new Schema(
       unique: true,
     },
 
+    userType: {
+      type: String,
+      required: true,
+      enum: ["customer", "staff"],
+    },
+
+    flatId: {
+      type: String,
+      required: false,
+    },
+
+    flatInfoId: {
+      type: Schema.Types.ObjectId,
+      required: false,
+      ref: "FlatInfo",
+    },
+
+    password: {
+      type: String,
+      require: false,
+    },
+
     clientId: {
       type: Schema.Types.ObjectId,
       ref: "client",
       required: true,
     },
-
-    password: {
-      type: String,
-      require: true,
-    },
   },
+
   {
     timestamps: true,
   }

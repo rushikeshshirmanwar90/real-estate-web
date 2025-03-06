@@ -2,10 +2,9 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import NextTopLoader from 'nextjs-toploader';
-import SideBarItems from "@/components/SideBarItems";
-import SideBar from "@/components/SideBar";
-import { Building2Icon, ChartPieIcon, LayoutDashboard } from "lucide-react";
 import { Bounce, ToastContainer } from 'react-toastify';
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AdminSidebar } from "@/components/admin-sidebar";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -32,45 +31,39 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className=""  >
+        <NextTopLoader
+          color="#2299DD"
+          initialPosition={0.08}
+          crawlSpeed={200}
+          height={3}
+          crawl={true}
+          showSpinner={true}
+          easing="ease"
+          speed={200}
+          shadow="0 0 10px #2299DD,0 0 5px #2299DD"
+        />
 
-        <main className="flex gap-2 w-full" >
-          <NextTopLoader
-            color="#2299DD"
-            initialPosition={0.08}
-            crawlSpeed={200}
-            height={3}
-            crawl={true}
-            showSpinner={true}
-            easing="ease"
-            speed={200}
-            shadow="0 0 10px #2299DD,0 0 5px #2299DD"
-          />
 
-          <SideBar>
-            <div className="mt-4 w-full">
-              <SideBarItems link="/" active={false} alert={true} icon={<LayoutDashboard size={20} />} text="Dashboard" />
-              <SideBarItems link="/projects" active={true} alert={true} icon={<Building2Icon size={20} />} text="Projects" />
-              <SideBarItems link="/" active={false} alert={true} icon={<ChartPieIcon size={20} />} text="Analytics" />
-            </div>
-          </SideBar>
-          <div className="w-[79vw] max-h-screen overflow-y-scroll" >
-            {children}
+        <ToastContainer
+          position="top-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick={false}
+          rtl={false}
+          draggable
+          theme="light"
+          transition={Bounce}
+        />
+
+        <SidebarProvider className="">
+          <div className="flex min-h-screen w-full">
+            <AdminSidebar />
+            <main className="flex-1">{children}</main>
           </div>
-          <ToastContainer
-            position="top-right"
-            autoClose={5000}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick={false}
-            rtl={false}
-            draggable
-            theme="light"
-            transition={Bounce}
-          />
-        </main>
+        </SidebarProvider>
+
       </body>
     </html>
   );

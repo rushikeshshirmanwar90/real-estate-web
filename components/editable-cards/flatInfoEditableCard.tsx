@@ -29,10 +29,10 @@ export function FlatInfoEditableCard({ flatInfos = [], onFlatInfoChange }: FlatI
     const [isEditing, setIsEditing] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [tempFlatInfos, setTempFlatInfos] = useState<FlatInfo[]>(
-        flatInfos.map(flat => ({
+        flatInfos.map((flat) => ({
             ...flat,
-            images: flat.images || [] // Ensure images array exists
-        }))
+            images: flat.images || [], // Ensure images array exists
+        })),
     )
     const hasData = flatInfos.length > 0
 
@@ -40,21 +40,17 @@ export function FlatInfoEditableCard({ flatInfos = [], onFlatInfoChange }: FlatI
         const urls = await handleImageUpload(e, setTempFlatInfos, setIsLoading)
         if (urls && urls.length > 0) {
             setTempFlatInfos((prev) =>
-                prev.map((flat, i) =>
-                    i === flatIndex
-                        ? { ...flat, images: [...(flat.images || []), ...urls] }
-                        : flat
-                )
+                prev.map((flat, i) => (i === flatIndex ? { ...flat, images: [...(flat.images || []), ...urls] } : flat)),
             )
         }
     }
 
     const handleEdit = () => {
         setTempFlatInfos(
-            flatInfos.map(flat => ({
+            flatInfos.map((flat) => ({
                 ...flat,
-                images: flat.images || [] // Ensure images array exists
-            }))
+                images: flat.images || [], // Ensure images array exists
+            })),
         )
         setIsEditing(true)
     }
@@ -66,10 +62,10 @@ export function FlatInfoEditableCard({ flatInfos = [], onFlatInfoChange }: FlatI
 
     const handleCancel = () => {
         setTempFlatInfos(
-            flatInfos.map(flat => ({
+            flatInfos.map((flat) => ({
                 ...flat,
-                images: flat.images || [] // Ensure images array exists
-            }))
+                images: flat.images || [], // Ensure images array exists
+            })),
         )
         setIsEditing(false)
     }
@@ -100,20 +96,18 @@ export function FlatInfoEditableCard({ flatInfos = [], onFlatInfoChange }: FlatI
     const removeImage = (flatIndex: number, imageIndex: number) => {
         setTempFlatInfos((prev) =>
             prev.map((flat, i) =>
-                i === flatIndex
-                    ? { ...flat, images: (flat.images || []).filter((_, imgIdx) => imgIdx !== imageIndex) }
-                    : flat
-            )
+                i === flatIndex ? { ...flat, images: (flat.images || []).filter((_, imgIdx) => imgIdx !== imageIndex) } : flat,
+            ),
         )
     }
 
     return (
-        <Card className="w-full overflow-hidden bg-gradient-to-br from-[#446B6B] to-[#2D4848] text-white shadow-xl">
-            <CardHeader className="border-b border-white/10 bg-white/5">
+        <Card className="w-full overflow-hidden bg-card shadow-xl">
+            <CardHeader className="border-b border-border bg-muted/30">
                 <div className="flex items-center justify-between">
                     <h2 className="text-2xl font-semibold tracking-tight flex items-center gap-3">
-                        <div className="border border-[#073B3A] bg-[#517675] p-2 rounded-full">
-                            <Building2 size={20} color="#073B3A" />
+                        <div className="border border-border bg-primary/10 p-2 rounded-full">
+                            <Building2 size={20} className="text-primary" />
                         </div>
                         Flat Information
                     </h2>
@@ -122,7 +116,7 @@ export function FlatInfoEditableCard({ flatInfos = [], onFlatInfoChange }: FlatI
                             variant="ghost"
                             size="icon"
                             onClick={handleEdit}
-                            className="h-8 w-8 rounded-full text-white transition-colors hover:bg-white/10 hover:text-white/90"
+                            className="h-8 w-8 rounded-full transition-colors hover:bg-muted/50"
                         >
                             <Pencil className="h-4 w-4" />
                         </Button>
@@ -131,13 +125,13 @@ export function FlatInfoEditableCard({ flatInfos = [], onFlatInfoChange }: FlatI
             </CardHeader>
             <CardContent className="p-6 space-y-6">
                 {!hasData && !isEditing ? (
-                    <Button variant="ghost" className="text-white hover:bg-white/10 hover:text-white/90" onClick={handleEdit}>
+                    <Button variant="ghost" className="hover:bg-muted/30" onClick={handleEdit}>
                         <span className="mr-2 text-lg">+</span> Add Flat Information
                     </Button>
                 ) : (
                     <div className="space-y-6">
                         {(isEditing ? tempFlatInfos : flatInfos).map((flatInfo, index) => (
-                            <div key={index} className="relative space-y-4 rounded-lg bg-white/5 p-4">
+                            <div key={index} className="relative space-y-4 rounded-lg bg-muted/30 p-4">
                                 {isEditing && (
                                     <Button
                                         variant="destructive"
@@ -151,61 +145,55 @@ export function FlatInfoEditableCard({ flatInfos = [], onFlatInfoChange }: FlatI
                                 {isEditing ? (
                                     <div className="grid gap-4 md:grid-cols-2">
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium text-white/90">Title</label>
+                                            <label className="text-sm font-medium">Title</label>
                                             <Input
                                                 value={flatInfo.title}
                                                 onChange={(e) => updateFlatInfo(index, "title", e.target.value)}
-                                                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                                                 required
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium text-white/90">Description</label>
+                                            <label className="text-sm font-medium">Description</label>
                                             <Textarea
                                                 value={flatInfo.description}
                                                 onChange={(e) => updateFlatInfo(index, "description", e.target.value)}
-                                                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium text-white/90">Total Flats</label>
+                                            <label className="text-sm font-medium">Total Flats</label>
                                             <Input
                                                 type="number"
                                                 value={flatInfo.totalFlats}
                                                 onChange={(e) => updateFlatInfo(index, "totalFlats", Number(e.target.value))}
-                                                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                                                 required
                                                 min={0}
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium text-white/90">Total Booked Flats</label>
+                                            <label className="text-sm font-medium">Total Booked Flats</label>
                                             <Input
                                                 type="number"
                                                 value={flatInfo.totalBookedFlats}
                                                 onChange={(e) => updateFlatInfo(index, "totalBookedFlats", Number(e.target.value))}
-                                                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                                                 required
                                                 min={0}
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium text-white/90">Total Area (sq ft)</label>
+                                            <label className="text-sm font-medium">Total Area (sq ft)</label>
                                             <Input
                                                 type="number"
                                                 value={flatInfo.totalArea}
                                                 onChange={(e) => updateFlatInfo(index, "totalArea", Number(e.target.value))}
-                                                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                                                 required
                                                 min={0}
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium text-white/90">Video URL</label>
+                                            <label className="text-sm font-medium">Video URL</label>
                                             <Input
                                                 value={flatInfo.video || ""}
                                                 onChange={(e) => updateFlatInfo(index, "video", e.target.value)}
-                                                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
                                                 placeholder="https://..."
                                             />
                                         </div>
@@ -214,19 +202,19 @@ export function FlatInfoEditableCard({ flatInfos = [], onFlatInfoChange }: FlatI
                                     <div className="grid gap-4 md:grid-cols-2">
                                         <div>
                                             <div className="text-lg font-medium">{flatInfo.title}</div>
-                                            <div className="text-sm text-white/70">{flatInfo.description}</div>
+                                            <div className="text-sm text-muted-foreground">{flatInfo.description}</div>
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <div className="text-sm text-white/70">Total Flats</div>
+                                                <div className="text-sm text-muted-foreground">Total Flats</div>
                                                 <div className="text-lg font-medium">{flatInfo.totalFlats}</div>
                                             </div>
                                             <div>
-                                                <div className="text-sm text-white/70">Booked Flats</div>
+                                                <div className="text-sm text-muted-foreground">Booked Flats</div>
                                                 <div className="text-lg font-medium">{flatInfo.totalBookedFlats}</div>
                                             </div>
                                             <div>
-                                                <div className="text-sm text-white/70">Total Area</div>
+                                                <div className="text-sm text-muted-foreground">Total Area</div>
                                                 <div className="text-lg font-medium">{flatInfo.totalArea} sq ft</div>
                                             </div>
                                         </div>
@@ -253,14 +241,16 @@ export function FlatInfoEditableCard({ flatInfos = [], onFlatInfoChange }: FlatI
                                         </div>
                                     ))}
                                     {isEditing && (
-                                        <label className="flex aspect-square cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-white/20 hover:border-white/40">
+                                        <label className="flex aspect-square cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-border hover:border-muted-foreground">
                                             <div className="flex flex-col items-center gap-2">
                                                 {isLoading ? (
                                                     <Loader2 className="h-6 w-6 animate-spin" />
                                                 ) : (
-                                                    <ImagePlus className="h-8 w-8 text-white/60" />
+                                                    <ImagePlus className="h-8 w-8 text-muted-foreground" />
                                                 )}
-                                                <span className="text-sm text-white/60">{isLoading ? "Adding Image" : "Add Image"}</span>
+                                                <span className="text-sm text-muted-foreground">
+                                                    {isLoading ? "Adding Image" : "Add Image"}
+                                                </span>
                                             </div>
                                             <input
                                                 type="file"
@@ -275,11 +265,7 @@ export function FlatInfoEditableCard({ flatInfos = [], onFlatInfoChange }: FlatI
                             </div>
                         ))}
                         {isEditing && (
-                            <Button
-                                variant="outline"
-                                onClick={addFlatInfo}
-                                className="w-full border-white/20 text-white hover:bg-white/10"
-                            >
+                            <Button variant="outline" onClick={addFlatInfo} className="w-full">
                                 <span className="mr-2 text-lg">+</span> Add Flat Type
                             </Button>
                         )}
@@ -287,11 +273,11 @@ export function FlatInfoEditableCard({ flatInfos = [], onFlatInfoChange }: FlatI
                 )}
             </CardContent>
             {isEditing && (
-                <CardFooter className="border-t border-white/10 bg-white/5 gap-4 justify-end pt-3">
-                    <Button type="button" onClick={handleCancel} className="text-white hover:bg-white/10">
+                <CardFooter className="border-t border-border bg-muted/30 gap-4 justify-end pt-3">
+                    <Button type="button" onClick={handleCancel} variant="outline">
                         <X className="h-4 w-4 mr-2" /> Cancel
                     </Button>
-                    <Button type="button" onClick={handleSave} className="bg-white/10 hover:bg-white/20 text-white">
+                    <Button type="button" onClick={handleSave}>
                         <Check className="h-4 w-4 mr-2" /> Save Changes
                     </Button>
                 </CardFooter>
@@ -299,3 +285,4 @@ export function FlatInfoEditableCard({ flatInfos = [], onFlatInfoChange }: FlatI
         </Card>
     )
 }
+
