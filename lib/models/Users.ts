@@ -6,43 +6,33 @@ const userSchema = new Schema(
       type: String,
       required: true,
     },
-
     lastName: {
       type: String,
       required: true,
     },
-
     phoneNumber: {
-      type: "number",
-      require: true,
+      type: String,
+      required: true,
       unique: true,
     },
-
     email: {
       type: String,
       unique: true,
+      required: true,
     },
-
     userType: {
       type: String,
       required: true,
       enum: ["customer", "staff"],
     },
-
-    flatId: {
-      type: String,
-      required: false,
-    },
-
-    flatInfoId: {
+    properties: {
       type: Schema.Types.ObjectId,
+      ref: "CustomerDetails",
       required: false,
-      ref: "FlatInfo",
     },
-
     password: {
       type: String,
-      require: false,
+      required: false,
     },
 
     clientId: {
@@ -51,7 +41,6 @@ const userSchema = new Schema(
       required: true,
     },
   },
-
   {
     timestamps: true,
   }

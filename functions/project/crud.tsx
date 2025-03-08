@@ -7,11 +7,17 @@ export const getSingleProject = async (projectId: string) => {
     return data;
 }
 
-export const getAllProject = async () => {
-    const res = await fetch(`${domain}/api/project`);
-    const data = await res.json();
-    return data;
-}
+
+export const getAllProjects = async () => {
+    try {
+        const res = await fetch(`${domain}/api/project`);
+        if (!res.ok) throw new Error("Failed to fetch projects");
+        return await res.json();
+    } catch (error) {
+        console.error(error);
+        return [];
+    }
+};
 
 export const deleteProject = async (projectId: string) => {
     const res = await fetch(`${domain}/api/project?id=${projectId}`, {

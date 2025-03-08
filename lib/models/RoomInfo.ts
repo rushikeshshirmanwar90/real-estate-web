@@ -1,6 +1,6 @@
 import { model, models, Schema } from "mongoose";
 
-const roomUpdateSchema = new Schema({
+const RowHouseInfoSchema = new Schema({
   title: {
     type: String,
     required: true,
@@ -33,4 +33,5 @@ const roomUpdateSchema = new Schema({
   },
 });
 
-export default models.RoomUpdate || model("RoomUpdate", roomUpdateSchema);
+export const RowHouseInfo =
+  models.RowHouseInfo || model("RowHouseInfo", RowHouseInfoSchema);

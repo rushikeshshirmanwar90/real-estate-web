@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
     type ColumnDef,
     type ColumnFiltersState,
@@ -24,100 +24,39 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { StaffProps } from "../types/staff"
 
-type Staff = {
-    id: string
-    name: string
-    email: string
-    phone: string
-    position: string
-    department: string
-}
-
-const data: Staff[] = [
-    {
-        id: "1",
-        name: "Robert Johnson",
-        email: "robert.johnson@example.com",
-        phone: "(123) 456-7890",
-        position: "Sales Manager",
-        department: "Sales",
-    },
-    {
-        id: "2",
-        name: "Maria Garcia",
-        email: "maria.garcia@example.com",
-        phone: "(234) 567-8901",
-        position: "Property Agent",
-        department: "Sales",
-    },
-    {
-        id: "3",
-        name: "David Chen",
-        email: "david.chen@example.com",
-        phone: "(345) 678-9012",
-        position: "Financial Analyst",
-        department: "Finance",
-    },
-    {
-        id: "4",
-        name: "Sarah Williams",
-        email: "sarah.williams@example.com",
-        phone: "(456) 789-0123",
-        position: "Marketing Specialist",
-        department: "Marketing",
-    },
-    {
-        id: "5",
-        name: "James Brown",
-        email: "james.brown@example.com",
-        phone: "(567) 890-1234",
-        position: "Property Manager",
-        department: "Operations",
-    },
-    {
-        id: "6",
-        name: "Linda Martinez",
-        email: "linda.martinez@example.com",
-        phone: "(678) 901-2345",
-        position: "HR Manager",
-        department: "Human Resources",
-    },
-    {
-        id: "7",
-        name: "Michael Lee",
-        email: "michael.lee@example.com",
-        phone: "(789) 012-3456",
-        position: "IT Specialist",
-        department: "IT",
-    },
-    {
-        id: "8",
-        name: "Jennifer Taylor",
-        email: "jennifer.taylor@example.com",
-        phone: "(890) 123-4567",
-        position: "Property Agent",
-        department: "Sales",
-    },
-]
-
-export function StaffTable() {
+export const StaffTable: React.FC<{ staff: StaffProps[], loading: boolean }> = ({ staff, loading }) => {
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 
-    const columns: ColumnDef<Staff>[] = [
+
+
+    const columns: ColumnDef<StaffProps>[] = [
+        {
+            accessorKey: "srNumber",
+            header: ({ column }) => (
+                <Button
+                    variant="ghost"
+                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                >
+                    Sr. No.
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+            ),
+            cell: ({ row }) => (
+                <div className="text-center">{row.getValue("srNumber")}</div>
+            ),
+        },
         {
             accessorKey: "name",
-            header: ({ column }) => {
-                return (
-                    <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-                        Name
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
-                )
-            },
+            header: ({ column }) => (
+                <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+                    Name
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+            ),
             cell: ({ row }) => (
                 <div className="flex items-center gap-2">
                     <Avatar className="h-8 w-8">
@@ -140,37 +79,6 @@ export function StaffTable() {
         {
             accessorKey: "phone",
             header: "Phone",
-        },
-        {
-            accessorKey: "position",
-            header: "Position",
-        },
-        {
-            accessorKey: "department",
-            header: "Department",
-            cell: ({ row }) => {
-                const department = row.getValue("department") as string
-                return (
-                    <Badge
-                        variant="outline"
-                        className={
-                            department === "Sales"
-                                ? "bg-blue-100 text-blue-800 hover:bg-blue-100 hover:text-blue-800"
-                                : department === "Finance"
-                                    ? "bg-green-100 text-green-800 hover:bg-green-100 hover:text-green-800"
-                                    : department === "Marketing"
-                                        ? "bg-purple-100 text-purple-800 hover:bg-purple-100 hover:text-purple-800"
-                                        : department === "Operations"
-                                            ? "bg-amber-100 text-amber-800 hover:bg-amber-100 hover:text-amber-800"
-                                            : department === "Human Resources"
-                                                ? "bg-pink-100 text-pink-800 hover:bg-pink-100 hover:text-pink-800"
-                                                : "bg-slate-100 text-slate-800 hover:bg-slate-100 hover:text-slate-800"
-                        }
-                    >
-                        {department}
-                    </Badge>
-                )
-            },
         },
         {
             id: "actions",
@@ -199,7 +107,7 @@ export function StaffTable() {
     ]
 
     const table = useReactTable({
-        data,
+        data: staff,
         columns,
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
@@ -231,18 +139,22 @@ export function StaffTable() {
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>
-                                {headerGroup.headers.map((header) => {
-                                    return (
-                                        <TableHead key={header.id}>
-                                            {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                                        </TableHead>
-                                    )
-                                })}
+                                {headerGroup.headers.map((header) => (
+                                    <TableHead key={header.id}>
+                                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                                    </TableHead>
+                                ))}
                             </TableRow>
                         ))}
                     </TableHeader>
                     <TableBody>
-                        {table.getRowModel().rows?.length ? (
+                        {loading ? (
+                            <TableRow>
+                                <TableCell colSpan={columns.length} className="h-24 text-center">
+                                    Loading data...
+                                </TableCell>
+                            </TableRow>
+                        ) : table.getRowModel().rows?.length ? (
                             table.getRowModel().rows.map((row) => (
                                 <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
                                     {row.getVisibleCells().map((cell) => (
@@ -274,4 +186,3 @@ export function StaffTable() {
         </div>
     )
 }
-

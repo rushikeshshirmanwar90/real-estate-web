@@ -1,5 +1,5 @@
 import connect from "@/lib/db";
-import RoomUpdate from "@/lib/models/RoomUpdate";
+import RoomUpdate from "@/lib/models/RoomInfo";
 import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (req: NextRequest) => {

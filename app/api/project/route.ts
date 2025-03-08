@@ -48,6 +48,7 @@ export const GET = async (req: Request) => {
     );
   }
 };
+
 export const POST = async (req: Request) => {
   try {
     await connect();

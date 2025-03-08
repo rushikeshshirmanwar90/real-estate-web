@@ -37,8 +37,6 @@ const Page = () => {
         latitude: 0,
     });
 
-
-
     const fetchClientId = async () => {
         try {
             const id = await getClientId();
