@@ -7,6 +7,7 @@ import CustomerTable from '@/components/customers/customer-table'
 import { AddCustomerDialog } from '@/components/customers/add-customer-dialog'
 import domain from '@/components/utils/domain'
 import { ApiUser, Customer } from '@/components/types/customer'
+import { successToast } from '@/components/toasts'
 
 const page = () => {
 
@@ -53,7 +54,20 @@ const page = () => {
         try {
             const res = await axios.post(`${domain}/api/user`, data);
             updateData();
-            console.log("user added successfully", res);
+            successToast("user added successfully");
+        } catch (error: any) {
+            console.error("can't able to add the customer");
+            console.log(error.message)
+        }
+    }
+
+    const deleteCustomer = async (id: string) => {
+        try {
+            const res = await axios.delete(`${domain}/api/user`, {
+                params: { id: id }
+            });
+            updateData();
+            successToast("user deleted successfully");
         } catch (error: any) {
             console.error("can't able to add the customer");
             console.log(error.message)
@@ -75,7 +89,7 @@ const page = () => {
                         <AddCustomerDialog addCustomer={addCustomer} />
                     </div>
                     <div className="mt-6">
-                        <CustomerTable customers={customers} loading={loading} />
+                        <CustomerTable customers={customers} loading={loading} deleteCustomer={deleteCustomer} />
                     </div>
                 </div>
             </div>

@@ -1,4 +1,4 @@
-import { BuildingFormProps } from "@/app/building-form/types"
+import { BuildingFormProps } from "@/app/(forms)/building-form/types"
 import domain from "@/components/utils/domain"
 
 export const addBuilding = async (data: BuildingFormProps) => {

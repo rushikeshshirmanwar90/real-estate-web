@@ -11,6 +11,11 @@ const buildingSchema = new Schema(
       type: String,
     },
 
+    location: {
+      type: String,
+      required: true,
+    },
+
     area: {
       type: Number,
       require: true,
@@ -62,6 +67,11 @@ const buildingSchema = new Schema(
         },
 
         totalBookedFlats: {
+          type: Number,
+          required: true,
+        },
+
+        bhk: {
           type: Number,
           required: true,
         },

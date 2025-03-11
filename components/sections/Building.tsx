@@ -4,8 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress"
 import { getSingleBuilding } from "@/functions/building/crud"
 import { useEffect, useState } from "react"
-import { BuildingFormProps } from "@/app/building-form/types"
-import { AmenityItem, DisplayIcon } from "./editable-cards/AmenitiesSelector"
+import { BuildingFormProps } from "@/app/(forms)/building-form/types"
+import { AmenityItem, DisplayIcon } from "../editable-cards/AmenitiesSelector"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 const Building: React.FC<{ buildingId: string | null | undefined }> = ({ buildingId }) => {
 
@@ -117,8 +119,19 @@ const Building: React.FC<{ buildingId: string | null | undefined }> = ({ buildin
                         {buildingData?.flatInfo?.map((flat, index) => (
                             <Card key={index}>
                                 <CardHeader>
-                                    <CardTitle>{flat.title}</CardTitle>
-                                    <CardDescription>{flat.description}</CardDescription>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <CardTitle>{flat.title}</CardTitle>
+                                            <CardDescription>{flat.description}</CardDescription>
+                                        </div>
+                                        <div>
+                                            <Link href={`/room-form?projectId=${buildingData?.projectId}&buildingId=${buildingData?._id}&flatId=${flat._id}`}>
+                                                <Button>
+                                                    Add Room Details
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                    </div>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="grid gap-4">
@@ -146,6 +159,10 @@ const Building: React.FC<{ buildingId: string | null | undefined }> = ({ buildin
                                             <div>
                                                 <dt className="font-medium">Total Area</dt>
                                                 <dd>{flat.totalArea} sq ft</dd>
+                                            </div>
+                                            <div>
+                                                <dt className="font-medium">BHK</dt>
+                                                <dd>{flat.bhk}</dd>
                                             </div>
                                             <div>
                                                 <dt className="font-medium">Availability</dt>

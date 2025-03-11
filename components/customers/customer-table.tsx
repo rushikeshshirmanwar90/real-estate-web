@@ -21,7 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { DropdownMenu, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuContent } from "@/components/ui/dropdown-menu";
 import { Customer, PropertyItem } from "../types/customer";
 
-const CustomerTable: React.FC<{ customers: Customer[], loading: boolean }> = ({ customers, loading }) => {
+const CustomerTable: React.FC<{ customers: Customer[], loading: boolean, deleteCustomer: (id: string) => void }> = ({ customers, loading, deleteCustomer }) => {
     const [sorting, setSorting] = useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const [selectedProperty, setSelectedProperty] = useState<PropertyItem | null>(null);
@@ -106,9 +106,9 @@ const CustomerTable: React.FC<{ customers: Customer[], loading: boolean }> = ({ 
                             <DropdownMenuSeparator />
                             <DropdownMenuItem>View details</DropdownMenuItem>
                             <DropdownMenuItem>Edit customer</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">Delete customer</DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive" onClick={() => deleteCustomer(customer.id)}  >Delete customer</DropdownMenuItem>
                         </DropdownMenuContent>
-                    </DropdownMenu>
+                    </DropdownMenu >
                 );
             },
         },

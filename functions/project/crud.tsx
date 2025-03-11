@@ -1,5 +1,5 @@
 import domain from "@/components/utils/domain";
-import { FormData } from "@/app/project-form/types";
+import { FormData } from "@/app/(forms)/project-form/types";
 
 export const getSingleProject = async (projectId: string) => {
     const res = await fetch(`${domain}/api/project?id=${projectId}`);

@@ -8,17 +8,8 @@ import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { ImagePlus, Pencil, X, Check, Loader2, Building2 } from "lucide-react"
+import { FlatInfo } from "@/app/(forms)/building-form/types"
 import { handleImageUpload } from "../functions/image-handling"
-
-interface FlatInfo {
-    title: string
-    description?: string
-    images: string[]
-    totalFlats: number
-    totalBookedFlats: number
-    totalArea: number
-    video?: string
-}
 
 interface FlatInfoEditableCardProps {
     flatInfos: FlatInfo[] | undefined
@@ -81,6 +72,7 @@ export function FlatInfoEditableCard({ flatInfos = [], onFlatInfoChange }: FlatI
                 totalBookedFlats: 0,
                 totalArea: 0,
                 video: "",
+                bhk: 1,
             },
         ])
     }
@@ -190,6 +182,16 @@ export function FlatInfoEditableCard({ flatInfos = [], onFlatInfoChange }: FlatI
                                             />
                                         </div>
                                         <div className="space-y-2">
+                                            <label className="text-sm font-medium">BHK</label>
+                                            <Input
+                                                type="number"
+                                                value={flatInfo.bhk}
+                                                onChange={(e) => updateFlatInfo(index, "bhk", Number(e.target.value))}
+                                                required
+                                                min={0}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
                                             <label className="text-sm font-medium">Video URL</label>
                                             <Input
                                                 value={flatInfo.video || ""}
@@ -212,6 +214,10 @@ export function FlatInfoEditableCard({ flatInfos = [], onFlatInfoChange }: FlatI
                                             <div>
                                                 <div className="text-sm text-muted-foreground">Booked Flats</div>
                                                 <div className="text-lg font-medium">{flatInfo.totalBookedFlats}</div>
+                                            </div>
+                                            <div>
+                                                <div className="text-sm text-muted-foreground">BHK</div>
+                                                <div className="text-lg font-medium">{flatInfo.bhk}</div>
                                             </div>
                                             <div>
                                                 <div className="text-sm text-muted-foreground">Total Area</div>

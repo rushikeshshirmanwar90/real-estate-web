@@ -1,0 +1,67 @@
+import connect from "@/lib/db";
+import { User } from "@/lib/models/Users";
+import { CustomerDetails } from "@/lib/models/CustomerDetails";
+import { NextResponse } from "next/server";
+
+export const POST = async (req: Request) => {
+  try {
+    await connect();
+
+    const body = await req.json();
+    const { email } = body;
+
+    if (!email) {
+      return NextResponse.json(
+        {
+          message: "Email is required",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    const isUser = await User.findOne({ email }).populate("properties");
+
+    if (!isUser) {
+      return NextResponse.json(
+        {
+          message: "User not registered",
+        },
+        {
+          status: 404,
+        }
+      );
+    }
+
+    if (
+      isUser.password == "" ||
+      isUser.password == null ||
+      isUser.password == undefined
+    ) {
+      return NextResponse.json(
+        {
+          isUser,
+        },
+        { status: 201 }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        isUser,
+      },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    console.log(error.message);
+    return NextResponse.json(
+      {
+        message:
+          "Can't able to find the user, something went wrong, please try again",
+        error: error.message,
+      },
+      { status: 500 }
+    );
+  }
+};

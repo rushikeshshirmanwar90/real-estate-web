@@ -5,8 +5,8 @@ import Image from "next/image"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { DisplayIcon } from "./editable-cards/AmenitiesSelector"
-import { RowHouseProps } from "@/app/rowHouse-form/types"
+import { DisplayIcon } from "../editable-cards/AmenitiesSelector"
+import { RowHouseProps } from "@/app/(forms)/rowHouse-form/types"
 import { getSingleRowHouse } from "@/functions/rowHouse/crud"
 
 const RowHouse: React.FC<{ sectionId: string }> = ({ sectionId }) => {

@@ -34,7 +34,7 @@ const PropertySchema = new Schema(
     },
     flatName: {
       type: String,
-      required: false,
+      required: true,
       default: "",
     },
   },

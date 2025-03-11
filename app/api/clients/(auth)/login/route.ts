@@ -66,7 +66,7 @@ export const POST = async (req: NextRequest, res: NextResponse) => {
       }
     );
   } catch (error: any) {
-    console.error("Login error:", error); 
+    console.error("Login error:", error);
     if (error.message.includes("buffering timed out")) {
       return NextResponse.json(
         {

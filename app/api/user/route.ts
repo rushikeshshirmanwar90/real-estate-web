@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-
 import connect from "@/lib/db";
 import { User } from "@/lib/models/Users";
 import { CustomerDetails } from "@/lib/models/CustomerDetails";
@@ -8,13 +7,11 @@ export const GET = async (req: NextRequest) => {
   try {
     await connect();
 
-    // Get user ID from the URL or query params - optional
     const url = new URL(req.url);
     const userId = url.searchParams.get("userId");
 
     // If userId is provided, fetch that specific user
     if (userId) {
-      // Fetch user with populated properties field
       const user = await User.findById(userId).populate("properties");
 
       if (!user) {
@@ -47,22 +44,36 @@ export const POST = async (req: NextRequest) => {
 
     const data = await req.json();
 
-    // Create the User record first
     let userData = { ...data };
     let propertiesData;
 
-    if (data.userType === "customer") {
-      // Extract properties from user data to create CustomerDetails later
-      propertiesData = userData.properties;
-      delete userData.properties; // Remove properties from userData
+    const { email, phoneNumber } = data;
 
-      // Remove password field for customer users
+    const findUser = await User.findOne({
+      $or: [{ email }, { phoneNumber }],
+    });
+
+    if (findUser) {
+      return NextResponse.json(
+        {
+          message:
+            "User Already Exits, please register with another email and phone number",
+        },
+        {
+          status: 409,
+        }
+      );
+    }
+
+    if (data.userType === "customer") {
+      propertiesData = userData.properties;
+      delete userData.properties;
+
       if (userData.password) {
         delete userData.password;
       }
     }
 
-    // Create and save new user
     const newUser = new User(userData);
     const savedUser = await newUser.save();
 
@@ -74,8 +85,6 @@ export const POST = async (req: NextRequest) => {
         { status: 404 }
       );
     }
-
-    // If user is a customer, create CustomerDetails with the properties
     if (
       data.userType === "customer" &&
       propertiesData &&

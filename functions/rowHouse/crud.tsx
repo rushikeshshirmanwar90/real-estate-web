@@ -1,4 +1,4 @@
-import { RowHouseProps } from "@/app/rowHouse-form/types"
+import { RowHouseProps } from "@/app/(forms)/rowHouse-form/types"
 import domain from "@/components/utils/domain"
 
 export const addRowHouse = async (data: RowHouseProps) => {

@@ -6,12 +6,14 @@ export interface Section {
 }
 
 export interface FlatInfo {
+    _id: string;
     title: string;
     description?: string;
     images: string[];
     totalFlats: number;
     totalBookedFlats: number;
     totalArea: number;
+    bhk: number
     video?: string;
 }
 
@@ -21,8 +23,10 @@ export interface Amenity {
 }
 
 export interface BuildingFormProps {
+    _id?: string;
     name: string;
     description?: string;
+    location: string
     projectId: string;
     area: number;
     images: string[];

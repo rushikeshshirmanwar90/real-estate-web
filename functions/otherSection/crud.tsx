@@ -1,4 +1,4 @@
-import { OtherSectionProps } from "@/app/otherSection-form/types"
+import { OtherSectionProps } from "@/app/(forms)/otherSection-form/types"
 import domain from "@/components/utils/domain"
 
 export const addOtherSection = async (data: OtherSectionProps) => {

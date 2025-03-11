@@ -1,7 +1,7 @@
 import { Building } from "@/lib/models/Building";
 import { Projects } from "@/lib/models/Project";
 import connect from "@/lib/db";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (req: Response) => {
   try {
@@ -194,6 +194,58 @@ export const PUT = async (req: Response) => {
       {
         status: 500,
       }
+    );
+  }
+};
+
+export const PATCH = async (req: NextRequest) => {
+  try {
+    await connect();
+
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json(
+        {
+          message: "Building ID is required",
+        },
+        { status: 400 }
+      );
+    }
+
+    const body = await req.json();
+
+    const updatedBuilding = await Building.findByIdAndUpdate(
+      id,
+      { $set: body },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedBuilding) {
+      return NextResponse.json(
+        {
+          message: "Building not found",
+        },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        message: "Building partially updated successfully",
+        data: updatedBuilding,
+      },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    console.error("Error updating building:", error);
+    return NextResponse.json(
+      {
+        message: "Failed to update building",
+        error: error.message,
+      },
+      { status: 500 }
     );
   }
 };

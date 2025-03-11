@@ -6,30 +6,36 @@ const userSchema = new Schema(
       type: String,
       required: true,
     },
+
     lastName: {
       type: String,
       required: true,
     },
+
     phoneNumber: {
       type: String,
       required: true,
       unique: true,
     },
+
     email: {
       type: String,
       unique: true,
       required: true,
     },
+
     userType: {
       type: String,
       required: true,
       enum: ["customer", "staff"],
     },
+
     properties: {
       type: Schema.Types.ObjectId,
       ref: "CustomerDetails",
       required: false,
     },
+
     password: {
       type: String,
       required: false,
@@ -40,6 +46,8 @@ const userSchema = new Schema(
       ref: "client",
       required: true,
     },
+
+    otp: { type: Number, required: false },
   },
   {
     timestamps: true,

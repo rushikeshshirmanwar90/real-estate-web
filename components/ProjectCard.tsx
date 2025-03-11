@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation"
 import {
     MapPin,
     Ruler,
-    ClubIcon,
     Ellipsis,
     Trash,
     Pencil,
@@ -39,8 +38,9 @@ import {
     CarouselPrevious,
 } from "@/components/ui/carousel"
 
-import RowHouse from "@/components/RowHouse"
-import OtherSection from "@/components/OtherSection"
+import RowHouse from "@/components/sections/RowHouse"
+import OtherSection from "@/components/sections/OtherSection"
+import Building from "@/components/sections/Building"
 
 import Autoplay from "embla-carousel-autoplay"
 
@@ -56,7 +56,6 @@ import { DisplayIcon } from "./editable-cards/AmenitiesSelector"
 import { deleteProject } from "@/functions/project/crud"
 import { successToast } from "./toasts"
 import Image from "next/image"
-import Building from "./Building"
 import { deleteBuilding } from "@/functions/building/crud"
 
 interface Section {
@@ -129,7 +128,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ projectInfo, refreshData }) =
             const encodedName = encodeURIComponent(newSection.name)
             const encodedProjectId = encodeURIComponent(projectInfo._id)
             if (newSection.type == 'building') {
-                router.push(`/building-form?name=${encodedName}&projectId=${encodedProjectId}`)
+                router.push(`/building-form?name=${encodedName}&projectId=${encodedProjectId}&location=${projectInfo.address}`)
             }
             if (newSection.type == 'row house') {
                 router.push(`/rowHouse-form?name=${encodedName}&projectId=${encodedProjectId}`)
@@ -151,18 +150,29 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ projectInfo, refreshData }) =
         setIsSectionModelOpen(true)
     }
 
-
-
     const handleDeleteSection = () => {
         const res = deleteBuilding(projectInfo._id, selectedSection?.id);
         refreshData();
         setIsSectionModelOpen(false)
     }
 
+    const handleSectionEdit = () => {
+        if (!selectedSection) {
+            console.error('No section selected')
+            return
+        }
+
+        const formPath = selectedSection.type === 'Buildings'
+            ? `/building-form?id=${selectedSection.id}`
+            : selectedSection.type === 'row house'
+                ? `/rowHouse-form?id=${selectedSection.id}`
+                : `/otherSection-form?id=${selectedSection.id}`
+
+        router.push(formPath)
+    }
     return (
         <div className="w-[68rem] bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col">
             <div className="flex">
-                {/* Image Section */}
                 <div className="w-1/2 relative">
 
                     <Carousel
@@ -187,7 +197,6 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ projectInfo, refreshData }) =
                             }
                         </CarouselContent>
                     </Carousel>
-
 
 
                     <div className="absolute top-4 left-4 bg-white text-gray-800 text-sm font-bold px-3 py-1 rounded-lg shadow">
@@ -345,10 +354,11 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ projectInfo, refreshData }) =
                 </DialogContent>
             </Dialog>
 
+
+            {/* models */}
             <Dialog open={isSectionModelOpen} onOpenChange={setIsSectionModelOpen}>
                 <DialogContent className="max-h-[90vh] flex flex-col p-0">
                     <div className="flex-1 overflow-y-auto p-6">
-
                         {
                             selectedSection?.type == 'Buildings' ? (<div>
                                 <Building buildingId={selectedSection?.id} />
@@ -363,14 +373,13 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ projectInfo, refreshData }) =
                         <Button variant="outline" onClick={() => setIsSectionModelOpen(false)}>
                             Close
                         </Button>
-                        <Button>Edit</Button>
+                        <Button type="button" onClick={handleSectionEdit} >Edit</Button>
                         <Button onClick={handleDeleteSection} variant="destructive">
                             Delete
                         </Button>
                     </div>
                 </DialogContent>
             </Dialog>
-
         </div>
     )
 }

@@ -36,7 +36,7 @@ export const handleImageUpload = async (
 
     const urls = (await Promise.all(uploadPromises)).filter(Boolean) as string[];
 
-    setImages((prevImages : any) => [...prevImages, ...urls]);
+    setImages((prevImages: any) => [...prevImages, ...urls]);
     setIsLoading(false);
 
     return urls;

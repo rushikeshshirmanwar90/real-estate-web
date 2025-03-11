@@ -25,7 +25,7 @@ import {
     FormLabel,
     FormMessage,
 } from '@/components/ui/form';
-import { formSchema, type FlatFormValues } from '@/app/project-form/schema';
+import { formSchema, type FlatFormValues } from '@/app/(forms)/project-form/schema';
 import ImageHandler from '@/components/image-handler';
 
 const AddFlatForm = () => {
