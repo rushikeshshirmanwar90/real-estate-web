@@ -27,7 +27,7 @@ interface AWSVerifyEmailProps {
     details?: Details;
 }
 
-const apkLink = 'https://expo.dev/accounts/rushi_shrimanwar/projects/real-estate-app/builds/e8100578-900b-4387-949b-9d222ef5d5f5';
+const apkLink = 'https://expo.dev/accounts/rushi_shrimanwar/projects/real-estate-app/builds/6e9ca91f-93e0-4e4e-b04a-22ad49d6af27';
 
 const baseUrl = 'https://res.cloudinary.com/dlcq8i2sc/image/upload/v1741694804/wbw6tqlr9qakfbts0kic.png';
 
