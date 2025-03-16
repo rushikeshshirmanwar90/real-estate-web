@@ -3,7 +3,10 @@ import type { NextRequest } from "next/server";
 
 // Helper function to apply CORS headers
 function applyCorsHeaders(response: NextResponse) {
-  response.headers.set("Access-Control-Allow-Origin", "http://localhost:3000"); // Your frontend origin
+  response.headers.set(
+    "Access-Control-Allow-Origin",
+    "https://real-estate-web-pied.vercel.app"
+  ); // Your frontend origin
   response.headers.set(
     "Access-Control-Allow-Methods",
     "GET, POST, PUT, DELETE, OPTIONS"
