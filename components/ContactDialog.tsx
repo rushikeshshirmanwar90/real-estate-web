@@ -49,7 +49,7 @@ const ContactsDialog: React.FC<{ clientId: string }> = ({ clientId }) => {
     const [isOpen, setIsOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const itemsPerPage = 5
+    const itemsPerPage = 20
 
     // Fetch contacts when dialog opens or clientId changes
     useEffect(() => {
@@ -323,7 +323,7 @@ const ContactsDialog: React.FC<{ clientId: string }> = ({ clientId }) => {
                                 {Array.from({ length: totalPages }).map((_, index) => {
                                     // Show limited page numbers for better UX
                                     if (
-                                        totalPages <= 5 ||
+                                        totalPages <= 20 ||
                                         index === 0 ||
                                         index === totalPages - 1 ||
                                         (index >= currentPage - 2 && index <= currentPage)

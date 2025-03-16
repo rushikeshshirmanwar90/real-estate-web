@@ -2,19 +2,37 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Helper function to apply CORS headers
-function applyCorsHeaders(response: NextResponse) {
-  response.headers.set(
-    "Access-Control-Allow-Origin",
-    "https://real-estate-web-pied.vercel.app"
-  ); // Your frontend origin
+function applyCorsHeaders(response: NextResponse, request: NextRequest) {
+  const origin = request.headers.get("origin");
+
+  // List of allowed origins
+  const allowedOrigins = [
+    "https://real-estate-web-pied.vercel.app",
+    "http://localhost:8080",
+  ];
+
+  // Check if the request origin is in our allowed list
+  if (origin && allowedOrigins.includes(origin)) {
+    response.headers.set("Access-Control-Allow-Origin", origin);
+  } else {
+    // You could also use a wildcard for development, but not recommended for production
+    response.headers.set(
+      "Access-Control-Allow-Origin",
+      "https://real-estate-web-pied.vercel.app"
+    );
+  }
+
+  // Add these additional headers for more complex requests
+  response.headers.set("Access-Control-Allow-Credentials", "true");
   response.headers.set(
     "Access-Control-Allow-Methods",
     "GET, POST, PUT, DELETE, OPTIONS"
-  ); // Allowed methods
+  );
   response.headers.set(
     "Access-Control-Allow-Headers",
-    "Content-Type, Authorization"
-  ); // Allowed headers
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization"
+  );
+
   return response;
 }
 
@@ -25,21 +43,19 @@ export function middleware(request: NextRequest) {
   if (pathname.startsWith("/api/")) {
     // Handle preflight OPTIONS request
     if (request.method === "OPTIONS") {
-      return applyCorsHeaders(new NextResponse(null, { status: 204 }));
+      return applyCorsHeaders(new NextResponse(null, { status: 204 }), request);
     }
 
     // Apply CORS headers to all API responses
     const response = NextResponse.next();
-    return applyCorsHeaders(response);
+    return applyCorsHeaders(response, request);
   }
 
   // Existing authentication logic for non-API routes
   const token = request.cookies.get("client_auth_token")?.value;
-
   if (token && pathname === "/login") {
     return NextResponse.redirect(new URL("/", request.url));
   }
-
   if (!token && pathname !== "/login") {
     return NextResponse.redirect(new URL("/login", request.url));
   }
@@ -47,10 +63,10 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Update matcher to include /api/* along with existing patterns
+// Make sure the matcher is correctly set up
 export const config = {
   matcher: [
-    "/api/:path*", // Match all API routes
-    "/((?!_next/static|_next/image|favicon.ico).*)", // Your existing matcher for pages
+    "/api/:path*",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.png$).*)",
   ],
 };

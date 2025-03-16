@@ -53,5 +53,3 @@ export const thankYouMail = async (email: string, details: Details) => {
     return false;
   }
 };
-
-

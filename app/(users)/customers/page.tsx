@@ -23,6 +23,8 @@ const Page = () => {
                 const res = await axios.get(`${domain}/api/user`);
                 const apiUsers: ApiUser[] = res.data;
 
+                // console.log(apiUsers);
+
                 // Filter only users with userType "customer" and map to Customer type
                 const customerData = apiUsers
                     .filter(user => user.userType === "customer")

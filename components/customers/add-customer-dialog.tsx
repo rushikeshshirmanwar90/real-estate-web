@@ -1,10 +1,12 @@
 "use client"
 
+import type React from "react"
+
 import { useEffect, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { PlusCircle, Trash2, Edit, Plus } from "lucide-react"
+import { PlusCircle, Trash2, Edit, Plus, Loader2, Check, Mail } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -24,11 +26,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import axios from "axios"
 import domain from "../utils/domain"
 import { getClientId } from "@/functions/getClientId"
+import { sendOtp, thankYouMail } from "@/functions/mail"
+import { Details } from "../types/customer"
 // Matched with the PropertySchema in Mongoose
 
-
 export interface CustomerData {
-    _id?: string
+    id?: string
     firstName: string
     lastName: string
     email: string
@@ -36,8 +39,8 @@ export interface CustomerData {
     properties: PropertyItem[]
     userType: string
     clientId: string
+    emailVerified?: boolean
 }
-
 
 interface SectionData {
     sectionId: string
@@ -45,13 +48,12 @@ interface SectionData {
     type: string
 }
 
-
-
 interface FlatInfo {
     _id: string
     title: string
     totalFlats: number
-    totalBookedFlats: number
+    totalBookedFlats: number,
+    video: string
 }
 
 interface PropertyItem {
@@ -90,13 +92,24 @@ const formSchema = z.object({
     }),
     phoneNumber: z.string().min(10, {
         message: "Phone number must be at least 10 digits.",
-    })
+    }),
+    emailVerified: z.boolean().optional(),
 })
 
-export const AddCustomerDialog: React.FC<{ addCustomer: (data: CustomerData) => void, userId?: string }> = ({ addCustomer }) => {
+export const AddCustomerDialog: React.FC<{ addCustomer: (data: CustomerData) => void; userId?: string }> = ({
+    addCustomer,
+}) => {
     const [open, setOpen] = useState<boolean>(false)
     const [projects, setProjects] = useState<projectProps[]>([])
     const [building, setBuilding] = useState<BuildingProps[]>([])
+    const [verifyingEmail, setVerifyingEmail] = useState(false)
+    const [emailVerified, setEmailVerified] = useState(false)
+    const [emailVerificationSent, setEmailVerificationSent] = useState(false)
+    const [verificationError, setVerificationError] = useState<string | null>(null)
+    const [verificationCode, setVerificationCode] = useState()
+    const [otpInput, setOtpInput] = useState("")
+    const [showOtpInput, setShowOtpInput] = useState(false)
+    const [verifyingOtp, setVerifyingOtp] = useState(false)
 
     // Property form state
     const [selectedProject, setSelectedProject] = useState<string>("")
@@ -116,23 +129,11 @@ export const AddCustomerDialog: React.FC<{ addCustomer: (data: CustomerData) => 
         setBuilding(data)
     }
 
-
     const fetchProjects = async () => {
         const res = await axios.get(`${domain}/api/project`)
         const data = res.data
         setProjects(data)
     }
-
-    const fetchClientId = async () => {
-        try {
-            const id = await getClientId();
-            if (id) {
-                form.setValue("clientId", id);
-            }
-        } catch (error) {
-            console.error("Error fetching client ID:", error);
-        }
-    };
 
 
     useEffect(() => {
@@ -165,10 +166,8 @@ export const AddCustomerDialog: React.FC<{ addCustomer: (data: CustomerData) => 
             } else {
                 setAvailableFlats([])
             }
-
         } else {
             setAvailableFlats([])
-
         }
     }, [selectedSection, selectedSectionType, building, editingPropertyIndex])
 
@@ -181,8 +180,25 @@ export const AddCustomerDialog: React.FC<{ addCustomer: (data: CustomerData) => 
             lastName: "",
             email: "",
             phoneNumber: "",
+            emailVerified: false,
         },
     })
+
+    const fetchClientId = async () => {
+        try {
+            const id = await getClientId();
+            if (id) {
+                form.setValue("clientId", id);
+            }
+        } catch (error) {
+            console.error("Error fetching client ID:", error);
+        }
+    };
+
+
+    useEffect(() => {
+        fetchClientId()
+    }, [])
 
     const propertyForm = useForm<z.infer<typeof propertySchema>>({
         resolver: zodResolver(propertySchema),
@@ -207,7 +223,6 @@ export const AddCustomerDialog: React.FC<{ addCustomer: (data: CustomerData) => 
         }
         propertyForm.setValue("flatId", "")
         propertyForm.setValue("flatName", "")
-
     }
 
     const handleAddProperty = () => {
@@ -230,7 +245,6 @@ export const AddCustomerDialog: React.FC<{ addCustomer: (data: CustomerData) => 
         setSelectedProject(property.projectId)
         setSelectedSection(property.sectionId)
         setSelectedSectionType(property.sectionType)
-
 
         propertyForm.reset({
             projectId: property.projectId,
@@ -258,7 +272,78 @@ export const AddCustomerDialog: React.FC<{ addCustomer: (data: CustomerData) => 
         propertyForm.reset()
     }
 
-    function onSubmit(values: z.infer<typeof formSchema>) {
+    const sendVerificationEmail = async () => {
+        const email = form.getValues("email")
+        if (!email || !form.formState.dirtyFields.email) {
+            setVerificationError("Please enter an email address first")
+            return
+        }
+
+        try {
+            setVerifyingEmail(true)
+            setVerificationError(null)
+
+            const otp = await sendOtp(email)
+            setVerificationCode(otp)
+
+            setEmailVerificationSent(true)
+            setShowOtpInput(true)
+            setTimeout(() => {
+                setEmailVerificationSent(false)
+            }, 5000)
+        } catch (error: unknown) {
+            setVerificationError("Failed to send verification email")
+            console.log(error);
+        } finally {
+            setVerifyingEmail(false)
+        }
+    }
+
+    const verifyOtp = async () => {
+        if (!otpInput) {
+            setVerificationError("Please enter the OTP sent to your email")
+            return
+        }
+
+        try {
+            setVerifyingOtp(true)
+            setVerificationError(null)
+
+            if (otpInput == verificationCode) {
+                setEmailVerified(true)
+                form.setValue("emailVerified", true)
+                setShowOtpInput(false)
+            } else {
+                setVerificationError("Invalid OTP. Please try again.")
+            }
+        } catch (error) {
+            setVerificationError("Failed to verify OTP")
+            console.log(error);
+        } finally {
+            setVerifyingOtp(false)
+        }
+    }
+
+    const onSubmit = async (values: z.infer<typeof formSchema>) => {
+
+        const propertyDetails: Details[] = properties.map((property) => {
+            // Find the building data for this property
+            const buildingData = building.find((b) => b._id === property.sectionId)
+
+            // Find the flat info if available
+            const flatInfo = property.flatId ? availableFlats.find((f) => f._id === property.flatId) : null
+
+            return {
+                userName: `${values.firstName} ${values.lastName}`,
+                flatName: property.flatName || "",
+                title: property.sectionName || "",
+                description: buildingData?.description || "",
+                images: buildingData?.images || [],
+                totalArea: buildingData?.area || 0,
+                video: flatInfo?.video || "",
+            }
+        })
+
         const customerData = {
             firstName: values.firstName,
             lastName: values.lastName,
@@ -268,16 +353,37 @@ export const AddCustomerDialog: React.FC<{ addCustomer: (data: CustomerData) => 
             userType: values.userType,
             clientId: values.clientId
         }
-        addCustomer(customerData);
-        setOpen(false)
-        form.reset()
-        setProperties([])
+        const check = await thankYouMail(customerData.email, propertyDetails[0]);
+        if (check) {
+            addCustomer(customerData)
+            setOpen(false)
+            form.reset()
+            setProperties([])
+            setEmailVerified(false)
+            setEmailVerificationSent(false)
+            setVerificationError(null)
+        }
     }
 
 
+
+    // Reset verification state when email changes
     useEffect(() => {
-        fetchClientId();
-    }, []);
+        const subscription = form.watch((value, { name }) => {
+            if (name === "email") {
+                setEmailVerified(false)
+                setEmailVerificationSent(false)
+                setVerificationError(null)
+                setShowOtpInput(false)
+                setOtpInput("")
+                form.setValue("emailVerified", false)
+            }
+        })
+        return () => subscription.unsubscribe()
+    }, [form])
+
+
+
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -330,9 +436,57 @@ export const AddCustomerDialog: React.FC<{ addCustomer: (data: CustomerData) => 
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Email</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="john.smith@example.com" {...field} />
-                                        </FormControl>
+                                        <div className="flex space-x-2">
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="john.smith@example.com"
+                                                    {...field}
+                                                    className={emailVerified ? "border-green-500" : ""}
+                                                />
+                                            </FormControl>
+                                            <Button
+                                                type="button"
+                                                variant={emailVerified ? "outline" : "secondary"}
+                                                onClick={emailVerified ? undefined : sendVerificationEmail}
+                                                disabled={verifyingEmail || !field.value}
+                                                className={emailVerified ? "border-green-500 text-green-500" : ""}
+                                            >
+                                                {verifyingEmail ? (
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                ) : emailVerified ? (
+                                                    <Check className="h-4 w-4 mr-2" />
+                                                ) : (
+                                                    <Mail className="h-4 w-4 mr-2" />
+                                                )}
+                                                {emailVerified ? "Verified" : "Verify"}
+                                            </Button>
+                                        </div>
+                                        {emailVerificationSent && (
+                                            <p className="text-sm text-blue-500 mt-1">
+                                                Verification email sent. Please check your inbox for the OTP.
+                                            </p>
+                                        )}
+                                        {showOtpInput && !emailVerified && (
+                                            <div className="mt-2">
+                                                <div className="flex space-x-2">
+                                                    <Input
+                                                        type="text"
+                                                        placeholder="Enter OTP"
+                                                        value={otpInput}
+                                                        onChange={(e) => setOtpInput(e.target.value)}
+                                                    />
+                                                    <Button
+                                                        type="button"
+                                                        variant="secondary"
+                                                        onClick={verifyOtp}
+                                                        disabled={verifyingOtp || !otpInput}
+                                                    >
+                                                        {verifyingOtp ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify OTP"}
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {verificationError && <p className="text-sm text-red-500 mt-1">{verificationError}</p>}
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -545,47 +699,48 @@ export const AddCustomerDialog: React.FC<{ addCustomer: (data: CustomerData) => 
                                                     <Button
                                                         type="button"
                                                         onClick={() => {
-                                                            // Manually trigger form validation
                                                             propertyForm.trigger().then((isValid) => {
                                                                 if (isValid) {
-                                                                    // Get the current form values
                                                                     const values = propertyForm.getValues()
 
-                                                                    // Process the form data manually
-                                                                    const project = projects.find((p) => p._id === values.projectId)
-                                                                    const section = filteredSections.find((s) => s.sectionId === values.sectionId)
-                                                                    const flatName = values.flatName || "" // Use the input as flatName
+                                                                    // Get project and section names for display
+                                                                    const selectedProjectObj = projects.find((p) => p._id === values.projectId)
+                                                                    const selectedSectionObj = filteredSections.find(
+                                                                        (s) => s.sectionId === values.sectionId,
+                                                                    )
 
+                                                                    // Get flat name if applicable
+                                                                    let selectedFlatObj
                                                                     if (values.flatId && selectedSectionType === "Buildings") {
-                                                                        const flat = availableFlats.find((f) => f._id === values.flatId)
-                                                                        if (flat) {
-                                                                            // Store flatInfoId at the form level for the schema
-                                                                        }
+                                                                        selectedFlatObj = availableFlats.find((f) => f._id === values.flatId)
                                                                     }
 
-                                                                    const newProperty: PropertyItem = {
-                                                                        id: editingPropertyIndex !== null
-                                                                            ? properties[editingPropertyIndex].id
-                                                                            : Date.now().toString(),
+                                                                    // Create property object
+                                                                    const property: PropertyItem = {
+                                                                        id:
+                                                                            editingPropertyIndex !== null
+                                                                                ? properties[editingPropertyIndex].id
+                                                                                : Date.now().toString(),
                                                                         projectId: values.projectId,
-                                                                        projectName: project?.name || "",
+                                                                        projectName: selectedProjectObj?.name || "Unknown Project",
                                                                         sectionId: values.sectionId,
-                                                                        sectionName: section?.name || "",
+                                                                        sectionName: selectedSectionObj?.name || "Unknown Section",
                                                                         sectionType: selectedSectionType,
                                                                         flatId: values.flatId,
-                                                                        flatName: flatName, // This now contains the unit number directly
+                                                                        flatName: values.flatName || selectedFlatObj?.title || "",
                                                                     }
 
                                                                     if (editingPropertyIndex !== null) {
                                                                         // Update existing property
                                                                         const updatedProperties = [...properties]
-                                                                        updatedProperties[editingPropertyIndex] = newProperty
+                                                                        updatedProperties[editingPropertyIndex] = property
                                                                         setProperties(updatedProperties)
                                                                     } else {
                                                                         // Add new property
-                                                                        setProperties([...properties, newProperty])
+                                                                        setProperties([...properties, property])
                                                                     }
 
+                                                                    // Reset form and close property form
                                                                     setIsAddingProperty(false)
                                                                     setEditingPropertyIndex(null)
                                                                     propertyForm.reset()
@@ -607,7 +762,7 @@ export const AddCustomerDialog: React.FC<{ addCustomer: (data: CustomerData) => 
                             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={properties.length === 0}>
+                            <Button type="submit" disabled={properties.length === 0 || !emailVerified}>
                                 Add Customer
                             </Button>
                         </DialogFooter>
@@ -617,3 +772,4 @@ export const AddCustomerDialog: React.FC<{ addCustomer: (data: CustomerData) => 
         </Dialog>
     )
 }
+

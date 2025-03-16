@@ -121,7 +121,7 @@ const CustomerTable: React.FC<{ customers: CustomerData[], loading: boolean, del
             cell: ({ row }) => {
                 const customer = row.original;
                 return (
-                    <ContactsDialog clientId={customer.clientId} />
+                    <ContactsDialog clientId={customer.id || ""} />
                 );
             },
         },
@@ -139,11 +139,11 @@ const CustomerTable: React.FC<{ customers: CustomerData[], loading: boolean, del
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(customer._id || "")}>Copy customer ID</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(customer.id || "")}>Copy customer ID</DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem>View details</DropdownMenuItem>
                             <DropdownMenuItem>Edit customer</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={() => deleteCustomer(customer._id || "")}>Delete customer</DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive" onClick={() => deleteCustomer(customer.id || "")}>Delete customer</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 );

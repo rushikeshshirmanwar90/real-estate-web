@@ -27,7 +27,7 @@ interface AWSVerifyEmailProps {
     details?: Details;
 }
 
-const apkLink = process.env.APK_LINK;
+const apkLink = 'https://expo.dev/accounts/rushi_shrimanwar/projects/real-estate-app/builds/e8100578-900b-4387-949b-9d222ef5d5f5';
 
 const baseUrl = 'https://res.cloudinary.com/dlcq8i2sc/image/upload/v1741694804/wbw6tqlr9qakfbts0kic.png';
 
@@ -104,6 +104,22 @@ export const EmailTemplate = ({
                                 </a>
                             </Section>
 
+                            <Section style={downloadAppSection}>
+                                <Text style={downloadAppText}>
+                                    Download our app to get the latest updates and manage your property details
+                                </Text>
+                                <Section style={downloadButtonContainer}>
+                                    <a
+                                        href={apkLink}
+                                        style={downloadButtonStyle}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        Download App
+                                    </a>
+                                </Section>
+                            </Section>
+
                             {/* Property Specifications */}
                             <Section style={propertySpecsSection}>
                                 <Text style={specTitleText}>Property Specifications</Text>
@@ -113,22 +129,7 @@ export const EmailTemplate = ({
                             </Section>
                         </Section>
 
-                        {/* Download App Section */}
-                        <Section style={downloadAppSection}>
-                            <Text style={downloadAppText}>
-                                Download our app to get the latest updates and manage your property details
-                            </Text>
-                            <Section style={downloadButtonContainer}>
-                                <a
-                                    href={apkLink}
-                                    style={downloadButtonStyle}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    Download App
-                                </a>
-                            </Section>
-                        </Section>
+
                     </Section>
                 </Container>
             </Body>
