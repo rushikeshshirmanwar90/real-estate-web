@@ -5,6 +5,7 @@ import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { FormField, FormMessage } from './ui/form'
 import { handleImageUpload, removeImage } from '../components/functions/image-handling'
+import { FieldValues } from 'react-hook-form'
 
 interface formProps {
     control: FieldValues
