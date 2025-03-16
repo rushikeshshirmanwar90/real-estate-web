@@ -1,6 +1,6 @@
 import { Projects } from "@/lib/models/Project";
 import connect from "@/lib/db";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { validateClient } from "@/components/functions/validateClient";
 import { ObjectId } from "mongodb";
 

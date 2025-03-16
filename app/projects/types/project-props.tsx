@@ -10,6 +10,7 @@ export interface projectProps {
     address: string;
     state: string;
     city: string;
+    totalBuilding: number;
     amenities: AmenitiesProps[];
     clientId: string;
     section: {

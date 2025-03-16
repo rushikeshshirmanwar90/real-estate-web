@@ -20,11 +20,11 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { ProjectProps } from '../types/project-props'
-import { Building2, Calendar, MapPin, Edit, Trash2 } from 'lucide-react'
+import { projectProps } from '../types/project-props'
+import { Building2, MapPin, Edit, Trash2 } from 'lucide-react'
 import { deleteProject } from "@/functions/project/crud"
 
-const ProjectGrid = ({ projects }: { projects: ProjectProps[] }) => {
+const ProjectGrid = ({ projects }: { projects: projectProps[] }) => {
     return (
         <div className="container mx-auto p-4 md:p-6">
             <h1 className="text-3xl font-bold mb-6">Projects Overview</h1>
@@ -116,7 +116,7 @@ const ProjectGrid = ({ projects }: { projects: ProjectProps[] }) => {
                                     </div>
                                 </div>
 
-                                <div className="flex items-start gap-2">
+                                {/* <div className="flex items-start gap-2">
                                     <Calendar className="w-5 h-5 mt-0.5 text-muted-foreground shrink-0" />
                                     <div>
                                         <p className="font-medium">Created</p>
@@ -128,7 +128,7 @@ const ProjectGrid = ({ projects }: { projects: ProjectProps[] }) => {
                                             })}
                                         </p>
                                     </div>
-                                </div>
+                                </div> */}
 
                                 {project.description && (
                                     <div className="border-t pt-4 mt-4">

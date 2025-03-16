@@ -2,13 +2,12 @@ import React from 'react'
 import Tag from './Tag'
 import { Button } from './ui/button'
 import Link from 'next/link'
-import { LucideIcon } from "lucide-react";
 
 interface TopHeaderProps {
     tagTitle: string,
     title: string,
     buttonText: string,
-    TagIcon?: LucideIcon
+    TagIcon?: React.ElementType
     buttonDisable?: boolean
     link?: string
 }
@@ -44,7 +43,7 @@ const TopHeader: React.FC<TopHeaderProps> = ({
                                 <Button variant={'ghost'} className='bg-[#FCC608] hover:bg-[#fcc708de]' disabled={buttonDisable}>
                                     <p className='text-lg font-medium px-4' >
                                         {buttonText}
-                                    </p> {TagIcon && <TagIcon />}
+                                    </p>    {TagIcon && <TagIcon />}
                                 </Button>
                             </Link>
                         )

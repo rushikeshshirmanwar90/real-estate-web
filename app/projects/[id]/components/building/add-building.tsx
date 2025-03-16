@@ -6,29 +6,37 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { postBuilding } from '../../../functions/building-crud';
 import { BuildingProps } from '../../../types/building-props';
-import { toast } from 'sonner';
+import { toast } from 'react-toastify';
 
 interface addBuildingModelProps {
-    projectId: string | undefined,
+    projectId: string,
     applyChanges: () => void
 }
 
 const AddBuildingModel: React.FC<addBuildingModelProps> = ({ projectId, applyChanges }) => {
+
     const handleAddBuilding = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
-        const newBuilding: BuildingProps = {
-            name: formData.get('name') as string,
-            totalFlats: Number(formData.get('totalFlats')),
-            projectId: projectId
-        };
-        await postBuilding(newBuilding)
-        applyChanges();
-        toast.success("Building Added successfully!", {
-            description: `${newBuilding.name}  Building added successfully.`,
-        })
-    };
 
+        // Create a partial building object with only the required properties
+        const newBuilding: Partial<BuildingProps> = {
+            name: formData.get('name') as string,
+            projectId: projectId,
+            // Add other required properties with default values
+            description: '',
+            area: 0,
+            images: [],
+            section: [],
+            flatInfo: [],
+            amenities: []
+        };
+
+
+        await postBuilding(newBuilding as BuildingProps)
+        applyChanges();
+        toast.success("Building Added successfully!")
+    };
 
     return (
         <div>

@@ -24,11 +24,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import axios from "axios"
 import domain from "../utils/domain"
 import { getClientId } from "@/functions/getClientId"
-
 // Matched with the PropertySchema in Mongoose
 
 
-interface CustomerData {
+export interface CustomerData {
+    _id?: string
     firstName: string
     lastName: string
     email: string

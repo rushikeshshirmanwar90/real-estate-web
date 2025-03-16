@@ -1,6 +1,6 @@
-import { ProjectProps } from "../../types/project-props";
+import { projectProps } from "../../types/project-props";
 
-const ProjectInfo: React.FC<{ project: ProjectProps | undefined }> = ({ project }) => {
+const ProjectInfo: React.FC<{ project: projectProps | undefined }> = ({ project }) => {
     return (
         <div className="space-y-4">
             <h1 className="text-3xl font-bold">{project?.name}</h1>

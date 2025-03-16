@@ -42,7 +42,7 @@ const Page = () => {
                 setIsLoading(true);
                 try {
                     const data = await getSingleBuilding(id);
-                    setBuildingData(data);
+                    // setBuildingData(data);
                     setFormData(data);
                     setSelectedAmenities(data.amenities);
                 } catch (error) {

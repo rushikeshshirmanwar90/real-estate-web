@@ -19,16 +19,17 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuContent } from "@/components/ui/dropdown-menu";
-import { Customer, PropertyItem } from "../types/customer";
+import { PropertyItem } from "../types/customer";
 import ContactsDialog from "@/components/ContactDialog";
+import { CustomerData } from "./add-customer-dialog";
 
-const CustomerTable: React.FC<{ customers: Customer[], loading: boolean, deleteCustomer: (id: string) => void }> = ({ customers, loading, deleteCustomer }) => {
+const CustomerTable: React.FC<{ customers: CustomerData[], loading: boolean, deleteCustomer: (id: string) => void }> = ({ customers, loading, deleteCustomer }) => {
     const [sorting, setSorting] = useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const [selectedProperty, setSelectedProperty] = useState<PropertyItem | null>(null);
     const [isPropertyDialogOpen, setIsPropertyDialogOpen] = useState(false);
 
-    const columns: ColumnDef<Customer>[] = [
+    const columns: ColumnDef<CustomerData>[] = [
         {
             accessorKey: "srNumber",
             header: ({ column }) => (
@@ -120,7 +121,7 @@ const CustomerTable: React.FC<{ customers: Customer[], loading: boolean, deleteC
             cell: ({ row }) => {
                 const customer = row.original;
                 return (
-                    <ContactsDialog clientId={customer.id} />
+                    <ContactsDialog clientId={customer.clientId} />
                 );
             },
         },
@@ -138,11 +139,11 @@ const CustomerTable: React.FC<{ customers: Customer[], loading: boolean, deleteC
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(customer.id)}>Copy customer ID</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(customer._id || "")}>Copy customer ID</DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem>View details</DropdownMenuItem>
                             <DropdownMenuItem>Edit customer</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={() => deleteCustomer(customer.id)}>Delete customer</DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive" onClick={() => deleteCustomer(customer._id || "")}>Delete customer</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 );

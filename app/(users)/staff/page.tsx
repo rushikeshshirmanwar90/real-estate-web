@@ -4,7 +4,7 @@ import axios from 'axios'
 
 import { AddStaffDialog } from '@/components/staff/add-staff-dialog'
 import { StaffTable } from '@/components/staff/staff-table'
-import { StaffProps } from '@/components/types/staff'
+import { StaffDataProps, StaffProps } from '@/components/types/staff'
 import domain from '@/components/utils/domain'
 
 
@@ -48,7 +48,7 @@ const Page = () => {
         fetchStaffData()
     }, [random])
 
-    const addStaff = async (data: StaffProps) => {
+    const addStaff = async (data: StaffDataProps) => {
         try {
             const res = await axios.post(`${domain}/api/user`, data)
             if (res) {

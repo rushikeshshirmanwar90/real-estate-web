@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
@@ -28,13 +27,23 @@ export function FlatInfoEditableCard({ flatInfos = [], onFlatInfoChange }: FlatI
     const hasData = flatInfos.length > 0
 
     const handleFlatImages = async (flatIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
-        const urls = await handleImageUpload(e, setTempFlatInfos, setIsLoading)
+        // Create a dummy setter that matches the expected type
+        const dummySetImages: React.Dispatch<React.SetStateAction<string[]>> = () => { };
+
+        // Call the original function but ignore its state updates
+        const urls = await handleImageUpload(e, dummySetImages, setIsLoading);
+
+        // Manually update the FlatInfo state with the returned URLs
         if (urls && urls.length > 0) {
             setTempFlatInfos((prev) =>
-                prev.map((flat, i) => (i === flatIndex ? { ...flat, images: [...(flat.images || []), ...urls] } : flat)),
-            )
+                prev.map((flat, i) =>
+                    i === flatIndex
+                        ? { ...flat, images: [...(flat.images || []), ...urls] }
+                        : flat
+                )
+            );
         }
-    }
+    };
 
     const handleEdit = () => {
         setTempFlatInfos(

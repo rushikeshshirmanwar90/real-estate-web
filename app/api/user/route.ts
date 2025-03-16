@@ -2,14 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import connect from "@/lib/db";
 import { User } from "@/lib/models/Users";
 import { CustomerDetails } from "@/lib/models/CustomerDetails";
-interface UserBase {
-  email: string;
-  phoneNumber: string;
-  userType: "customer" | "staff" | "admin";
-  name?: string;
-  password?: string;
-  properties?: string; // ObjectId reference
-}
 
 // For POST and PUT requests
 interface UserCreateRequest {
@@ -83,10 +75,6 @@ interface ErrorResponse {
   error?: unknown;
 }
 
-// Request parameters
-interface UserIdParam {
-  userId: string;
-}
 // CustomerDetails interfaces
 interface CustomerDetailsBase {
   userId: string;
@@ -111,22 +99,41 @@ interface ErrorResponse {
   error?: unknown;
 }
 
-// Request parameters
-interface UserIdParam {
-  userId: string;
-}
+export const GET = async (req: NextRequest | Request) => {
+  try {
+    await connect();
 
-export type {
-  UserBase,
-  UserCreateRequest,
-  UserResponse,
-  PropertyInput,
-  PropertyOutput,
-  CustomerDetailsBase,
-  CustomerDetailsResponse,
-  UserWithDetailsResponse,
-  ErrorResponse,
-  UserIdParam,
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    let res;
+
+    if (id) {
+      res = await User.findById(id);
+    } else {
+      res = await User.find();
+    }
+
+    if (!res) {
+      return NextResponse.json(
+        {
+          message: `can't able to get the data`,
+        },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(res);
+  } catch (error: unknown) {
+    console.error("Error creating user:", error);
+    return NextResponse.json(
+      {
+        error: error,
+        message: "An Error occur while creating the user",
+      } as ErrorResponse,
+      { status: 500 }
+    );
+  }
 };
 
 export const POST = async (req: NextRequest | Request) => {

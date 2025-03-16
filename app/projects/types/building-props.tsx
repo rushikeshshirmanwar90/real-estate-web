@@ -32,4 +32,5 @@ export interface BuildingProps {
     section: Section[];
     flatInfo: FlatInfo[];
     amenities: Amenity[];
+    totalFlats: number | string
 }

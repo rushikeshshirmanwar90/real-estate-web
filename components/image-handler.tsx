@@ -1,86 +1,154 @@
-import React from 'react'
-import { ImagePlus, Loader2, X } from 'lucide-react'
-import { Label } from './ui/label'
-import { Button } from './ui/button'
-import { Input } from './ui/input'
-import { FormField, FormMessage } from './ui/form'
-import { handleImageUpload, removeImage } from '../components/functions/image-handling'
-import { FieldValues } from 'react-hook-form'
-
-interface formProps {
-    control: FieldValues
-}
+import React from 'react';
+import { UseFormReturn } from 'react-hook-form';
+import { FlatFormValues } from '@/app/(forms)/project-form/schema';
 
 interface ImageHandlerProps {
-    uploadedImages: string[],
-    form: formProps,
-    setUploadedImages: React.Dispatch<React.SetStateAction<string[]>>
-    isLoading: boolean,
-    setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
-    title: string
+    form: UseFormReturn<FlatFormValues>;
+    isLoading: boolean;
+    setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+    setUploadedImages: React.Dispatch<React.SetStateAction<string[]>>;
+    uploadedImages: string[];
+    title: string;
+    maxImages?: number;
 }
+
+export const handleImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setImages: React.Dispatch<React.SetStateAction<string[]>>,
+    setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
+    form?: UseFormReturn<FlatFormValues>
+) => {
+    if (!e.target.files?.length) return;
+    setIsLoading(true);
+
+    const uploadPromises = Array.from(e.target.files).map(async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', 'realEstate');
+
+        try {
+            const response = await fetch(
+                `https://api.cloudinary.com/v1_1/dlcq8i2sc/image/upload`,
+                {
+                    method: 'POST',
+                    body: formData,
+                }
+            );
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Cloudinary error:', errorData);
+                return null;
+            }
+
+            const data = await response.json();
+            return data.secure_url;
+        } catch (error) {
+            console.error('Upload failed:', error);
+            return null;
+        }
+    });
+
+    const urls = (await Promise.all(uploadPromises)).filter(Boolean) as string[];
+
+    setImages((prevImages) => {
+        const newImages = [...prevImages, ...urls];
+        // Update form field if form is provided
+        if (form) {
+            form.setValue('images', newImages);
+        }
+        return newImages;
+    });
+
+    setIsLoading(false);
+
+    return urls;
+};
+
+export const removeImage = (
+    index: number,
+    setImages: React.Dispatch<React.SetStateAction<string[]>>,
+    form?: UseFormReturn<FlatFormValues>
+) => {
+    setImages((prevImages) => {
+        const newImages = prevImages.filter((_, i) => i !== index);
+        // Update form field if form is provided
+        if (form) {
+            form.setValue('images', newImages);
+        }
+        return newImages;
+    });
+};
 
 const ImageHandler: React.FC<ImageHandlerProps> = ({
-    uploadedImages,
     form,
-    setUploadedImages,
     isLoading,
     setIsLoading,
-    title
+    setUploadedImages,
+    uploadedImages,
+    title,
+    maxImages = 10,
 }) => {
-    return (
-        <div>
-            <div>
-                <Label>{title}</Label>
-                <div className="mt-2 space-y-4">
-                    <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                        {uploadedImages.map((url: string, index: number) => (
-                            <div key={index} className="relative aspect-square">
-                                <img
-                                    src={url}
-                                    alt={`Property ${index + 1}`}
-                                    className="object-cover w-full h-full rounded-lg"
-                                />
-                                <Button
-                                    type="button"
-                                    variant="destructive"
-                                    size="icon"
-                                    className="absolute top-2 right-2 h-6 w-6"
-                                    onClick={() => removeImage(index, form, setUploadedImages)}
-                                >
-                                    <X className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        ))}
-                        <div className="aspect-square relative">
-                            <Input
-                                type="file"
-                                accept="image/*"
-                                multiple
-                                onChange={(e) => handleImageUpload(e, setIsLoading, setUploadedImages, form)}
-                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                disabled={isLoading}
-                            />
-                            <div className="h-full border-2 border-dashed rounded-lg flex items-center justify-center">
-                                {isLoading ? (
-                                    <Loader2 className="h-6 w-6 animate-spin" />
-                                ) : (
-                                    <ImagePlus className="h-6 w-6" />
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                    <FormField
-                        control={form.control}
-                        name="images"
-                        render={() => (
-                            <FormMessage />
-                        )}
-                    />
-                </div>
-            </div>
-        </div>
-    )
-}
+    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        await handleImageUpload(e, setUploadedImages, setIsLoading, form);
+    };
 
-export default ImageHandler
+    const handleRemove = (index: number) => {
+        removeImage(index, setUploadedImages, form);
+    };
+
+    return (
+        <div className="mt-4">
+            <h3 className="text-lg font-medium mb-2">{title}</h3>
+            <div className="flex flex-wrap gap-2 mb-4">
+                {uploadedImages.map((image, index) => (
+                    <div key={index} className="relative w-24 h-24">
+                        <img
+                            src={image}
+                            alt={`Uploaded image ${index + 1}`}
+                            className="w-full h-full object-cover rounded-md"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => handleRemove(index)}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
+                            aria-label="Remove image"
+                        >
+                            ×
+                        </button>
+                    </div>
+                ))}
+
+                {isLoading && (
+                    <div className="w-24 h-24 flex items-center justify-center bg-gray-100 rounded-md">
+                        <svg className="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+                )}
+            </div>
+
+            {uploadedImages.length < maxImages && (
+                <div className="mt-2">
+                    <label className="block cursor-pointer bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded">
+                        <span>Upload Images</span>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={handleUpload}
+                            className="hidden"
+                            disabled={isLoading}
+                        />
+                    </label>
+                    <p className="text-sm text-gray-500 mt-1">
+                        {uploadedImages.length} of {maxImages} images uploaded
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default ImageHandler;

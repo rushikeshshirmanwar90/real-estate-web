@@ -4,16 +4,16 @@ import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 
 import CustomerTable from '@/components/customers/customer-table'
-import { AddCustomerDialog } from '@/components/customers/add-customer-dialog'
+import { AddCustomerDialog, CustomerData } from '@/components/customers/add-customer-dialog'
 import domain from '@/components/utils/domain'
-import { ApiUser, Customer } from '@/components/types/customer'
+import { ApiUser } from '@/components/types/customer'
 import { successToast } from '@/components/toasts'
 
 const Page = () => {
 
 
     const [loading, setLoading] = useState<boolean>(true);
-    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [customers, setCustomers] = useState<CustomerData[]>([]);
     const [random, setRandom] = useState<number>();
 
     useEffect(() => {
@@ -33,6 +33,11 @@ const Page = () => {
                         email: user.email,
                         phone: user.phoneNumber,
                         properties: user.properties?.property || [],
+                        firstName: user.firstName,
+                        lastName: user.lastName,
+                        phoneNumber: user.phoneNumber,
+                        userType: user.userType,
+                        clientId: user.clientId,
                     }));
 
                 const tmp = customerData.reverse()
@@ -50,7 +55,7 @@ const Page = () => {
     }, [random]);
 
 
-    const addCustomer = async (data: Customer) => {
+    const addCustomer = async (data: CustomerData) => {
         try {
             await axios.post(`${domain}/api/user`, data);
             updateData();

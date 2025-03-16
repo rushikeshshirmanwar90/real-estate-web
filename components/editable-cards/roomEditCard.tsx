@@ -54,15 +54,23 @@ export function RoomsEditableCard({ rooms = [], onRoomsChange }: RoomsEditableCa
     ]
 
     const handleRoomImages = async (roomIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
-        const urls = await handleImageUpload(e, setTempRooms, setIsLoading)
+        // Create a dummy setter that matches the expected type
+        const dummySetImages: React.Dispatch<React.SetStateAction<string[]>> = () => { };
+
+        // Call the original function but ignore its state updates
+        const urls = await handleImageUpload(e, dummySetImages, setIsLoading);
+
+        // Manually update the tempRooms state with the returned URLs
         if (urls && urls.length > 0) {
             setTempRooms((prev) =>
                 prev.map((section, i) =>
-                    i === roomIndex ? { ...section, images: [...(section.images || []), ...urls] } : section
+                    i === roomIndex
+                        ? { ...section, images: [...(section.images || []), ...urls] }
+                        : section
                 )
-            )
+            );
         }
-    }
+    };
 
     const handleEdit = () => {
         setTempRooms(

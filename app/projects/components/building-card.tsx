@@ -32,12 +32,21 @@ const BuildingCard = ({ building, index, onAddBuilding, onDelete }: BuildingCard
     const handleAddBuilding = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         const formData = new FormData(e.currentTarget)
-        const newBuilding = {
+
+        // Create a complete BuildingProps object with all required properties
+        const newBuilding: BuildingProps = {
             _id: Math.random().toString(),
             name: formData.get("name") as string,
             totalFlats: Number(formData.get("totalFlats")),
             projectId: "projectId-placeholder",
+            description: "",
+            area: 0,
+            images: [],
+            section: [],
+            flatInfo: [],
+            amenities: []
         }
+
         onAddBuilding(newBuilding)
     }
 

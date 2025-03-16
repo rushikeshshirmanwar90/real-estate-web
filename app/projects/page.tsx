@@ -46,7 +46,7 @@ export default function Page() {
                 buttonText='Add Project'
                 tagTitle='Featured Properties'
                 title='Our Featured Properties'
-                TagIcon={<Plus />}
+                TagIcon={Plus}
                 link="/project-form"
             />
             <div className='flex flex-col items-center justify-center my-5 gap-5'>

@@ -5,7 +5,7 @@ import ProjectCarousel from './components/project-carousel';
 import ProjectInfo from './components/project-info';
 import BuildingsSection from './components/building-section';
 import { BuildingProps } from '../types/building-props';
-import { ProjectProps } from '../types/project-props';
+import { projectProps } from '../types/project-props';
 import { getSingleProject } from '@/functions/project/crud';
 import { getBuildings } from '../functions/building-crud';
 
@@ -19,7 +19,7 @@ const ProjectDetails = () => {
 
     const [buildings, setBuildings] = useState<BuildingProps[]>([]);
     const [loading, setLoading] = useState<boolean>();
-    const [project, setProject] = useState<ProjectProps>();
+    const [project, setProject] = useState<projectProps>();
     const [randomNums, setRandomNums] = useState<number>(123456);
 
 

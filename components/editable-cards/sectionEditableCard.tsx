@@ -51,17 +51,24 @@ export function SectionEditableCard({ sections = [], onSectionsChange }: Section
     const updateSection = (index: number, field: keyof Section, value: string) => {
         setTempSections(tempSections.map((section, i) => (i === index ? { ...section, [field]: value } : section)))
     }
-
     const handleSectionImages = async (sectionIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
-        const urls = await handleImageUpload(e, setTempSections, setIsLoading)
+        // Create a dummy setter that matches the expected type
+        const dummySetImages: React.Dispatch<React.SetStateAction<string[]>> = () => { };
+
+        // Call the original function but ignore its state updates
+        const urls = await handleImageUpload(e, dummySetImages, setIsLoading);
+
+        // Manually update the tempSections state with the returned URLs
         if (urls && urls.length > 0) {
             setTempSections((prev) =>
                 prev.map((section, i) =>
-                    i === sectionIndex ? { ...section, images: [...(section.images || []), ...urls] } : section,
-                ),
-            )
+                    i === sectionIndex
+                        ? { ...section, images: [...(section.images || []), ...urls] }
+                        : section
+                )
+            );
         }
-    }
+    };
 
     const removeImage = (sectionIndex: number, imageIndex: number) => {
         setTempSections((prev) =>
