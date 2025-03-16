@@ -17,7 +17,7 @@ export default function Page() {
         setIsProjectLoading(true);
         setError(null);
         try {
-            const res = await axios.get("http://localhost:8080/api/project");
+            const res = await axios.get("https://real-estate-web-pied.vercel.app/api/project");
             const data = res.data;
             setProjectData(data);
         } catch (error) {
