@@ -41,12 +41,13 @@ export const GET = async (req: NextRequest | Request) => {
         error: error,
       },
       {
-        status: 500, // Changed from 200 to 500 to indicate server error
+        status: 500,
       }
     );
   }
 };
-export const POST = async (req: Response) => {
+
+export const POST = async (req: NextRequest | Request) => {
   try {
     await connect();
 
@@ -102,7 +103,7 @@ export const POST = async (req: Response) => {
   }
 };
 
-export const DELETE = async (req: Response) => {
+export const DELETE = async (req: NextRequest | Request) => {
   try {
     await connect();
 
@@ -150,7 +151,7 @@ export const DELETE = async (req: Response) => {
   }
 };
 
-export const PUT = async (req: Response) => {
+export const PUT = async (req: NextRequest | Request) => {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
@@ -194,7 +195,7 @@ export const PUT = async (req: Response) => {
   }
 };
 
-export const PATCH = async (req: NextRequest) => {
+export const PATCH = async (req: NextRequest | Request) => {
   try {
     await connect();
 
