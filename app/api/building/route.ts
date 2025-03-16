@@ -2,7 +2,8 @@ import { Building } from "@/lib/models/Building";
 import { Projects } from "@/lib/models/Project";
 import connect from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-export const GET = async (req: Request) => {
+
+export const GET = async (req: NextRequest | Request) => {
   try {
     await connect();
     const { searchParams } = new URL(req.url);
