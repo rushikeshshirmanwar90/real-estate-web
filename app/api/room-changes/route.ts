@@ -2,7 +2,7 @@ import connect from "@/lib/db";
 import { RoomInfo as RoomUpdate } from "@/lib/models/RoomInfo";
 import { NextRequest, NextResponse } from "next/server";
 
-export const GET = async (req: NextRequest) => {
+export const GET = async (req: NextRequest | Request) => {
   try {
     await connect();
 
@@ -40,7 +40,7 @@ export const GET = async (req: NextRequest) => {
   }
 };
 
-export const POST = async (req: NextRequest) => {
+export const POST = async (req: NextRequest | Request) => {
   try {
     await connect();
 
@@ -73,7 +73,7 @@ export const POST = async (req: NextRequest) => {
   }
 };
 
-export const PUT = async (req: NextRequest) => {
+export const PUT = async (req: NextRequest | Request) => {
   try {
     await connect();
 
@@ -110,7 +110,7 @@ export const PUT = async (req: NextRequest) => {
   }
 };
 
-export const DELETE = async (req: NextRequest) => {
+export const DELETE = async (req: NextRequest | Request) => {
   try {
     await connect();
 

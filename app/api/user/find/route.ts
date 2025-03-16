@@ -2,7 +2,7 @@ import connect from "@/lib/db";
 import { User } from "@/lib/models/Users";
 import { NextResponse } from "next/server";
 
-export const POST = async (req: Request) => {
+export const POST = async (req: NextRequest | Request) => {
   try {
     await connect();
 

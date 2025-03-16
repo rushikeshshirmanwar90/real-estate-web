@@ -8,7 +8,7 @@ const generateOTP = (): number => {
     return Math.floor(100000 + Math.random() * 900000); // Ensures a 6-digit OTP
 };
 
-export const POST = async (req: NextRequest) => {
+export const POST = async (req: NextRequest | Request) => {
     try {
         await connect();
 

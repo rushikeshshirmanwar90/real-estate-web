@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import { User } from "@/lib/models/Users";
 
-export const POST = async (req: NextRequest) => {
+export const POST = async (req: NextRequest | Request) => {
   try {
     await connect();
 

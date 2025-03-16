@@ -3,7 +3,7 @@ import { Contacts } from "@/lib/models/Contacts";
 import { User } from "@/lib/models/Users";
 import { NextRequest, NextResponse } from "next/server";
 
-export const GET = async (req: NextRequest) => {
+export const GET = async (req: NextRequest | Request) => {
   try {
     // Establish database connection (if required)
     await connect();
@@ -63,7 +63,7 @@ export const GET = async (req: NextRequest) => {
   }
 };
 
-export const POST = async (req: NextRequest) => {
+export const POST = async (req: NextRequest | Request) => {
   try {
     await connect();
 
@@ -164,7 +164,7 @@ export const POST = async (req: NextRequest) => {
   }
 };
 
-export const DELETE = async (req: NextRequest) => {
+export const DELETE = async (req: NextRequest | Request) => {
   try {
     // Establish database connection
     await connect();

@@ -9,7 +9,7 @@ const generateOTP = (): number => {
   return Math.floor(Math.random() * 1000000);
 };
 
-export const POST = async (req: NextRequest) => {
+export const POST = async (req: NextRequest | Request) => {
   try {
     await connect();
     const { email } = await req.json();

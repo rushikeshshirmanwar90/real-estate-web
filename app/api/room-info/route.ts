@@ -1,9 +1,9 @@
 import { RoomInfo } from "@/lib/models/RoomInfo";
 import { Building } from "@/lib/models/Building";
 import connect from "@/lib/db";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export const GET = async (req: Response) => {
+export const GET = async (req: NextRequest | Request) => {
   try {
     await connect();
 
@@ -56,7 +56,7 @@ export const GET = async (req: Response) => {
   }
 };
 
-export const POST = async (req: Response) => {
+export const POST = async (req: NextRequest | Request) => {
   try {
     await connect();
 
@@ -90,7 +90,7 @@ export const POST = async (req: Response) => {
   }
 };
 
-export const PUT = async (req: Response) => {
+export const PUT = async (req: NextRequest | Request) => {
   try {
     const { searchParams } = new URL(req.url);
     const flatId = searchParams.get("flatId");
@@ -134,7 +134,7 @@ export const PUT = async (req: Response) => {
   }
 };
 
-export const DELETE = async (req: Response) => {
+export const DELETE = async (req: NextRequest | Request) => {
   try {
     await connect();
 

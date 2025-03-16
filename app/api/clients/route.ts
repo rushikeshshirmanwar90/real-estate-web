@@ -3,7 +3,7 @@ import connect from "@/lib/db";
 import { Client } from "@/lib/models/Client";
 import { NextRequest, NextResponse } from "next/server";
 
-export const GET = async (req: Response) => {
+export const GET = async (req: NextRequest | Request) => {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");

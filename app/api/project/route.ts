@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { validateClient } from "@/components/functions/validateClient";
 import { ObjectId } from "mongodb";
 
-export const GET = async (req: Request) => {
+export const GET = async (req: NextRequest | Request) => {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
@@ -49,7 +49,7 @@ export const GET = async (req: Request) => {
   }
 };
 
-export const POST = async (req: Request) => {
+export const POST = async (req: NextRequest | Request) => {
   try {
     await connect();
     const isValidClient = await validateClient();
@@ -101,7 +101,7 @@ export const POST = async (req: Request) => {
   }
 };
 
-export const DELETE = async (req: Request) => {
+export const DELETE = async (req: NextRequest | Request) => {
   try {
     await connect();
 
@@ -142,7 +142,7 @@ export const DELETE = async (req: Request) => {
   }
 };
 
-export const PUT = async (req: Request) => {
+export const PUT = async (req: NextRequest | Request) => {
   try {
     await connect();
 

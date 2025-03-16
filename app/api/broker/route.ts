@@ -1,9 +1,9 @@
 import bcrypt from "bcrypt";
 import connect from "@/lib/db";
 import { Broker } from "@/lib/models/Brokers";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export const GET = async (req: Request) => {
+export const GET = async (req: NextRequest | Request) => {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
@@ -48,7 +48,7 @@ export const GET = async (req: Request) => {
   }
 };
 
-export const POST = async (req: Request) => {
+export const POST = async (req: NextRequest | Request) => {
   try {
     const body = await req.json();
     const SALT_ID = process.env.SALT_ID!;
@@ -86,7 +86,7 @@ export const POST = async (req: Request) => {
     );
   }
 };
-export const PUT = async (req: Request) => {
+export const PUT = async (req: NextRequest | Request) => {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
@@ -130,7 +130,7 @@ export const PUT = async (req: Request) => {
     );
   }
 };
-export const DELETE = async (req: Request) => {
+export const DELETE = async (req: NextRequest | Request) => {
   try {
     const { searchParams } = new URL(req.url);
 

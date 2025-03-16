@@ -3,7 +3,7 @@ import { Projects } from "@/lib/models/Project";
 import { RowHouse } from "@/lib/models/RowHouse";
 import { NextRequest, NextResponse } from "next/server";
 
-export const GET = async (req: NextRequest) => {
+export const GET = async (req: NextRequest | Request) => {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
   try {
@@ -45,7 +45,7 @@ export const GET = async (req: NextRequest) => {
   }
 };
 
-export const POST = async (req: NextRequest) => {
+export const POST = async (req: NextRequest | Request) => {
   try {
     await connect();
     const data = await req.json();
@@ -98,7 +98,7 @@ export const POST = async (req: NextRequest) => {
   }
 };
 
-export const DELETE = async (req: NextRequest) => {
+export const DELETE = async (req: NextRequest | Request) => {
   const { searchParams } = new URL(req.url);
   const projectId = searchParams.get("projectId");
   const sectionId = searchParams.get("sectionId");
@@ -153,7 +153,7 @@ export const DELETE = async (req: NextRequest) => {
   }
 };
 
-export const PUT = async (req: NextRequest) => {
+export const PUT = async (req: NextRequest | Request) => {
   const { searchParams } = new URL(req.url);
   const rowHouseId = searchParams.get("rh");
   const newData = await req.json();

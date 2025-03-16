@@ -6,7 +6,7 @@ import { cookies } from "next/headers";
 import { Client } from "@/lib/models/Client";
 import connect from "@/lib/db";
 
-export const POST = async (req: NextRequest) => {
+export const POST = async (req: NextRequest | Request) => {
   try {
     await connect();
 

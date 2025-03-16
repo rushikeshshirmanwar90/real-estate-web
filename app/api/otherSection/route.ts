@@ -4,7 +4,7 @@ import { Projects } from "@/lib/models/Project";
 
 import { NextRequest, NextResponse } from "next/server";
 
-export const GET = async (req: NextRequest) => {
+export const GET = async (req: NextRequest | Request) => {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
   try {
@@ -46,7 +46,7 @@ export const GET = async (req: NextRequest) => {
   }
 };
 
-export const POST = async (req: NextRequest) => {
+export const POST = async (req: NextRequest | Request) => {
   try {
     const data = await req.json();
     await connect();
@@ -99,7 +99,7 @@ export const POST = async (req: NextRequest) => {
   }
 };
 
-export const DELETE = async (req: NextRequest) => {
+export const DELETE = async (req: NextRequest | Request) => {
   const { searchParams } = new URL(req.url);
   const projectId = searchParams.get("projectId");
   const sectionId = searchParams.get("sectionId");
@@ -154,7 +154,7 @@ export const DELETE = async (req: NextRequest) => {
   }
 };
 
-export const PUT = async (req: NextRequest) => {
+export const PUT = async (req: NextRequest | Request) => {
   const { searchParams } = new URL(req.url);
   const OtherSectionId = searchParams.get("rh");
   const newData = await req.json();

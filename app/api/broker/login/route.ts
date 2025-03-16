@@ -2,10 +2,10 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import connect from "@/lib/db";
 import { Broker } from "@/lib/models/Brokers";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
-export const POST = async (req: Request) => {
+export const POST = async (req: NextRequest | Request) => {
   try {
     const { email, password, phoneNumber } = await req.json();
     const cookiesStore = await cookies();

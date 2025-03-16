@@ -1,6 +1,6 @@
 import { Building } from "@/lib/models/Building";
 import connect from "@/lib/db";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { User } from "@/lib/models/Users";
 import { Types } from "mongoose";
 
@@ -73,7 +73,7 @@ interface FlatInfoResponse {
   propertyDetails: Property;
 }
 
-export const GET = async (req: Request) => {
+export const GET = async (req: NextRequest | Request) => {
   try {
     await connect();
 

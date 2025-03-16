@@ -5,7 +5,7 @@ import { render } from '@react-email/components';
 import { transporter } from "@/lib/transporter";
 
 
-export const POST = async (req: NextRequest) => {
+export const POST = async (req: NextRequest | Request) => {
     try {
         await connect();
 

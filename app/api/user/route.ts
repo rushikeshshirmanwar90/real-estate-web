@@ -129,7 +129,7 @@ export type {
   UserIdParam,
 };
 
-export const POST = async (req: NextRequest) => {
+export const POST = async (req: NextRequest | Request) => {
   try {
     await connect();
 
