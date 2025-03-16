@@ -2,17 +2,14 @@ import { Building } from "@/lib/models/Building";
 import { Projects } from "@/lib/models/Project";
 import connect from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-
-export const GET = async (req: Response) => {
+export const GET = async (req: Request) => {
   try {
     await connect();
-
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
 
     if (!id) {
       const buildings = await Building.find();
-
       if (!buildings) {
         return NextResponse.json(
           {
@@ -23,8 +20,8 @@ export const GET = async (req: Response) => {
       }
       return NextResponse.json(buildings);
     }
-    const building = await Building.findById(id);
 
+    const building = await Building.findById(id);
     if (!building) {
       return NextResponse.json(
         {
@@ -39,16 +36,15 @@ export const GET = async (req: Response) => {
     console.log(error);
     return NextResponse.json(
       {
-        message: "something wen't wrong, can't able to get the buildings",
+        message: "something went wrong, can't able to get the buildings",
         error: error,
       },
       {
-        status: 200,
+        status: 500, // Changed from 200 to 500 to indicate server error
       }
     );
   }
 };
-
 export const POST = async (req: Response) => {
   try {
     await connect();
