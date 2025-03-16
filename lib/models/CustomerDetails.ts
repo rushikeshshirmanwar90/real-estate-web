@@ -1,4 +1,4 @@
-import { model, models, Schema } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
 const PropertySchema = new Schema(
   {
@@ -64,4 +64,5 @@ const CustomerDetailsSchema = new Schema(
 );
 
 export const CustomerDetails =
-  models.CustomerDetails || model("CustomerDetails", CustomerDetailsSchema);
+  mongoose.models.CustomerDetails ||
+  mongoose.model("CustomerDetails", CustomerDetailsSchema);

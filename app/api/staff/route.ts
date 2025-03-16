@@ -25,11 +25,11 @@ export const GET = async () => {
       },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         message: "can't able to fetch staff data",
-        error: error.message,
+        error: error,
       },
       {
         status: 500,

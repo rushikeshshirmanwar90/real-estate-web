@@ -2,16 +2,14 @@ import Link from 'next/link'
 import React from 'react'
 
 interface SideBarItemsProps {
-    icon: any,
+    icon: string,
     text: string,
     active: boolean,
-    alert: boolean,
     link: string
 }
 
 const SideBarItems: React.FC<SideBarItemsProps> = ({
     active,
-    alert,
     icon,
     text,
     link

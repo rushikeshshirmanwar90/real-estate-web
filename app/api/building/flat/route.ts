@@ -2,7 +2,76 @@ import { Building } from "@/lib/models/Building";
 import connect from "@/lib/db";
 import { NextResponse } from "next/server";
 import { User } from "@/lib/models/Users";
-import { CustomerDetails } from "@/lib/models/CustomerDetails";
+import { Types } from "mongoose";
+
+interface Property {
+  flatId: string;
+  [key: string]: string | number | boolean | object | undefined;
+}
+
+interface UserProperties {
+  properties: {
+    property: Property[];
+  };
+  [key: string]: string | number | boolean | object | undefined;
+}
+
+interface FlatInfo {
+  _id: string | Types.ObjectId;
+  title: string;
+  description: string;
+  images: string[];
+  totalFlats: number;
+  totalBookedFlats: number;
+  bhk: number;
+  totalArea: number;
+  video: string;
+  [key: string]:
+    | string
+    | number
+    | boolean
+    | object
+    | string[]
+    | Types.ObjectId
+    | undefined;
+}
+
+interface BuildingDocument {
+  _id: string | Types.ObjectId;
+  name: string;
+  projectId: string;
+  location: string;
+  flatInfo: FlatInfo[];
+  [key: string]:
+    | string
+    | number
+    | boolean
+    | object
+    | FlatInfo[]
+    | Types.ObjectId
+    | undefined;
+}
+
+interface FlatInfoResponse {
+  flatInfo: {
+    id: string | Types.ObjectId;
+    title: string;
+    description: string;
+    images: string[];
+    totalFlats: number;
+    totalBookedFlats: number;
+    bhk: number;
+    totalArea: number;
+    video: string;
+  } | null;
+  building: {
+    id: string | Types.ObjectId;
+    name: string;
+    projectId: string;
+    location: string;
+  };
+  propertyDetails: Property;
+}
 
 export const GET = async (req: Request) => {
   try {
@@ -20,7 +89,9 @@ export const GET = async (req: Request) => {
       );
     }
 
-    const userProperties = await User.findById(userId).populate("properties");
+    const userProperties = (await User.findById(userId).populate(
+      "properties"
+    )) as UserProperties;
 
     if (!userProperties?.properties?.property?.length) {
       return NextResponse.json(
@@ -32,12 +103,12 @@ export const GET = async (req: Request) => {
     }
 
     const flatIds = userProperties.properties.property.map(
-      (prop: any) => prop.flatId
+      (prop: Property) => prop.flatId
     );
 
-    const buildings = await Building.find({
+    const buildings = (await Building.find({
       "flatInfo._id": { $in: flatIds },
-    });
+    })) as BuildingDocument[];
 
     if (!buildings.length) {
       return NextResponse.json(
@@ -49,15 +120,15 @@ export const GET = async (req: Request) => {
     }
 
     const flatInfos = flatIds
-      .map((flatId: any) => {
+      .map((flatId: string) => {
         const building = buildings.find((b) =>
-          b.flatInfo.some((f: any) => f._id.toString() === flatId)
+          b.flatInfo.some((f: FlatInfo) => f._id.toString() === flatId)
         );
 
         if (!building) return null;
 
         const flatInfo = building.flatInfo.find(
-          (f: any) => f._id.toString() === flatId
+          (f: FlatInfo) => f._id.toString() === flatId
         );
 
         return {
@@ -81,11 +152,11 @@ export const GET = async (req: Request) => {
             location: building.location,
           },
           propertyDetails: userProperties.properties.property.find(
-            (prop: any) => prop.flatId === flatId
+            (prop: Property) => prop.flatId === flatId
           ),
-        };
+        } as FlatInfoResponse;
       })
-      .filter((info: any) => info !== null);
+      .filter((info): info is FlatInfoResponse => info !== null);
 
     return NextResponse.json(
       {
@@ -95,12 +166,12 @@ export const GET = async (req: Request) => {
       },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error fetching flat infos:", error);
     return NextResponse.json(
       {
         message: "An error occurred while fetching flat information",
-        error: error.message,
+        error: error,
       },
       { status: 500 }
     );

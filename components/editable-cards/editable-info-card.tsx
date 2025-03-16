@@ -114,7 +114,7 @@ export function EditableSectionCard({
                             className="hidden"
                             accept="image/*"
                             multiple
-                            onChange={(e: any) => handleImageUpload(e, setTempImages, setIsLoading)}
+                            onChange={(e) => handleImageUpload(e, setTempImages, setIsLoading)}
                         />
                     </label>
                 )}

@@ -45,13 +45,13 @@ export const POST = async (req: NextRequest) => {
             }
         }, { status: 200 })
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         // Error handling
         console.error("Login error:", error);
 
         return NextResponse.json({
             message: "An error occurred during login",
-            error: error.message || "Internal server error"
+            error: error || "Internal server error"
         }, {
             status: 500
         });

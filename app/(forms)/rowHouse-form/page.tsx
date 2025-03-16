@@ -20,7 +20,6 @@ const Page = () => {
     const projectId = searchParams.get('projectId') || ""
     const id = searchParams.get("id") || ""
 
-    const [rowHouseData, setRowHouseData] = useState<[]>([]);
     const [selectedAmenities, setSelectedAmenities] = useState<AmenitiesProps[]>([]);
     const [formData, setFormData] = useState<RowHouseProps>({
         projectId: projectId,
@@ -55,7 +54,6 @@ const Page = () => {
             setError(null);
             try {
                 const data = await getSingleRowHouse(id);
-                setRowHouseData(data);
                 setFormData(data);
                 setSelectedAmenities(data.amenities);
             } catch (error) {

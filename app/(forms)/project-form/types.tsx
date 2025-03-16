@@ -11,7 +11,7 @@ export interface FormData {
     state: string;
     city: string;
     amenities: AmenitiesProps[];
-    clientId: string; // Update type to accept both ObjectId and string
+    clientId: string;
     longitude: number,
     latitude: number,
 }

@@ -10,9 +10,9 @@ export const GET = async (req: Response) => {
     const { searchParams } = new URL(req.url);
     const projectId = searchParams.get("projectId");
     const buildingId = searchParams.get("buildingId");
-    const id = searchParams.get("id");
+    const flatId = searchParams.get("flatId");
 
-    if (!id) {
+    if (!flatId) {
       const query: { projectId?: string; buildingId?: string } = {};
       if (projectId) query.projectId = projectId;
       if (buildingId) query.buildingId = buildingId;
@@ -30,7 +30,7 @@ export const GET = async (req: Response) => {
       return NextResponse.json(flats);
     }
 
-    const flat = await RoomInfo.findById(id);
+    const flat = await RoomInfo.findOne({ flatId });
 
     if (!flat) {
       return NextResponse.json(
@@ -42,12 +42,12 @@ export const GET = async (req: Response) => {
     }
 
     return NextResponse.json(flat);
-  } catch (error: any) {
-    console.log(error.message);
+  } catch (error) {
+    console.log(error);
     return NextResponse.json(
       {
         message: "Something went wrong while fetching flats",
-        error: error.message,
+        error: error,
       },
       {
         status: 500,
@@ -78,12 +78,12 @@ export const POST = async (req: Response) => {
       },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error adding flat:", error);
     return NextResponse.json(
       {
         message: "An error occurred while creating the flat",
-        error: error.message,
+        error: error,
       },
       { status: 500 }
     );
@@ -93,13 +93,13 @@ export const POST = async (req: Response) => {
 export const PUT = async (req: Response) => {
   try {
     const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
+    const flatId = searchParams.get("flatId");
 
     const body = await req.json();
 
     await connect();
 
-    const updatedFlat = await RoomInfo.findByIdAndUpdate(id, body, {
+    const updatedFlat = await RoomInfo.findOneAndUpdate({ flatId }, body, {
       new: true,
     });
 
@@ -121,11 +121,11 @@ export const PUT = async (req: Response) => {
       },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error) {
     return NextResponse.json(
       {
         message: "Can't able to update the flat",
-        error: error.message,
+        error: error,
       },
       {
         status: 500,
@@ -174,7 +174,7 @@ export const DELETE = async (req: Response) => {
     return NextResponse.json({
       message: "Flat deleted successfully",
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error deleting flat:", error);
     return NextResponse.json(
       { error: "Internal server error" },

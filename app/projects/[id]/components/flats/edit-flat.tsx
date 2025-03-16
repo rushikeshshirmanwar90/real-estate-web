@@ -65,7 +65,7 @@ const EditFlat = ({ flat, onSuccess }: EditFlatProps) => {
             onSuccess()
         } catch (error) {
             toast.error('Failed to update flat', {
-                description: 'Please try again later.',
+                description: `Please try again later. ${error}`,
             })
         } finally {
             setIsSubmitting(false)

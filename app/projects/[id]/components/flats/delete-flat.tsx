@@ -42,7 +42,7 @@ const DeleteFlat = ({ flatId, flatName, onSuccess }: DeleteFlatProps) => {
             onSuccess()
         } catch (error) {
             toast.error('Failed to delete flat', {
-                description: 'Please try again later.',
+                description: `Please try again later. ${error}`,
             })
         } finally {
             setIsDeleting(false)

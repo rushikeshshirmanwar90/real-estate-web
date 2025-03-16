@@ -9,7 +9,7 @@ import domain from '@/components/utils/domain'
 import { ApiUser, Customer } from '@/components/types/customer'
 import { successToast } from '@/components/toasts'
 
-const page = () => {
+const Page = () => {
 
 
     const [loading, setLoading] = useState<boolean>(true);
@@ -35,7 +35,7 @@ const page = () => {
                         properties: user.properties?.property || [],
                     }));
 
-                let tmp = customerData.reverse()
+                const tmp = customerData.reverse()
                 setCustomers(tmp);
 
                 setCustomers(customerData);
@@ -52,25 +52,25 @@ const page = () => {
 
     const addCustomer = async (data: Customer) => {
         try {
-            const res = await axios.post(`${domain}/api/user`, data);
+            await axios.post(`${domain}/api/user`, data);
             updateData();
             successToast("user added successfully");
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("can't able to add the customer");
-            console.log(error.message)
+            console.log(error)
         }
     }
 
     const deleteCustomer = async (id: string) => {
         try {
-            const res = await axios.delete(`${domain}/api/user`, {
+            await axios.delete(`${domain}/api/user`, {
                 params: { id: id }
             });
             updateData();
             successToast("user deleted successfully");
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("can't able to add the customer");
-            console.log(error.message)
+            console.log(error)
         }
     }
 
@@ -97,4 +97,4 @@ const page = () => {
     )
 }
 
-export default page
+export default Page

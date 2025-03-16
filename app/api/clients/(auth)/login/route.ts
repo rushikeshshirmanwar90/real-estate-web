@@ -6,7 +6,7 @@ import { cookies } from "next/headers";
 import { Client } from "@/lib/models/Client";
 import connect from "@/lib/db";
 
-export const POST = async (req: NextRequest, res: NextResponse) => {
+export const POST = async (req: NextRequest) => {
   try {
     await connect();
 
@@ -65,22 +65,12 @@ export const POST = async (req: NextRequest, res: NextResponse) => {
         status: 200,
       }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Login error:", error);
-    if (error.message.includes("buffering timed out")) {
-      return NextResponse.json(
-        {
-          message: "Database connection timed out. Please try again later.",
-        },
-        {
-          status: 500,
-        }
-      );
-    }
 
     return NextResponse.json(
       {
-        message: "Can't log in: " + error.message,
+        message: "Can't log in: " + error,
       },
       {
         status: 500,

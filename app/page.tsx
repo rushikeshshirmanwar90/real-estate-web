@@ -1,9 +1,3 @@
-import { DashboardCards } from "@/components/DashboardCard";
-import SideBar from "@/components/SideBar";
-import SideBarItems from "@/components/SideBarItems";
-import { Building2Icon, ChartPieIcon, LayoutDashboard } from "lucide-react";
-
-
 
 export default function Page() {
   return (

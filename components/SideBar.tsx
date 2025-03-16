@@ -3,7 +3,7 @@ import { ChevronFirst, MoreVertical } from 'lucide-react'
 import Image from 'next/image'
 import React from 'react'
 
-const SideBar: React.FC<{ children: any }> = ({ children }) => {
+const SideBar: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return (
         <aside className='h-screen w-[20vw]'>
             <nav className='h-full flex flex-col bg-white border-r shadow-sm'>

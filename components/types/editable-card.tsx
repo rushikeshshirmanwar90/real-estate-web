@@ -1,3 +1,6 @@
+import { LucideIcon } from "lucide-react";
+
+
 interface FieldOption {
     label: string
     value: string
@@ -15,7 +18,7 @@ export interface EditableSectionCardProps {
     title: string
     fields?: Field[]
     images?: string[]
-    icon?: any
+    icon?: LucideIcon
     onFieldChange?: (key: string, value: string | number) => void
     onImagesChange?: (images: string[]) => void
 }

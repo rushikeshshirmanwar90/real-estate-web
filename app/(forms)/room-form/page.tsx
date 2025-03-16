@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { RoomsEditableCard } from "@/components/editable-cards/roomEditCard"
 import TopHeader from "@/components/TopHeader"
@@ -8,6 +8,7 @@ import axios from "axios"
 import domain from "@/components/utils/domain"
 import { successToast } from "@/components/toasts"
 import { FlatInfo, Room } from "./type"
+import { findRoomInfo } from "@/functions/rooms"
 
 const RoomForm = () => {
     const searchParams = useSearchParams()
@@ -22,6 +23,37 @@ const RoomForm = () => {
         flatId: flatId,
         rooms: [],
     })
+    const [isLoading, setIsLoading] = useState(true)
+    const [isUpdating, setIsUpdating] = useState(false)
+
+    // Fetch existing room data when component mounts
+    useEffect(() => {
+        const fetchRoomData = async () => {
+            try {
+                setIsLoading(true)
+                const res = await findRoomInfo(flatId)
+                if (res) {
+                    setFlatInfo({
+                        projectId: res.projectId || projectId,
+                        buildingId: res.buildingId || buildingId,
+                        flatId: res.flatId || flatId,
+                        rooms: res.rooms || [],
+                    })
+                    setIsUpdating(true)
+                }
+            } catch (error) {
+                console.error("Error fetching room data:", error)
+            } finally {
+                setIsLoading(false)
+            }
+        }
+
+        if (flatId) {
+            fetchRoomData()
+        } else {
+            setIsLoading(false)
+        }
+    }, [flatId, projectId, buildingId])
 
     const handleRoomsChange = (rooms: Room[]) => {
         setFlatInfo((prev) => ({
@@ -36,7 +68,6 @@ const RoomForm = () => {
             flatInfo.buildingId.trim() !== "" &&
             flatInfo.flatId.trim() !== "";
 
-        // Check if there's at least one room (optional, depending on your requirements)
         const hasRooms = flatInfo.rooms.length > 0;
 
         const hasValidRooms = flatInfo.rooms.length === 0 || flatInfo.rooms.every(room =>
@@ -51,43 +82,54 @@ const RoomForm = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        console.log(flatInfo)
+        if (!isFormValid()) {
+            console.log("Form is invalid")
+            return;
+        }
 
         try {
-            const res = await axios.post(`${domain}/api/room-info`, flatInfo);
+            let res;
+            if (isUpdating) {
+                res = await axios.put(`${domain}/api/room-info?flatId=${flatId}`, flatInfo);
+            } else {
+                res = await axios.post(`${domain}/api/room-info`, flatInfo);
+            }
+
             const data = res.data;
 
             if (data) {
-                successToast("Flat Rooms are added successfully");
+                successToast(`Flat Rooms are ${isUpdating ? 'updated' : 'added'} successfully`);
                 router.push("/projects");
             }
-
-        } catch (error: any) {
-            console.log("something went wrong can't add the project");
-            console.error(error.error)
+        } catch (error: unknown) {
+            console.log(`Something went wrong, can't ${isUpdating ? 'update' : 'add'} the rooms`);
+            console.error(error)
         }
+    }
 
+    if (isLoading) {
+        return <div>Loading...</div>
     }
 
     return (
         <div className="container mx-auto p-6 space-y-8">
-
-            <form onSubmit={handleSubmit} >
+            <form onSubmit={handleSubmit}>
                 <TopHeader
-                    buttonText={"Add Room Details"}
+                    buttonText={isUpdating ? "Update Room Details" : "Add Room Details"}
                     tagTitle="Project"
                     title={`set up buildings`}
-                    buttonDisable={false}
+                    buttonDisable={!isFormValid()}
                 />
 
                 <div className="space-y-6">
-                    <RoomsEditableCard rooms={flatInfo.rooms} onRoomsChange={handleRoomsChange} />
+                    <RoomsEditableCard
+                        rooms={flatInfo.rooms}
+                        onRoomsChange={handleRoomsChange}
+                    />
                 </div>
             </form>
-
         </div>
     )
-
 }
 
 export default RoomForm;

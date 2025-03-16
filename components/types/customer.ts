@@ -43,3 +43,13 @@ export type PropertyItem = {
   flatId?: string;
   flatName?: string;
 };
+
+export interface Details {
+  userName: string;
+  flatName: string;
+  title: string;
+  description: string;
+  images: string[];
+  totalArea: number;
+  video: string;
+}

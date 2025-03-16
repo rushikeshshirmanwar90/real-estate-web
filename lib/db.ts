@@ -20,8 +20,8 @@ const connect = async () => {
       dbName: "realEstate",
       bufferCommands: true,
     });
-  } catch (error: any) {
-    console.log("Error : " + error.message);
+  } catch (error: unknown) {
+    console.log("Error : " + error);
   }
 };
 

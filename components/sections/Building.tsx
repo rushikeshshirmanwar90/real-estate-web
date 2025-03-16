@@ -52,8 +52,8 @@ const Building: React.FC<{ buildingId: string | null | undefined }> = ({ buildin
                         <div className="flex flex-wrap gap-2">
 
                             {
-                                buildingData?.amenities?.map((item: AmenityItem) => (
-                                    <div className="bg-gray-100 px-3 py-2 rounded-lg flex items-center gap-2 text-gray-700">
+                                buildingData?.amenities?.map((item: AmenityItem, index: number) => (
+                                    <div key={index} className="bg-gray-100 px-3 py-2 rounded-lg flex items-center gap-2 text-gray-700">
                                         <DisplayIcon iconName={item.icon} size={20} color="black" /> {item.name}
                                     </div>
                                 ))
@@ -127,7 +127,7 @@ const Building: React.FC<{ buildingId: string | null | undefined }> = ({ buildin
                                         <div>
                                             <Link href={`/room-form?projectId=${buildingData?.projectId}&buildingId=${buildingData?._id}&flatId=${flat._id}`}>
                                                 <Button>
-                                                    Add Room Details
+                                                    Rooms
                                                 </Button>
                                             </Link>
                                         </div>

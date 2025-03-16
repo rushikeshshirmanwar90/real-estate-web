@@ -32,8 +32,8 @@ export const GET = async (req: Response) => {
       }
       return NextResponse.json(client);
     }
-  } catch (error: any) {
-    console.error("Error : " + error.message);
+  } catch (error: unknown) {
+    console.error("Error : " + error);
   }
 };
 
@@ -51,10 +51,10 @@ export const POST = async (req: NextRequest) => {
     await addClient.save();
 
     return NextResponse.json({ message: "Client added successfully" });
-  } catch (error: any) {
-    console.error("Error: " + error.message);
+  } catch (error: unknown) {
+    console.error("Error: " + error);
     return NextResponse.json(
-      { message: "An error occurred", error: error.message },
+      { message: "An error occurred", error: error },
       { status: 500 }
     );
   }
@@ -88,10 +88,10 @@ export const DELETE = async (req: NextRequest) => {
       message: "Client Deleted Successfully",
       data: deletedClient,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Internal Server Error:", error);
     return NextResponse.json(
-      { message: "Internal Server Error", error: error.message },
+      { message: "Internal Server Error", error: error },
       { status: 500 }
     );
   }
@@ -139,10 +139,10 @@ export const PUT = async (req: NextRequest) => {
       message: "User Updated Successfully",
       data: updatedUser,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Internal Server Error:", error);
     return NextResponse.json(
-      { message: "Internal Server Error", error: error.message },
+      { message: "Internal Server Error", error: error },
       { status: 500 }
     );
   }

@@ -7,6 +7,16 @@ import { StaffTable } from '@/components/staff/staff-table'
 import { StaffProps } from '@/components/types/staff'
 import domain from '@/components/utils/domain'
 
+
+interface StaffApiResponse {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phoneNumber: string;
+}
+
+
 const Page = () => {
     const [staff, setStaff] = useState<StaffProps[]>([]);
     const [random, setRandom] = useState<number>();
@@ -18,13 +28,14 @@ const Page = () => {
                 const res = await axios.get(`${domain}/api/staff`)
                 const data = res.data.staffData
 
-                const transformedData = data.map((item: any) => ({
+
+                const transformedData: StaffProps[] = data.map((item: StaffApiResponse) => ({
                     id: item._id,
                     srNumber: data.indexOf(item) + 1,
                     name: `${item.firstName} ${item.lastName}`,
                     email: item.email,
                     phone: item.phoneNumber
-                }))
+                }));
 
                 setStaff(transformedData)
                 setLoading(false)
@@ -43,9 +54,9 @@ const Page = () => {
             if (res) {
                 console.log("staff added successfully");
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.log("something went wrong");
-            console.error(error.error);
+            console.error(error);
         } finally {
             updateData();
         }

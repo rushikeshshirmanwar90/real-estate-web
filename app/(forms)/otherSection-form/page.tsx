@@ -1,15 +1,22 @@
 'use client'
 
-import { AmenitiesProps, Field } from '@/components/types/editable-card';
+import { Field } from '@/components/types/editable-card';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useState } from 'react'
-import { OtherSectionProps } from './types';
 import { successToast } from '@/components/toasts';
 import { addOtherSection, getSingleOtherSection, updateOtherSection } from '@/functions/otherSection/crud';
 import TopHeader from '@/components/TopHeader';
 import { EditableSectionCard } from '@/components/editable-cards/editable-info-card';
 import { Book, Image } from 'lucide-react';
 import axios from 'axios';
+
+export interface OtherSectionProps {
+    name: string;
+    description?: string;
+    projectId: string;
+    area: number;
+    images: string[];
+}
 
 const Page = () => {
     const router = useRouter();
@@ -19,8 +26,6 @@ const Page = () => {
     const projectId = searchParams.get('projectId') || ""
     const id = searchParams.get("id") || ""
 
-    const [otherSectionData, setOtherSectionData] = useState<[]>([]);
-    const [selectedAmenities, setSelectedAmenities] = useState<AmenitiesProps[]>([]);
     const [formData, setFormData] = useState<OtherSectionProps>({
         projectId: projectId,
         name: sectionName,
@@ -50,7 +55,6 @@ const Page = () => {
             setError(null);
             try {
                 const data = await getSingleOtherSection(id);
-                setOtherSectionData(data);
                 setFormData(data);
             } catch (error) {
                 if (axios.isAxiosError(error)) {

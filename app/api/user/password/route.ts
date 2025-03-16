@@ -32,11 +32,11 @@ export const POST = async (req: NextRequest) => {
       },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         message: "can't able update the password, please try again",
-        error: error.message,
+        error: error,
       },
       { status: 500 }
     );

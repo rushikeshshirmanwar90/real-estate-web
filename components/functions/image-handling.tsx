@@ -1,6 +1,6 @@
 export const handleImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    setImages: React.Dispatch<React.SetStateAction<string[]>> | any,
+    setImages: React.Dispatch<React.SetStateAction<string[]>>,
     setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
 ) => {
     if (!e.target.files?.length) return;
@@ -36,7 +36,7 @@ export const handleImageUpload = async (
 
     const urls = (await Promise.all(uploadPromises)).filter(Boolean) as string[];
 
-    setImages((prevImages: any) => [...prevImages, ...urls]);
+    setImages((prevImages) => [...prevImages, ...urls]);
     setIsLoading(false);
 
     return urls;

@@ -8,7 +8,6 @@ export const GET = async (req: Response) => {
     await connect();
 
     const { searchParams } = new URL(req.url);
-    const projectId = searchParams.get("projectId");
     const id = searchParams.get("id");
 
     if (!id) {
@@ -36,12 +35,12 @@ export const GET = async (req: Response) => {
     }
 
     return NextResponse.json(building);
-  } catch (error: any) {
-    console.log(error.message);
+  } catch (error: unknown) {
+    console.log(error);
     return NextResponse.json(
       {
         message: "something wen't wrong, can't able to get the buildings",
-        error: error.message,
+        error: error,
       },
       {
         status: 200,
@@ -94,12 +93,12 @@ export const POST = async (req: Response) => {
       },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error adding building:", error);
     return NextResponse.json(
       {
         message: "An error occurred while creating the building",
-        error: error.message,
+        error: error,
       },
       { status: 500 }
     );
@@ -185,11 +184,11 @@ export const PUT = async (req: Response) => {
       },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         message: "can't able to update the building",
-        error: error.message,
+        error: error,
       },
       {
         status: 500,
@@ -238,12 +237,12 @@ export const PATCH = async (req: NextRequest) => {
       },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error updating building:", error);
     return NextResponse.json(
       {
         message: "Failed to update building",
-        error: error.message,
+        error: error,
       },
       { status: 500 }
     );

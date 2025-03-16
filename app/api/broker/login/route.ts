@@ -53,12 +53,12 @@ export const POST = async (req: Request) => {
       { message: "user login successfully" },
       { status: 200 }
     );
-  } catch (error: any) {
-    console.log(error.message);
+  } catch (error: unknown) {
+    console.log(error);
     return NextResponse.json(
       {
         message: "can't able to login",
-        error: error.message,
+        error: error,
       },
       {
         status: 500,

@@ -34,8 +34,6 @@ import {
     Carousel,
     CarouselContent,
     CarouselItem,
-    CarouselNext,
-    CarouselPrevious,
 } from "@/components/ui/carousel"
 
 import RowHouse from "@/components/sections/RowHouse"
@@ -85,8 +83,6 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ projectInfo, refreshData }) =
     const [isSectionModelOpen, setIsSectionModelOpen] = useState(false)
     const [selectedSection, setSelectedSection] = useState<selectedSectionProps>()
 
-    // Section state
-    const [sections, setSections] = useState<Section[]>([])
     const [newSection, setNewSection] = useState({
         name: "",
         type: "" as Section["type"],
@@ -151,7 +147,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ projectInfo, refreshData }) =
     }
 
     const handleDeleteSection = () => {
-        const res = deleteBuilding(projectInfo._id, selectedSection?.id);
+        deleteBuilding(projectInfo._id, selectedSection?.id);
         refreshData();
         setIsSectionModelOpen(false)
     }
@@ -183,8 +179,8 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ projectInfo, refreshData }) =
                         ]}>
                         <CarouselContent>
                             {
-                                projectInfo.images.map((item: string) => (
-                                    <CarouselItem>
+                                projectInfo.images.map((item: string, index: number) => (
+                                    <CarouselItem key={index} >
                                         <Image
                                             src={`${item}`}
                                             alt="Project Image"
@@ -251,8 +247,8 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ projectInfo, refreshData }) =
                         <div className="mt-3 flex gap-2 flex-wrap">
 
                             {
-                                projectInfo?.amenities.map((item: AmenitiesProps) => (
-                                    <div className="bg-gray-100 px-3 py-2 rounded-lg flex items-center gap-2 text-gray-700">
+                                projectInfo?.amenities.map((item: AmenitiesProps, index: number) => (
+                                    <div key={index} className="bg-gray-100 px-3 py-2 rounded-lg flex items-center gap-2 text-gray-700">
                                         <DisplayIcon iconName={item.icon} size={20} color="black" /> {item.name}
                                     </div>
                                 ))

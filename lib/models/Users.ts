@@ -47,6 +47,11 @@ const userSchema = new Schema(
       required: true,
     },
 
+    verified: {
+      type: Boolean,
+      default: false,
+    },
+
     otp: { type: Number, required: false },
   },
   {

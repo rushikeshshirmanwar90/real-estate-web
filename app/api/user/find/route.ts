@@ -1,6 +1,5 @@
 import connect from "@/lib/db";
 import { User } from "@/lib/models/Users";
-import { CustomerDetails } from "@/lib/models/CustomerDetails";
 import { NextResponse } from "next/server";
 
 export const POST = async (req: Request) => {
@@ -53,13 +52,13 @@ export const POST = async (req: Request) => {
       },
       { status: 200 }
     );
-  } catch (error: any) {
-    console.log(error.message);
+  } catch (error: unknown) {
+    console.log(error);
     return NextResponse.json(
       {
         message:
           "Can't able to find the user, something went wrong, please try again",
-        error: error.message,
+        error: error,
       },
       { status: 500 }
     );

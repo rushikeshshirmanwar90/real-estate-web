@@ -1,3 +1,4 @@
+// components/EmailTemplate.tsx
 import {
     Body,
     Container,
@@ -41,11 +42,9 @@ export const EmailTemplate = ({
                             <Text style={mainText}>
                                 Thank you for registering with [Your Real Estate App Name]! To complete your registration,
                                 please verify your email address by entering the verification code below:
-
                             </Text>
                             <Section style={verificationSection}>
                                 <Text style={verifyText}>Verification code</Text>
-
                                 <Text style={codeText}>{verificationCode}</Text>
                                 <Text style={validityText}>
                                     (This code is valid for 10 minutes)

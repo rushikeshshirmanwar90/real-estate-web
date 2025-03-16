@@ -31,12 +31,12 @@ export const GET = async (req: NextRequest) => {
       },
       { status: 200 }
     );
-  } catch (error: any) {
-    console.log("something went wrong : ", error.message);
+  } catch (error) {
+    console.log("something went wrong : ", error);
     return NextResponse.json(
       {
         message: "Something wen't wrong !",
-        error: error.message,
+        error: error,
       },
       {
         status: 500,
@@ -84,12 +84,12 @@ export const POST = async (req: NextRequest) => {
     }
 
     return NextResponse.json({ newData }, { status: 200 });
-  } catch (error: any) {
-    console.log("something went wrong : ", error.message);
+  } catch (error) {
+    console.log("something went wrong : ", error);
     return NextResponse.json(
       {
         message: "Something wen't wrong !",
-        error: error.message,
+        error: error,
       },
       {
         status: 500,
@@ -139,12 +139,12 @@ export const DELETE = async (req: NextRequest) => {
       },
       { status: 200 }
     );
-  } catch (error: any) {
-    console.log("something went wrong : ", error.message);
+  } catch (error) {
+    console.log("something went wrong : ", error);
     return NextResponse.json(
       {
         message: "Something wen't wrong !",
-        error: error.message,
+        error: error,
       },
       {
         status: 500,
@@ -184,12 +184,12 @@ export const PUT = async (req: NextRequest) => {
       },
       { status: 200 }
     );
-  } catch (error: any) {
-    console.log("something went wrong : ", error.message);
+  } catch (error) {
+    console.log("something went wrong : ", error);
     return NextResponse.json(
       {
         message: "Something wen't wrong !",
-        error: error.message,
+        error: error,
       },
       {
         status: 500,

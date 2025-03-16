@@ -1,5 +1,5 @@
 import connect from "@/lib/db";
-import RoomUpdate from "@/lib/models/RoomInfo";
+import { RoomInfo as RoomUpdate } from "@/lib/models/RoomInfo";
 import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (req: NextRequest) => {
@@ -26,12 +26,12 @@ export const GET = async (req: NextRequest) => {
     }
 
     return NextResponse.json(roomUpdates);
-  } catch (error: any) {
-    console.log(error.message);
+  } catch (error: unknown) {
+    console.log(error);
     return NextResponse.json(
       {
         message: "something wen't wrong, can't able to get the room updates",
-        error: error.message,
+        error: error,
       },
       {
         status: 200,
@@ -59,12 +59,12 @@ export const POST = async (req: NextRequest) => {
     }
 
     return NextResponse.json(savedRoomUpdate);
-  } catch (error: any) {
-    console.log(error.message);
+  } catch (error: unknown) {
+    console.log(error);
     return NextResponse.json(
       {
         message: "something wen't wrong, can't able to save the room update",
-        error: error.message,
+        error: error,
       },
       {
         status: 200,
@@ -96,12 +96,12 @@ export const PUT = async (req: NextRequest) => {
     }
 
     return NextResponse.json(updatedRoomUpdate);
-  } catch (error: any) {
-    console.log(error.message);
+  } catch (error: unknown) {
+    console.log(error);
     return NextResponse.json(
       {
         message: "something wen't wrong, can't able to update the room update",
-        error: error.message,
+        error: error,
       },
       {
         status: 200,
@@ -129,12 +129,12 @@ export const DELETE = async (req: NextRequest) => {
     }
 
     return NextResponse.json(deletedRoomUpdate);
-  } catch (error: any) {
-    console.log(error.message);
+  } catch (error: unknown) {
+    console.log(error);
     return NextResponse.json(
       {
         message: "something wen't wrong, can't able to delete the room update",
-        error: error.message,
+        error: error,
       },
       {
         status: 200,

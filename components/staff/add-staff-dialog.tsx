@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { PlusCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { useEffect, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { PlusCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
     Dialog,
     DialogContent,
@@ -14,11 +14,12 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-} from "@/components/ui/dialog"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { getClientId } from "@/functions/getClientId"
+} from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { getClientId } from "@/functions/getClientId";
 
+// Define schema
 const formSchema = z.object({
     firstName: z.string().min(2, {
         message: "Name must be at least 2 characters.",
@@ -33,13 +34,20 @@ const formSchema = z.object({
         message: "Phone number must be at least 10 digits.",
     }),
     userType: z.string(),
-    clientId: z.string()
-})
+    clientId: z.string(),
+});
 
-export const AddStaffDialog: React.FC<{ addStaff: (data: any) => void }> = ({ addStaff }) => {
-    const [open, setOpen] = useState(false)
+// Infer type from schema
+type StaffData = z.infer<typeof formSchema>;
 
-    const form = useForm<z.infer<typeof formSchema>>({
+interface AddStaffDialogProps {
+    addStaff: (data: StaffData) => void;
+}
+
+export const AddStaffDialog: React.FC<AddStaffDialogProps> = ({ addStaff }) => {
+    const [open, setOpen] = useState(false);
+
+    const form = useForm<StaffData>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             firstName: "",
@@ -47,14 +55,14 @@ export const AddStaffDialog: React.FC<{ addStaff: (data: any) => void }> = ({ ad
             email: "",
             phoneNumber: "",
             userType: "staff",
-            clientId: ""
+            clientId: "",
         },
-    })
+    });
 
-    function onSubmit(values: z.infer<typeof formSchema>) {
-        addStaff(values)
-        setOpen(false)
-        form.reset()
+    function onSubmit(values: StaffData) {
+        addStaff(values);
+        setOpen(false);
+        form.reset();
     }
 
     const fetchClientId = async () => {
@@ -106,7 +114,7 @@ export const AddStaffDialog: React.FC<{ addStaff: (data: any) => void }> = ({ ad
                                 name="lastName"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>last Name</FormLabel>
+                                        <FormLabel>Last Name</FormLabel>
                                         <FormControl>
                                             <Input placeholder="Smith" {...field} />
                                         </FormControl>
@@ -152,5 +160,5 @@ export const AddStaffDialog: React.FC<{ addStaff: (data: any) => void }> = ({ ad
                 </Form>
             </DialogContent>
         </Dialog>
-    )
-}
+    );
+};

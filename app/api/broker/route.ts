@@ -36,12 +36,12 @@ export const GET = async (req: Request) => {
     }
 
     return NextResponse.json(brokers);
-  } catch (error: any) {
-    console.error(error.message);
+  } catch (error: unknown) {
+    console.error(error);
     return NextResponse.json(
       {
         message: "error fetching brokers",
-        error: error.message,
+        error: error,
       },
       { status: 500 }
     );
@@ -75,29 +75,30 @@ export const POST = async (req: Request) => {
       { message: "broker created successfully" },
       { status: 200 }
     );
-  } catch (error: any) {
-    console.log(error.message);
+  } catch (error: unknown) {
+    console.log(error);
     return NextResponse.json(
       {
         message: "can't able to add the broker",
-        error: error.message,
+        error: error,
       },
       { status: 500 }
     );
   }
 };
-
 export const PUT = async (req: Request) => {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     const body = await req.json();
 
-    const { email, phoneNumber, password, ...allowFields } = body;
+    // Explicitly filter out sensitive fields
+    const sensitiveFields = ["email", "phoneNumber", "password"];
+    const filteredBody = Object.fromEntries(
+      Object.entries(body).filter(([key]) => !sensitiveFields.includes(key))
+    );
 
-    await connect();
-
-    const updatedBroker = await Broker.findByIdAndUpdate(id, allowFields, {
+    const updatedBroker = await Broker.findByIdAndUpdate(id, filteredBody, {
       new: true,
     });
 
@@ -116,12 +117,12 @@ export const PUT = async (req: Request) => {
       message: "brokers data updated successfully",
       updatedData: updatedBroker,
     });
-  } catch (error: any) {
-    console.log(error.message);
+  } catch (error: unknown) {
+    console.log(error);
     return NextResponse.json(
       {
         message: "can't able to update the brokers details",
-        error: error.message,
+        error: error,
       },
       {
         status: 500,
@@ -129,7 +130,6 @@ export const PUT = async (req: Request) => {
     );
   }
 };
-
 export const DELETE = async (req: Request) => {
   try {
     const { searchParams } = new URL(req.url);
@@ -158,12 +158,12 @@ export const DELETE = async (req: Request) => {
         status: 200,
       }
     );
-  } catch (error: any) {
-    console.log(error.message);
+  } catch (error: unknown) {
+    console.log(error);
     return NextResponse.json(
       {
         message: "can't able to delete the broker",
-        error: error.message,
+        error: error,
       },
       { status: 500 }
     );

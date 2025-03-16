@@ -23,7 +23,6 @@ const Page = () => {
     const id = searchParams.get('id') || "";
 
     const [selectedAmenities, setSelectedAmenities] = useState<AmenitiesProps[]>([]);
-    const [buildingData, setBuildingData] = useState<BuildingFormProps | null>(null);
     const [formData, setFormData] = useState<BuildingFormProps>({
         projectId: projectId,
         name: sectionName,

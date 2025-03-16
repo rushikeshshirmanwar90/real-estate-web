@@ -20,11 +20,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuContent } from "@/components/ui/dropdown-menu";
 import { Customer, PropertyItem } from "../types/customer";
+import ContactsDialog from "@/components/ContactDialog";
 
 const CustomerTable: React.FC<{ customers: Customer[], loading: boolean, deleteCustomer: (id: string) => void }> = ({ customers, loading, deleteCustomer }) => {
     const [sorting, setSorting] = useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const [selectedProperty, setSelectedProperty] = useState<PropertyItem | null>(null);
+    const [isPropertyDialogOpen, setIsPropertyDialogOpen] = useState(false);
 
     const columns: ColumnDef<Customer>[] = [
         {
@@ -61,9 +63,15 @@ const CustomerTable: React.FC<{ customers: Customer[], loading: boolean, deleteC
             cell: ({ row }) => {
                 const properties = row.original.properties;
                 return properties && properties.length > 0 ? (
-                    <Dialog>
+                    <Dialog open={isPropertyDialogOpen} onOpenChange={setIsPropertyDialogOpen}>
                         <DialogTrigger asChild>
-                            <Button variant="link">
+                            <Button
+                                variant="link"
+                                onClick={() => {
+                                    // Set the first property as selected by default
+                                    setSelectedProperty(properties[0]);
+                                }}
+                            >
                                 {properties.length === 1 ? properties[0].projectName : `${properties.length} Properties`}
                             </Button>
                         </DialogTrigger>
@@ -71,6 +79,24 @@ const CustomerTable: React.FC<{ customers: Customer[], loading: boolean, deleteC
                             <DialogHeader>
                                 <DialogTitle>Property Details</DialogTitle>
                             </DialogHeader>
+                            {properties.length > 1 && (
+                                <div className="mb-4">
+                                    <select
+                                        className="w-full p-2 border rounded"
+                                        value={selectedProperty?.id || ""}
+                                        onChange={(e) => {
+                                            const selected = properties.find(p => p.id === e.target.value);
+                                            if (selected) setSelectedProperty(selected);
+                                        }}
+                                    >
+                                        {properties.map(prop => (
+                                            <option key={prop.id} value={prop.id}>
+                                                {prop.projectName} - {prop.sectionName}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
                             {selectedProperty && (
                                 <div className="space-y-2">
                                     <p><strong>Project Name:</strong> {selectedProperty.projectName}</p>
@@ -85,6 +111,16 @@ const CustomerTable: React.FC<{ customers: Customer[], loading: boolean, deleteC
                     </Dialog>
                 ) : (
                     <span className="text-gray-500">No properties</span>
+                );
+            },
+        },
+        {
+            accessorKey: "contacts",
+            header: "Contacts",
+            cell: ({ row }) => {
+                const customer = row.original;
+                return (
+                    <ContactsDialog clientId={customer.id} />
                 );
             },
         },
@@ -106,9 +142,9 @@ const CustomerTable: React.FC<{ customers: Customer[], loading: boolean, deleteC
                             <DropdownMenuSeparator />
                             <DropdownMenuItem>View details</DropdownMenuItem>
                             <DropdownMenuItem>Edit customer</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={() => deleteCustomer(customer.id)}  >Delete customer</DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive" onClick={() => deleteCustomer(customer.id)}>Delete customer</DropdownMenuItem>
                         </DropdownMenuContent>
-                    </DropdownMenu >
+                    </DropdownMenu>
                 );
             },
         },

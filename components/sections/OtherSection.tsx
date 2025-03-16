@@ -5,20 +5,16 @@ import Image from "next/image"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { OtherSectionProps } from "@/app/(forms)/otherSection-form/types"
-import { getSingleBuilding } from "@/functions/building/crud"
 import { getSingleOtherSection } from "@/functions/otherSection/crud"
 
 const OtherSection: React.FC<{ sectionId: string }> = ({ sectionId }) => {
 
     const [sectionData, setSectionData] = useState<OtherSectionProps>()
-    const [isLoading, setIsLoading] = useState<boolean>(false);
 
     const fetchSectionData = async () => {
-        setIsLoading(true)
         const res = await getSingleOtherSection(sectionId);
         console.log(res);
         setSectionData(res.data);
-        setIsLoading(false)
     }
 
     useEffect(() => {

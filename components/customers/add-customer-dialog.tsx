@@ -20,13 +20,40 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { projectProps } from "@/app/projects/types/project-props"
 import type { BuildingProps } from "@/app/projects/types/building-props"
-import type { RowHouseProps } from "@/app/(forms)/rowHouse-form/types"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import axios from "axios"
 import domain from "../utils/domain"
 import { getClientId } from "@/functions/getClientId"
 
 // Matched with the PropertySchema in Mongoose
+
+
+interface CustomerData {
+    firstName: string
+    lastName: string
+    email: string
+    phoneNumber: string
+    properties: PropertyItem[]
+    userType: string
+    clientId: string
+}
+
+
+interface SectionData {
+    sectionId: string
+    name: string
+    type: string
+}
+
+
+
+interface FlatInfo {
+    _id: string
+    title: string
+    totalFlats: number
+    totalBookedFlats: number
+}
+
 interface PropertyItem {
     id: string
     projectId: string
@@ -66,26 +93,22 @@ const formSchema = z.object({
     })
 })
 
-export const AddCustomerDialog: React.FC<{ addCustomer: (data: any) => void, userId?: string }> = ({ addCustomer, userId }) => {
-    const [open, setOpen] = useState(false)
+export const AddCustomerDialog: React.FC<{ addCustomer: (data: CustomerData) => void, userId?: string }> = ({ addCustomer }) => {
+    const [open, setOpen] = useState<boolean>(false)
     const [projects, setProjects] = useState<projectProps[]>([])
     const [building, setBuilding] = useState<BuildingProps[]>([])
-    const [rowHouse, setRowHouse] = useState<RowHouseProps[]>([])
 
     // Property form state
     const [selectedProject, setSelectedProject] = useState<string>("")
     const [selectedSection, setSelectedSection] = useState<string>("")
     const [selectedSectionType, setSelectedSectionType] = useState<string>("")
-    const [selectedFlat, setSelectedFlat] = useState<string>("")
-    const [flatName, setFlatName] = useState<string>("")
-    const [filteredSections, setFilteredSections] = useState<any[]>([])
-    const [availableFlats, setAvailableFlats] = useState<any[]>([])
+    const [filteredSections, setFilteredSections] = useState<SectionData[]>([])
+    const [availableFlats, setAvailableFlats] = useState<FlatInfo[]>([])
 
     // Property list state
     const [properties, setProperties] = useState<PropertyItem[]>([])
     const [isAddingProperty, setIsAddingProperty] = useState(false)
     const [editingPropertyIndex, setEditingPropertyIndex] = useState<number | null>(null)
-    const [selectedFlatInfo, setSelectedFlatInfo] = useState<string>("")
 
     const fetchBuilding = async () => {
         const res = await axios.get(`${domain}/api/building`)
@@ -93,11 +116,6 @@ export const AddCustomerDialog: React.FC<{ addCustomer: (data: any) => void, use
         setBuilding(data)
     }
 
-    const fetchRowHouse = async () => {
-        const res = await axios.get(`${domain}/api/rowHouse`)
-        const data = res.data
-        setRowHouse(data)
-    }
 
     const fetchProjects = async () => {
         const res = await axios.get(`${domain}/api/project`)
@@ -120,7 +138,6 @@ export const AddCustomerDialog: React.FC<{ addCustomer: (data: any) => void, use
     useEffect(() => {
         fetchProjects()
         fetchBuilding()
-        fetchRowHouse()
     }, [])
 
     useEffect(() => {
@@ -135,8 +152,6 @@ export const AddCustomerDialog: React.FC<{ addCustomer: (data: any) => void, use
             if (editingPropertyIndex === null) {
                 setSelectedSection("")
                 setSelectedSectionType("")
-                setSelectedFlat("")
-                setFlatName("")
                 setAvailableFlats([])
             }
         }
@@ -151,16 +166,9 @@ export const AddCustomerDialog: React.FC<{ addCustomer: (data: any) => void, use
                 setAvailableFlats([])
             }
 
-            if (editingPropertyIndex === null) {
-                setSelectedFlat("")
-                setFlatName("")
-            }
         } else {
             setAvailableFlats([])
-            setSelectedFlat("")
-            if (editingPropertyIndex === null && selectedSectionType !== "row house") {
-                setFlatName("")
-            }
+
         }
     }, [selectedSection, selectedSectionType, building, editingPropertyIndex])
 
@@ -199,8 +207,7 @@ export const AddCustomerDialog: React.FC<{ addCustomer: (data: any) => void, use
         }
         propertyForm.setValue("flatId", "")
         propertyForm.setValue("flatName", "")
-        setSelectedFlat("")
-        setFlatName("")
+
     }
 
     const handleAddProperty = () => {
@@ -213,8 +220,6 @@ export const AddCustomerDialog: React.FC<{ addCustomer: (data: any) => void, use
         setSelectedProject("")
         setSelectedSection("")
         setSelectedSectionType("")
-        setSelectedFlat("")
-        setFlatName("")
         setIsAddingProperty(true)
         setEditingPropertyIndex(null)
     }
@@ -225,8 +230,7 @@ export const AddCustomerDialog: React.FC<{ addCustomer: (data: any) => void, use
         setSelectedProject(property.projectId)
         setSelectedSection(property.sectionId)
         setSelectedSectionType(property.sectionType)
-        setSelectedFlat(property.flatId || "")
-        setFlatName(property.flatName || "")
+
 
         propertyForm.reset({
             projectId: property.projectId,
@@ -490,8 +494,6 @@ export const AddCustomerDialog: React.FC<{ addCustomer: (data: any) => void, use
                                                                 <Select
                                                                     onValueChange={(value) => {
                                                                         field.onChange(value)
-                                                                        setSelectedFlat(value)
-                                                                        setSelectedFlatInfo(value)
                                                                     }}
                                                                     value={field.value}
                                                                 >
@@ -528,7 +530,6 @@ export const AddCustomerDialog: React.FC<{ addCustomer: (data: any) => void, use
                                                                     {...field}
                                                                     onChange={(e) => {
                                                                         field.onChange(e)
-                                                                        setFlatName(e.target.value)
                                                                     }}
                                                                 />
                                                             </FormControl>
@@ -553,13 +554,12 @@ export const AddCustomerDialog: React.FC<{ addCustomer: (data: any) => void, use
                                                                     // Process the form data manually
                                                                     const project = projects.find((p) => p._id === values.projectId)
                                                                     const section = filteredSections.find((s) => s.sectionId === values.sectionId)
-                                                                    let flatName = values.flatName || "" // Use the input as flatName
+                                                                    const flatName = values.flatName || "" // Use the input as flatName
 
                                                                     if (values.flatId && selectedSectionType === "Buildings") {
                                                                         const flat = availableFlats.find((f) => f._id === values.flatId)
                                                                         if (flat) {
                                                                             // Store flatInfoId at the form level for the schema
-                                                                            setSelectedFlatInfo(flat._id)
                                                                         }
                                                                     }
 

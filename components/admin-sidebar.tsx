@@ -1,10 +1,8 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
-    BarChart3,
     Building2,
     ChevronDown,
     Home,
@@ -40,7 +38,6 @@ import {
 
 export function AdminSidebar() {
     const pathname = usePathname()
-    const [open, setOpen] = useState(true)
 
     const navigation = [
         { name: "Dashboard", href: "/", icon: LayoutDashboard },

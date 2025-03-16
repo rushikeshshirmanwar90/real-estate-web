@@ -34,13 +34,13 @@ export const GET = async (req: Request) => {
     return NextResponse.json(projects, {
       status: 200,
     });
-  } catch (error: any) {
-    console.log(error.message);
+  } catch (error: unknown) {
+    console.log(error);
 
     return NextResponse.json(
       {
         message: "can't able to get the Projects",
-        error: error.message,
+        error: error,
       },
       {
         status: 500,
@@ -89,12 +89,12 @@ export const POST = async (req: Request) => {
       },
       { status: 400 }
     );
-  } catch (error: any) {
-    console.log(error.message);
+  } catch (error: unknown) {
+    console.log(error);
     return NextResponse.json(
       {
         message: "Unable to create the Project",
-        error: error.message,
+        error: error,
       },
       { status: 500 }
     );
@@ -127,13 +127,13 @@ export const DELETE = async (req: Request) => {
       message: "project deleted successfully",
       project: deletedProject,
     });
-  } catch (error: any) {
-    console.log(error.message);
+  } catch (error: unknown) {
+    console.log(error);
 
     return NextResponse.json(
       {
         message: "can't able to delete the project",
-        error: error.message,
+        error: error,
       },
       {
         status: 500,
@@ -176,12 +176,12 @@ export const PUT = async (req: Request) => {
         status: 200,
       }
     );
-  } catch (error: any) {
-    console.log(error.message);
+  } catch (error: unknown) {
+    console.log(error);
     return NextResponse.json(
       {
         message: "can't able to update the project",
-        error: error.message,
+        error: error,
       },
       {
         status: 500,
