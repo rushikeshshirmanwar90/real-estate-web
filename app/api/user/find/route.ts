@@ -20,7 +20,7 @@ export const POST = async (req: NextRequest | Request) => {
       );
     }
 
-    const isUser = await User.findOne({ email }).populate("properties");
+    const isUser = await User.findOne({ email });
 
     if (!isUser) {
       return NextResponse.json(

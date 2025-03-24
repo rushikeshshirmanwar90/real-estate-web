@@ -30,12 +30,6 @@ const userSchema = new Schema(
       enum: ["customer", "staff"],
     },
 
-    properties: {
-      type: Schema.Types.ObjectId,
-      ref: "CustomerDetails",
-      required: false,
-    },
-
     password: {
       type: String,
       required: false,

@@ -1,77 +1,11 @@
 import { Building } from "@/lib/models/Building";
+import { RowHouse } from "@/lib/models/RowHouse";
 import connect from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-import { User } from "@/lib/models/Users";
-import { Types } from "mongoose";
-
-interface Property {
-  flatId: string;
-  [key: string]: string | number | boolean | object | undefined;
-}
-
-interface UserProperties {
-  properties: {
-    property: Property[];
-  };
-  [key: string]: string | number | boolean | object | undefined;
-}
-
-interface FlatInfo {
-  _id: string | Types.ObjectId;
-  title: string;
-  description: string;
-  images: string[];
-  totalFlats: number;
-  totalBookedFlats: number;
-  bhk: number;
-  totalArea: number;
-  video: string;
-  [key: string]:
-    | string
-    | number
-    | boolean
-    | object
-    | string[]
-    | Types.ObjectId
-    | undefined;
-}
-
-interface BuildingDocument {
-  _id: string | Types.ObjectId;
-  name: string;
-  projectId: string;
-  location: string;
-  flatInfo: FlatInfo[];
-  [key: string]:
-    | string
-    | number
-    | boolean
-    | object
-    | FlatInfo[]
-    | Types.ObjectId
-    | undefined;
-}
-
-interface FlatInfoResponse {
-  flatInfo: {
-    id: string | Types.ObjectId;
-    title: string;
-    description: string;
-    images: string[];
-    totalFlats: number;
-    totalBookedFlats: number;
-    bhk: number;
-    totalArea: number;
-    video: string;
-  } | null;
-  building: {
-    id: string | Types.ObjectId;
-    name: string;
-    projectId: string;
-    location: string;
-  };
-  propertyDetails: Property;
-}
+import { CustomerDetails } from "@/lib/models/CustomerDetails";
+import mongoose from "mongoose";
+import { Property as PropertyProps } from "@/components/types/customer";
+import { BuildingDoc, DetailedProperty, RowHouseDoc } from "@/types/types";
 
 export const GET = async (req: NextRequest | Request) => {
   try {
@@ -82,96 +16,136 @@ export const GET = async (req: NextRequest | Request) => {
 
     if (!userId) {
       return NextResponse.json(
-        {
-          message: "User ID is required",
-        },
-        { status: 400 }
-      );
-    }
-
-    const userProperties = (await User.findById(userId).populate(
-      "properties"
-    )) as UserProperties;
-
-    if (!userProperties?.properties?.property?.length) {
-      return NextResponse.json(
-        {
-          message: "No properties found for this user",
-        },
+        { message: "userId not found" },
         { status: 404 }
       );
     }
 
-    const flatIds = userProperties.properties.property.map(
-      (prop: Property) => prop.flatId
-    );
+    // Get customer property information
+    const customerDetails = (await CustomerDetails.findOne({
+      userId: userId,
+    }).lean()) as { userId: string; property: PropertyProps[] } | null;
 
-    const buildings = (await Building.find({
-      "flatInfo._id": { $in: flatIds },
-    })) as BuildingDocument[];
-
-    if (!buildings.length) {
+    if (!customerDetails) {
       return NextResponse.json(
-        {
-          message: "No buildings found containing these flats",
-        },
+        { message: "Can't find properties for this user" },
         { status: 404 }
       );
     }
 
-    const flatInfos = flatIds
-      .map((flatId: string) => {
-        const building = buildings.find((b) =>
-          b.flatInfo.some((f: FlatInfo) => f._id.toString() === flatId)
-        );
+    const properties: PropertyProps[] = customerDetails.property;
 
-        if (!building) return null;
+    // Prepare detailed property information
+    const detailedProperties: DetailedProperty[] = await Promise.all(
+      properties.map(async (property) => {
+        // Initialize with base property info
+        let detailedProperty: DetailedProperty = {
+          ...property,
+          propertyDetails: null,
+        };
 
-        const flatInfo = building.flatInfo.find(
-          (f: FlatInfo) => f._id.toString() === flatId
-        );
+        try {
+          // If sectionType is "Buildings", fetch from Building model
+          if (property.sectionType === "Buildings" && property.flatId) {
+            const buildingDoc = (await Building.findById(
+              new mongoose.Types.ObjectId(property.sectionId)
+            ).lean()) as unknown as BuildingDoc;
 
-        return {
-          flatInfo: flatInfo
-            ? {
-                id: flatInfo._id,
-                title: flatInfo.title,
-                description: flatInfo.description,
-                images: flatInfo.images,
-                totalFlats: flatInfo.totalFlats,
-                totalBookedFlats: flatInfo.totalBookedFlats,
-                bhk: flatInfo.bhk,
-                totalArea: flatInfo.totalArea,
-                video: flatInfo.video,
+            if (buildingDoc) {
+              // Find the specific flat in the building's flatInfo array
+              const flatDetails = buildingDoc.flatInfo?.find(
+                (flat) => flat._id.toString() === property.flatId
+              );
+
+              if (flatDetails) {
+                // Clean up the flat details to remove internal Mongoose properties
+                const cleanFlatDetails = {
+                  _id: flatDetails._id.toString(),
+                  title: flatDetails.title,
+                  description: flatDetails.description,
+                  images: flatDetails.images,
+                  totalFlats: flatDetails.totalFlats,
+                  totalBookedFlats: flatDetails.totalBookedFlats,
+                  bhk: flatDetails.bhk,
+                  totalArea: flatDetails.totalArea,
+                  video: flatDetails.video,
+                };
+
+                // Clean up the building details
+                const buildingDetails = {
+                  name: buildingDoc.name,
+                  location: buildingDoc.location,
+                  area: buildingDoc.area,
+                  images: buildingDoc.images,
+                  amenities: buildingDoc.amenities.map((amenity) => ({
+                    icon: amenity.icon,
+                    name: amenity.name,
+                    _id: amenity._id.toString(),
+                  })),
+                };
+
+                detailedProperty.propertyDetails = {
+                  type: "flat",
+                  data: cleanFlatDetails,
+                  buildingDetails,
+                };
               }
-            : null,
-          building: {
-            id: building._id,
-            name: building.name,
-            projectId: building.projectId,
-            location: building.location,
-          },
-          propertyDetails: userProperties.properties.property.find(
-            (prop: Property) => prop.flatId === flatId
-          ),
-        } as FlatInfoResponse;
+            }
+          }
+          // If sectionType is "row house", fetch from RowHouse model
+          else if (property.sectionType === "row house") {
+            const rowHouseDoc = (await RowHouse.findById(
+              new mongoose.Types.ObjectId(property.sectionId)
+            ).lean()) as unknown as RowHouseDoc;
+
+            if (rowHouseDoc) {
+              // Clean up the row house data
+              const rowHouseData = {
+                _id: rowHouseDoc._id.toString(),
+                name: rowHouseDoc.name,
+                description: rowHouseDoc.description,
+                images: rowHouseDoc.images,
+                totalHouse: rowHouseDoc.totalHouse,
+                bookedHouse: rowHouseDoc.bookedHouse,
+                area: rowHouseDoc.area,
+                projectId: rowHouseDoc.projectId.toString(),
+                amenities: rowHouseDoc.amenities.map((amenity) => ({
+                  icon: amenity.icon,
+                  name: amenity.name,
+                  _id: amenity._id.toString(),
+                })),
+              };
+
+              detailedProperty.propertyDetails = {
+                type: "rowHouse",
+                data: rowHouseData,
+              };
+            }
+          }
+        } catch (error) {
+          console.log(
+            `Error fetching details for property ${property.id}:`,
+            error
+          );
+        }
+
+        return detailedProperty;
       })
-      .filter((info): info is FlatInfoResponse => info !== null);
+    );
 
     return NextResponse.json(
       {
-        message: "Flat information retrieved successfully",
-        data: flatInfos,
-        total: flatInfos.length,
+        userId: customerDetails.userId,
+        properties: detailedProperties,
       },
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error("Error fetching flat infos:", error);
+    console.log("Error fetching property details:", error);
     return NextResponse.json(
       {
-        message: "An error occurred while fetching flat information",
-        error: error,
+        message: "Unable to fetch property details",
+        error: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );

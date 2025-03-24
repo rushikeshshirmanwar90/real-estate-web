@@ -1,4 +1,3 @@
-// components/EmailTemplate.tsx
 import {
     Body,
     Container,

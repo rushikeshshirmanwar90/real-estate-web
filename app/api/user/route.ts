@@ -85,10 +85,10 @@ export const GET = async (req: NextRequest | Request) => {
 
     if (id) {
       // Find user by ID and populate the properties field
-      res = await User.findById(id).populate("properties");
+      res = await User.findById(id);
     } else {
       // Get all users and populate the properties field
-      res = await User.find().populate("properties");
+      res = await User.find();
     }
 
     if (!res) {
@@ -143,10 +143,6 @@ export const POST = async (req: NextRequest | Request) => {
     if (data.userType === "customer") {
       propertiesData = userData.properties;
       delete userData.properties;
-
-      if (userData.password) {
-        delete userData.password;
-      }
     }
 
     const newUser = new User(userData);
@@ -166,8 +162,10 @@ export const POST = async (req: NextRequest | Request) => {
       propertiesData &&
       propertiesData.length > 0
     ) {
+      // Modified part: Now we're storing only the property IDs in the CustomerDetails
       const customerDetailsData = {
         userId: savedUser._id,
+        // Just push the property id as requested
         property: propertiesData.map((prop: PropertyInput) => ({
           id: prop.id,
           projectId: prop.projectId,

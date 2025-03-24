@@ -1,45 +1,62 @@
-import mongoose, { Schema } from "mongoose";
+import { Schema, model, models } from "mongoose";
 
-const PropertySchema = new Schema(
+const PaymentSchema = new Schema(
   {
-    id: {
+    title: {
       type: String,
       required: true,
     },
-    projectId: {
+    percentage: {
       type: String,
       required: true,
     },
-    projectName: {
+    date: {
       type: String,
       required: true,
-    },
-    sectionId: {
-      type: String,
-      required: true,
-    },
-    sectionName: {
-      type: String,
-      required: true,
-    },
-    sectionType: {
-      type: String,
-      required: true,
-      enum: ["row house", "Buildings"],
-    },
-    flatId: {
-      type: String,
-      required: false,
-      default: "",
-    },
-    flatName: {
-      type: String,
-      required: true,
-      default: "",
     },
   },
-  { _id: false }
+  {
+    _id: false,
+  }
 );
+
+const PropertySchema = new Schema({
+  projectId: {
+    type: String,
+    required: true,
+  },
+  projectName: {
+    type: String,
+    required: true,
+  },
+  sectionId: {
+    type: String,
+    required: true,
+  },
+  sectionName: {
+    type: String,
+    required: true,
+  },
+  sectionType: {
+    type: String,
+    required: true,
+    enum: ["row house", "Buildings"],
+  },
+  flatId: {
+    type: String,
+    required: false,
+    default: "",
+  },
+  flatName: {
+    type: String,
+    required: true,
+    default: "",
+  },
+  payments: {
+    type: [PaymentSchema],
+    required: false,
+  },
+});
 
 const CustomerDetailsSchema = new Schema(
   {
@@ -64,5 +81,4 @@ const CustomerDetailsSchema = new Schema(
 );
 
 export const CustomerDetails =
-  mongoose.models.CustomerDetails ||
-  mongoose.model("CustomerDetails", CustomerDetailsSchema);
+  models.CustomerDetails || model("CustomerDetails", CustomerDetailsSchema);
