@@ -151,3 +151,102 @@ export const GET = async (req: NextRequest | Request) => {
     );
   }
 };
+
+
+export const DELETE = async (req: NextRequest | Request) => {
+  try {
+    await connect();
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId");
+    const propertyId = searchParams.get("propertyId");
+
+    // If userId is not provided, return error
+    if (!userId) {
+      return NextResponse.json(
+        { message: "userId is required" },
+        { status: 400 }
+      );
+    }
+
+    // Validate userId format
+    let userObjectId;
+    try {
+      userObjectId = new mongoose.Types.ObjectId(userId);
+    } catch (error) {
+      return NextResponse.json(
+        { message: "Invalid userId format" },
+        { status: 400 }
+      );
+    }
+
+    // Find the user document
+    const userDoc = await CustomerDetails.findOne({ userId: userObjectId });
+    
+    if (!userDoc) {
+      return NextResponse.json(
+        { message: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    // If propertyId is provided, delete specific property
+    if (propertyId) {
+      // Check if the property exists in user's property array
+      const propertyIndex = userDoc.property.findIndex(
+        (prop : {_id : string}) => prop._id.toString() === propertyId
+      );
+
+      if (propertyIndex === -1) {
+        return NextResponse.json(
+          { message: "Property not found for this user" },
+          { status: 404 }
+        );
+      }
+
+      // Store the property being deleted
+      const deletedProperty = userDoc.property[propertyIndex];
+      
+      // Remove the property from the array
+      userDoc.property.splice(propertyIndex, 1);
+      
+      // Save the updated document
+      await userDoc.save();
+
+      return NextResponse.json(
+        { 
+          message: "Property deleted successfully", 
+          deletedProperty 
+        },
+        { status: 200 }
+      );
+    } 
+    // If no propertyId is provided, delete all properties
+    else {
+      // Store all properties before deletion
+      const deletedProperties = [...userDoc.property];
+      
+      // Clear the property array
+      userDoc.property = [];
+      
+      // Save the updated document
+      await userDoc.save();
+
+      return NextResponse.json(
+        { 
+          message: "All properties deleted for user", 
+          deletedProperties 
+        },
+        { status: 200 }
+      );
+    }
+  } catch (error: unknown) {
+    console.error("Error deleting property:", error);
+    return NextResponse.json(
+      {
+        message: "Failed to delete property",
+        error: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
+  }
+};
