@@ -52,7 +52,17 @@ export const updateRowHouse = async (updatedData: RowHouseProps, projectId: stri
 }
 
 export const getSingleRowHouse = async (projectId: string | undefined | null) => {
+    if (!projectId) {
+        throw new Error('Project ID is required');
+    }
+
     const res = await fetch(`${domain}/api/rowHouse?id=${projectId}`);
+
+    if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`API request failed with status ${res.status}: ${errorText}`);
+    }
+
     const data = await res.json();
     return data;
 }

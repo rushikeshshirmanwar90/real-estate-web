@@ -22,8 +22,8 @@ const Page = () => {
 
     const [selectedAmenities, setSelectedAmenities] = useState<AmenitiesProps[]>([]);
     const [formData, setFormData] = useState<RowHouseProps>({
-        projectId: projectId,
-        name: sectionName,
+        projectId: projectId || "",
+        name: sectionName || "",
         description: "",
         area: 0,
         totalHouse: 0,
@@ -54,8 +54,8 @@ const Page = () => {
             setError(null);
             try {
                 const data = await getSingleRowHouse(id);
-                setFormData(data);
-                setSelectedAmenities(data.amenities);
+                setFormData(data.data);
+                setSelectedAmenities(data.data.amenities);
             } catch (error) {
                 if (axios.isAxiosError(error)) {
                     setError(error.response?.data?.message || 'Failed to fetch row house data');
@@ -126,12 +126,21 @@ const Page = () => {
     }
 
     const isFormValid = () => {
-        return (
-            formData.name.trim() !== "" &&
-            formData.projectId.trim() !== "" &&
-            formData.images.length > 0 &&
-            (formData.amenities ? formData.amenities.every(amenity => amenity.name.trim() !== "" && amenity.icon.trim() !== "") : true)
-        );
+        if (formData) {
+            return (
+                (formData.name?.trim() ?? "") !== "" && // Ensure formData.name is a valid string
+                (formData.projectId?.trim() ?? "") !== "" && // Ensure formData.projectId is a valid string
+                formData.images.length > 0 &&
+                (formData.amenities
+                    ? formData.amenities.every(
+                        (amenity) =>
+                            (amenity.name?.trim() ?? "") !== "" &&
+                            (amenity.icon?.trim() ?? "") !== ""
+                    )
+                    : true)
+            );
+        }
+        return false; // Return false if formData is undefined
     };
 
     const handleSubmit = async (e: React.FormEvent) => {

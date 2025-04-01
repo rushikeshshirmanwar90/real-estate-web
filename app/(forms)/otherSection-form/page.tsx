@@ -49,13 +49,14 @@ const Page = () => {
             console.error("Error updating other section:", error);
         }
     }
+
     const fetchOtherSectionData = async () => {
         if (id) {
             setIsLoading(true);
             setError(null);
             try {
                 const data = await getSingleOtherSection(id);
-                setFormData(data);
+                setFormData(data.data);
             } catch (error) {
                 if (axios.isAxiosError(error)) {
                     setError(error.response?.data?.message || 'Failed to fetch other section data');
@@ -107,9 +108,9 @@ const Page = () => {
 
     const isFormValid = () => {
         return (
-            formData.name.trim() !== "" &&
-            formData.projectId.trim() !== "" &&
-            formData.images.length > 0
+            formData.name?.trim() !== "" &&
+            formData.projectId?.trim() !== "" &&
+            formData.images?.length > 0
         );
     };
 
