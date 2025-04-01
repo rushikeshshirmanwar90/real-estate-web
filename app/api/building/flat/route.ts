@@ -39,7 +39,7 @@ export const GET = async (req: NextRequest | Request) => {
     const detailedProperties: DetailedProperty[] = await Promise.all(
       properties.map(async (property) => {
         // Initialize with base property info
-        let detailedProperty: DetailedProperty = {
+        const detailedProperty: DetailedProperty = {
           ...property,
           propertyDetails: null,
         };
@@ -152,7 +152,6 @@ export const GET = async (req: NextRequest | Request) => {
   }
 };
 
-
 export const DELETE = async (req: NextRequest | Request) => {
   try {
     await connect();
@@ -174,26 +173,23 @@ export const DELETE = async (req: NextRequest | Request) => {
       userObjectId = new mongoose.Types.ObjectId(userId);
     } catch (error) {
       return NextResponse.json(
-        { message: "Invalid userId format" },
+        { message: "Invalid userId format", error: error },
         { status: 400 }
       );
     }
 
     // Find the user document
     const userDoc = await CustomerDetails.findOne({ userId: userObjectId });
-    
+
     if (!userDoc) {
-      return NextResponse.json(
-        { message: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
     // If propertyId is provided, delete specific property
     if (propertyId) {
       // Check if the property exists in user's property array
       const propertyIndex = userDoc.property.findIndex(
-        (prop : {_id : string}) => prop._id.toString() === propertyId
+        (prop: { _id: string }) => prop._id.toString() === propertyId
       );
 
       if (propertyIndex === -1) {
@@ -205,36 +201,36 @@ export const DELETE = async (req: NextRequest | Request) => {
 
       // Store the property being deleted
       const deletedProperty = userDoc.property[propertyIndex];
-      
+
       // Remove the property from the array
       userDoc.property.splice(propertyIndex, 1);
-      
+
       // Save the updated document
       await userDoc.save();
 
       return NextResponse.json(
-        { 
-          message: "Property deleted successfully", 
-          deletedProperty 
+        {
+          message: "Property deleted successfully",
+          deletedProperty,
         },
         { status: 200 }
       );
-    } 
+    }
     // If no propertyId is provided, delete all properties
     else {
       // Store all properties before deletion
       const deletedProperties = [...userDoc.property];
-      
+
       // Clear the property array
       userDoc.property = [];
-      
+
       // Save the updated document
       await userDoc.save();
 
       return NextResponse.json(
-        { 
-          message: "All properties deleted for user", 
-          deletedProperties 
+        {
+          message: "All properties deleted for user",
+          deletedProperties,
         },
         { status: 200 }
       );

@@ -49,7 +49,7 @@ export const POST = async (req: NextRequest) => {
       );
     }
 
-    let existingDocument = await ReviewAndUpdates.findOne({
+    const existingDocument = await ReviewAndUpdates.findOne({
       updateSectionType: body.updateSectionType,
       sectionId: body.sectionId,
     });

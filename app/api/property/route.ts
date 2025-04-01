@@ -21,7 +21,7 @@ export const GET = async (req: NextRequest | Request) => {
       objectId = new mongoose.Types.ObjectId(userId);
     } catch (error) {
       return NextResponse.json(
-        { message: "Invalid userId format" },
+        { message: "Invalid userId format", error },
         { status: 400 }
       );
     }
@@ -64,7 +64,7 @@ export const POST = async (req: NextRequest | Request) => {
       objectId = new mongoose.Types.ObjectId(userId);
     } catch (error) {
       return NextResponse.json(
-        { message: "Invalid userId format" },
+        { message: "Invalid userId format", error },
         { status: 400 }
       );
     }
@@ -156,7 +156,7 @@ export const DELETE = async (req: NextRequest | Request) => {
         objectId = new mongoose.Types.ObjectId(userId);
       } catch (error) {
         return NextResponse.json(
-          { message: "Invalid userId format" },
+          { message: "Invalid userId format", error },
           { status: 400 }
         );
       }
@@ -224,7 +224,7 @@ export const PUT = async (req: NextRequest | Request) => {
       objectId = new mongoose.Types.ObjectId(userId);
     } catch (error) {
       return NextResponse.json(
-        { message: "Invalid userId format" },
+        { message: "Invalid userId format", error },
         { status: 400 }
       );
     }
@@ -291,7 +291,7 @@ export const PATCH = async (req: NextRequest | Request) => {
       objectId = new mongoose.Types.ObjectId(userId);
     } catch (error) {
       return NextResponse.json(
-        { message: "Invalid userId format" },
+        { message: "Invalid userId format", error },
         { status: 400 }
       );
     }
