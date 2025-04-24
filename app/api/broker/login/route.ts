@@ -7,6 +7,7 @@ import { cookies } from "next/headers";
 
 export const POST = async (req: NextRequest | Request) => {
   try {
+
     const { email, password, phoneNumber } = await req.json();
     const cookiesStore = await cookies();
     const COOKIE_NAME = "broker_auth_token";

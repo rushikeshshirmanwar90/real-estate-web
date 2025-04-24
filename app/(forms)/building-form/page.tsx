@@ -153,6 +153,7 @@ const Page = () => {
                         <p className="text-lg font-medium">Loading building data...</p>
                     </div>
                 </div>
+
             ) : (
                 <form onSubmit={handleSubmit} className="mx-auto space-y-6 p-6">
                     <TopHeader

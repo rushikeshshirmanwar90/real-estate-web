@@ -45,6 +45,7 @@ const UpdateSchema = new Schema({
 });
 
 const ReviewAndUpdateSchema = new Schema({
+
   updateSectionType: {
     type: String,
     required: true,
@@ -65,7 +66,9 @@ const ReviewAndUpdateSchema = new Schema({
     type: [UpdateSchema],
     required: true,
   },
+
 });
 
 export const ReviewAndUpdates =
   models.ReviewAndUpdates || model("ReviewAndUpdates", ReviewAndUpdateSchema);
+ 
