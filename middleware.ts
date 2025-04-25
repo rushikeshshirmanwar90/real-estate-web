@@ -10,7 +10,7 @@ function applyCorsHeaders(response: NextResponse, request: NextRequest) {
     "https://real-estate-web-pied.vercel.app",
     "http://localhost:8080",
     "http://localhost:3000",
-    "https://real-estate-frontend-d3o5.vercel.app",
+    "https://real-estate-frontend-smoky.vercel.app",
   ];
 
   // Check if the request origin is in our allowed list
