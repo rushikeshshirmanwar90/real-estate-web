@@ -4,7 +4,7 @@ const ReferenceCustomerSchema = new Schema({
   id: {
     type: String,
     required: true,
-    unique : true
+    unique: true,
   },
 
   name: {
@@ -15,8 +15,7 @@ const ReferenceCustomerSchema = new Schema({
   contactNumber: {
     type: String,
     required: true,
-    unique : true
-
+    unique: true,
   },
 });
 
@@ -36,10 +35,13 @@ const LeadSchema = new Schema({
 });
 
 const ReferencedLeadsSchema = new Schema({
+  clientId: {
+    type: String,
+    required: true,
+  },
   referenceCustomer: ReferenceCustomerSchema,
   leads: [LeadSchema],
 });
 
 export const ReferenceLeads =
   models.ReferencedLeads || model("ReferencedLeads", ReferencedLeadsSchema);
-

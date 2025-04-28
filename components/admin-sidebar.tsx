@@ -40,7 +40,7 @@ export function AdminSidebar() {
     const pathname = usePathname()
 
     const navigation = [
-        { name: "Dashboard", href: "/", icon: LayoutDashboard },
+        { name: "HomePage", href: "/", icon: LayoutDashboard },
         { name: "Customers", href: "/customers", icon: Users },
         { name: "Staff", href: "/staff", icon: UserCircle2 },
         { name: "Projects", href: "/projects", icon: Building2 },
