@@ -52,7 +52,6 @@ const Page = () => {
     };
     useEffect(() => {
         const params = Object.fromEntries(searchParams.entries());
-        // If we have params, update the form with them
         if (Object.keys(params).length > 0) {
             setFormData(prev => ({
                 ...prev,

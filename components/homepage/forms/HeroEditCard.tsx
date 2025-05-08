@@ -6,75 +6,78 @@ import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { ImagePlus, Pencil, X, Check, Loader2, LayoutGrid } from "lucide-react"
-import { handleImageUpload } from "../functions/image-handling"
+import { handleImageUpload } from "@/components/functions/image-handling"
+import { HeroSectionProps } from "@/types/HomePage"
+import Image from "next/image"
 
-interface Section {
-    name: string
-    description?: string
-    images?: string[]
+interface HeroSectionEditableCardProps {
+    slid: HeroSectionProps[] | undefined
+    onSlidChange: (slid: HeroSectionProps[]) => void
 }
 
-interface SectionEditableCardProps {
-    sections: Section[] | undefined
-    onSectionsChange: (sections: Section[]) => void
-}
-
-export function SectionEditableCard({ sections = [], onSectionsChange }: SectionEditableCardProps) {
+export function HeroSectionEditableCard({ slid = [], onSlidChange }: HeroSectionEditableCardProps) {
     const [isEditing, setIsEditing] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
-    const [tempSections, setTempSections] = useState<Section[]>(sections)
-    const hasData = sections.length > 0
+    const [tmpSlidData, setTmpSlidData] = useState<HeroSectionProps[]>(slid)
+    const hasData = slid.length > 0
 
     const handleEdit = () => {
-        setTempSections([...sections])
+        setTmpSlidData([...slid])
         setIsEditing(true)
     }
 
     const handleSave = () => {
-        onSectionsChange(tempSections)
+        onSlidChange(tmpSlidData)
         setIsEditing(false)
     }
 
     const handleCancel = () => {
-        setTempSections([...sections])
+        setTmpSlidData([...slid])
         setIsEditing(false)
     }
 
     const addSection = () => {
-        setTempSections([...tempSections, { name: "", description: "", images: [] }])
+        setTmpSlidData([...tmpSlidData, {
+            title: "",
+            description: "",
+            image: "",
+            buttonText: "",
+            buttonLink: ""
+        }])
     }
 
     const removeSection = (index: number) => {
-        setTempSections(tempSections.filter((_, i) => i !== index))
+        setTmpSlidData(tmpSlidData.filter((_, i) => i !== index))
     }
 
-    const updateSection = (index: number, field: keyof Section, value: string) => {
-        setTempSections(tempSections.map((section, i) => (i === index ? { ...section, [field]: value } : section)))
+    const updateSection = (index: number, field: keyof HeroSectionProps, value: string) => {
+        setTmpSlidData(tmpSlidData.map((section, i) => (i === index ? { ...section, [field]: value } : section)))
     }
-    const handleSectionImages = async (sectionIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
+
+    const handleSectionImage = async (sectionIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
         // Create a dummy setter that matches the expected type
         const dummySetImages: React.Dispatch<React.SetStateAction<string[]>> = () => { };
 
         // Call the original function but ignore its state updates
         const urls = await handleImageUpload(e, dummySetImages, setIsLoading);
 
-        // Manually update the tempSections state with the returned URLs
+        // Update with just the first image URL
         if (urls && urls.length > 0) {
-            setTempSections((prev) =>
+            setTmpSlidData((prev) =>
                 prev.map((section, i) =>
                     i === sectionIndex
-                        ? { ...section, images: [...(section.images || []), ...urls] }
+                        ? { ...section, image: urls[0] }
                         : section
                 )
             );
         }
     };
 
-    const removeImage = (sectionIndex: number, imageIndex: number) => {
-        setTempSections((prev) =>
+    const removeImage = (sectionIndex: number) => {
+        setTmpSlidData((prev) =>
             prev.map((section, i) =>
                 i === sectionIndex
-                    ? { ...section, images: (section.images || []).filter((_, i) => i !== imageIndex) }
+                    ? { ...section, image: "" }
                     : section,
             ),
         )
@@ -88,7 +91,7 @@ export function SectionEditableCard({ sections = [], onSectionsChange }: Section
                         <div className="border border-border bg-primary/10 p-2 rounded-full">
                             <LayoutGrid size={20} className="text-primary" />
                         </div>
-                        Sections
+                        Hero Sections
                     </h2>
                     {hasData && !isEditing && (
                         <Button
@@ -105,12 +108,12 @@ export function SectionEditableCard({ sections = [], onSectionsChange }: Section
             <CardContent className="p-6">
                 {!hasData && !isEditing ? (
                     <Button variant="ghost" className="hover:bg-muted/30" onClick={handleEdit}>
-                        <span className="mr-2 text-lg">+</span> Add Sections
+                        <span className="mr-2 text-lg">+</span> Add Hero Section Slides
                     </Button>
                 ) : (
                     <div className="w-full">
                         <div className="flex gap-6 overflow-x-auto pb-4">
-                            {(isEditing ? tempSections : sections).map((section, index) => (
+                            {(isEditing ? tmpSlidData : slid).map((section, index) => (
                                 <div key={index} className="relative flex-none w-80 rounded-lg bg-muted/30 p-4">
                                     {isEditing && (
                                         <Button
@@ -125,10 +128,10 @@ export function SectionEditableCard({ sections = [], onSectionsChange }: Section
                                     {isEditing ? (
                                         <>
                                             <div className="space-y-2">
-                                                <label className="text-sm font-medium">Name</label>
+                                                <label className="text-sm font-medium">Title</label>
                                                 <Input
-                                                    value={section.name}
-                                                    onChange={(e) => updateSection(index, "name", e.target.value)}
+                                                    value={section.title}
+                                                    onChange={(e) => updateSection(index, "title", e.target.value)}
                                                     required
                                                 />
                                             </div>
@@ -139,35 +142,58 @@ export function SectionEditableCard({ sections = [], onSectionsChange }: Section
                                                     onChange={(e) => updateSection(index, "description", e.target.value)}
                                                 />
                                             </div>
+                                            <div className="mt-4 space-y-2">
+                                                <label className="text-sm font-medium">Button Text</label>
+                                                <Input
+                                                    value={section.buttonText}
+                                                    onChange={(e) => updateSection(index, "buttonText", e.target.value)}
+                                                />
+                                            </div>
+                                            <div className="mt-4 space-y-2">
+                                                <label className="text-sm font-medium">Button Link</label>
+                                                <Input
+                                                    value={section.buttonLink}
+                                                    onChange={(e) => updateSection(index, "buttonLink", e.target.value)}
+                                                />
+                                            </div>
                                         </>
                                     ) : (
                                         <div className="space-y-2">
-                                            <div className="text-lg font-medium">{section.name}</div>
+                                            <div className="text-lg font-medium">{section.title}</div>
                                             <div className="text-sm text-muted-foreground">{section.description}</div>
+                                            <div className="mt-2 flex items-center gap-2">
+                                                <span className="text-sm font-medium">Button:</span>
+                                                <span className="text-sm text-muted-foreground">{section.buttonText}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm font-medium">Link:</span>
+                                                <span className="text-sm text-muted-foreground">{section.buttonLink}</span>
+                                            </div>
                                         </div>
                                     )}
-                                    <div className="mt-4 grid grid-cols-2 gap-4">
-                                        {(section.images || []).map((image, imageIndex) => (
-                                            <div key={imageIndex} className="relative aspect-square">
-                                                <img
-                                                    src={image || "/placeholder.svg"}
-                                                    alt={`Section ${index + 1} image ${imageIndex + 1}`}
+                                    <div className="mt-4">
+                                        {section.image ? (
+                                            <div className="relative aspect-video w-full">
+                                                <Image
+                                                    src={section.image || "/placeholder.svg"}
+                                                    alt={`Hero Section ${index + 1}`}
                                                     className="h-full w-full rounded-lg object-cover"
+                                                    width={500}
+                                                    height={500}
                                                 />
                                                 {isEditing && (
                                                     <Button
                                                         variant="destructive"
                                                         size="icon"
                                                         className="absolute -right-2 -top-2 h-6 w-6 rounded-full"
-                                                        onClick={() => removeImage(index, imageIndex)}
+                                                        onClick={() => removeImage(index)}
                                                     >
                                                         <X className="h-4 w-4" />
                                                     </Button>
                                                 )}
                                             </div>
-                                        ))}
-                                        {isEditing && (
-                                            <label className="flex aspect-square cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-border hover:border-muted-foreground">
+                                        ) : isEditing && (
+                                            <label className="flex aspect-video w-full cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-border hover:border-muted-foreground">
                                                 <div className="flex flex-col items-center gap-2">
                                                     {isLoading ? (
                                                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -182,8 +208,7 @@ export function SectionEditableCard({ sections = [], onSectionsChange }: Section
                                                     type="file"
                                                     className="hidden"
                                                     accept="image/*"
-                                                    multiple
-                                                    onChange={(e) => handleSectionImages(index, e)}
+                                                    onChange={(e) => handleSectionImage(index, e)}
                                                 />
                                             </label>
                                         )}
@@ -192,7 +217,7 @@ export function SectionEditableCard({ sections = [], onSectionsChange }: Section
                             ))}
                             {isEditing && (
                                 <Button variant="outline" onClick={addSection} className="h-full min-w-48">
-                                    <span className="mr-2 text-lg">+</span> Add Section
+                                    <span className="mr-2 text-lg">+</span> Add Hero Section
                                 </Button>
                             )}
                         </div>

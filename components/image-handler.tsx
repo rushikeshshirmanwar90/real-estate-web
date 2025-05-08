@@ -1,6 +1,7 @@
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { FlatFormValues } from '@/app/(forms)/project-form/schema';
+import Image from 'next/image';
 
 interface ImageHandlerProps {
     form: UseFormReturn<FlatFormValues>;
@@ -33,7 +34,7 @@ export const handleImageUpload = async (
                     method: 'POST',
                     body: formData,
                 }
-            );
+            )
 
             if (!response.ok) {
                 const errorData = await response.json();
@@ -103,10 +104,12 @@ const ImageHandler: React.FC<ImageHandlerProps> = ({
             <div className="flex flex-wrap gap-2 mb-4">
                 {uploadedImages.map((image, index) => (
                     <div key={index} className="relative w-24 h-24">
-                        <img
+                        <Image
                             src={image}
                             alt={`Uploaded image ${index + 1}`}
                             className="w-full h-full object-cover rounded-md"
+                            width={96}
+                            height={96}
                         />
                         <button
                             type="button"

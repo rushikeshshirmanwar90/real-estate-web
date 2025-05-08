@@ -6,6 +6,7 @@ import axios from "axios"
 import TopHeader from '@/components/TopHeader';
 import ProjectCard from '@/components/ProjectCard';
 import { projectProps } from './types/project-props';
+import domain from '@/components/utils/domain';
 
 export default function Page() {
     const [projectData, setProjectData] = useState<projectProps[]>([]);
@@ -17,7 +18,7 @@ export default function Page() {
         setIsProjectLoading(true);
         setError(null);
         try {
-            const res = await axios.get("https://real-estate-web-pied.vercel.app/api/project");
+            const res = await axios.get(`${domain}/api/project`);
             const data = res.data;
             setProjectData(data);
         } catch (error) {
