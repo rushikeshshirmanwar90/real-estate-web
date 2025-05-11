@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { ImagePlus, Pencil, X, Check, Loader2, BedDouble, Plus } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RoomFeatureSelector } from "@/components/room-features-selector"
-import { handleImageUpload } from "../functions/image-handling"
+import { handleImageUpload } from "../../functions/image-handling"
 
 // Types based on your Mongoose schema
 interface Feature {

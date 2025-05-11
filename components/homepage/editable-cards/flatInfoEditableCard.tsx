@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { ImagePlus, Pencil, X, Check, Loader2, Building2 } from "lucide-react"
 import { FlatInfo } from "@/app/(forms)/building-form/types"
-import { handleImageUpload } from "../functions/image-handling"
+import { handleImageUpload } from "../../functions/image-handling"
 
 interface FlatInfoEditableCardProps {
     flatInfos: FlatInfo[] | undefined

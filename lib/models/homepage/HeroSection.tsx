@@ -1,10 +1,6 @@
 import { model, models, Schema } from "mongoose";
 
-const HeroSectionSchema = new Schema({
-    clientId: {
-        type: String,
-        required: true,
-    },
+const HeroSectionDetailsSchema = new Schema({
     title: {
         type: String,
         required: true,
@@ -25,7 +21,20 @@ const HeroSectionSchema = new Schema({
         type: String,
         required: true,
     },
-})
+});
+
+const HeroSectionSchema = new Schema({
+    clientId: {
+        type: String,
+        required: true,
+    },
+    details: {
+        type: [HeroSectionDetailsSchema],
+        required: true,
+    },
+}, { timestamps: true });
+
+
 
 export const HeroSection = models.HeroSection || model("HeroSection", HeroSectionSchema);
 

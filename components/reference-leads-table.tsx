@@ -1,0 +1,150 @@
+"use client"
+
+import { useState } from "react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { ChevronDown, ChevronRight, User, Users, Phone } from "lucide-react"
+
+interface Lead {
+    id: string
+    name: string
+    contactNumber: string
+}
+
+interface ReferenceCustomer {
+    id: string
+    name: string
+    contactNumber: string
+}
+
+interface ReferenceLead {
+    clientId: string
+    referenceCustomer: ReferenceCustomer
+    leads: Lead[]
+}
+
+interface ReferenceLeadsTableProps {
+    data: ReferenceLead[]
+}
+
+export function ReferenceLeadsTable({ data }: ReferenceLeadsTableProps) {
+    const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({})
+
+    const toggleRow = (clientId: string) => {
+        setExpandedRows((prev) => ({
+            ...prev,
+            [clientId]: !prev[clientId],
+        }))
+    }
+
+    return (
+        <Card className="shadow-sm">
+            <CardContent className="p-0">
+                <div className="rounded-md border">
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="bg-muted/50">
+                                <TableHead className="w-10"></TableHead>
+                                <TableHead>Client ID</TableHead>
+                                <TableHead>Reference Customer</TableHead>
+                                <TableHead>Contact Number</TableHead>
+                                <TableHead className="text-right">Total Leads</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {data.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                                        No reference leads found
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                data.map((item) => (
+                                    <>
+                                        <TableRow
+                                            key={item.clientId}
+                                            className="cursor-pointer hover:bg-muted/50"
+                                            onClick={() => toggleRow(item.clientId)}
+                                        >
+                                            <TableCell>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
+                                                    {expandedRows[item.clientId] ? (
+                                                        <ChevronDown className="h-4 w-4" />
+                                                    ) : (
+                                                        <ChevronRight className="h-4 w-4" />
+                                                    )}
+                                                </Button>
+                                            </TableCell>
+                                            <TableCell className="font-medium">{item.clientId}</TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center">
+                                                    <User className="mr-2 h-4 w-4 text-muted-foreground" />
+                                                    <span>{item.referenceCustomer.name}</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center">
+                                                    <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
+                                                    {item.referenceCustomer.contactNumber}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <span className="inline-flex items-center justify-center w-6 h-6 bg-primary/10 text-primary rounded-full text-xs font-medium">
+                                                    {item.leads.length}
+                                                </span>
+                                            </TableCell>
+                                        </TableRow>
+
+                                        {expandedRows[item.clientId] && (
+                                            <TableRow className="bg-muted/30">
+                                                <TableCell colSpan={5} className="p-0">
+                                                    <div className="p-4">
+                                                        <h4 className="text-sm font-semibold mb-2 flex items-center">
+                                                            <Users className="mr-2 h-4 w-4" />
+                                                            Leads from {item.referenceCustomer.name}
+                                                        </h4>
+                                                        <div className="rounded-md border bg-background">
+                                                            <Table>
+                                                                <TableHeader>
+                                                                    <TableRow className="bg-muted/50">
+                                                                        <TableHead>Lead ID</TableHead>
+                                                                        <TableHead>Name</TableHead>
+                                                                        <TableHead>Contact Number</TableHead>
+                                                                    </TableRow>
+                                                                </TableHeader>
+                                                                <TableBody>
+                                                                    {item.leads.map((lead) => (
+                                                                        <TableRow key={lead.id}>
+                                                                            <TableCell className="font-medium">{lead.id}</TableCell>
+                                                                            <TableCell>
+                                                                                <div className="flex items-center">
+                                                                                    <User className="mr-2 h-4 w-4 text-muted-foreground" />
+                                                                                    {lead.name}
+                                                                                </div>
+                                                                            </TableCell>
+                                                                            <TableCell>
+                                                                                <div className="flex items-center">
+                                                                                    <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
+                                                                                    {lead.contactNumber}
+                                                                                </div>
+                                                                            </TableCell>
+                                                                        </TableRow>
+                                                                    ))}
+                                                                </TableBody>
+                                                            </Table>
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+            </CardContent>
+        </Card>
+    )
+}

@@ -5,7 +5,7 @@ import { Progress } from "@/components/ui/progress"
 import { getSingleBuilding } from "@/functions/building/crud"
 import { useEffect, useState } from "react"
 import { BuildingFormProps } from "@/app/(forms)/building-form/types"
-import { AmenityItem, DisplayIcon } from "../editable-cards/AmenitiesSelector"
+import { AmenityItem, DisplayIcon } from "../homepage/editable-cards/AmenitiesSelector"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 

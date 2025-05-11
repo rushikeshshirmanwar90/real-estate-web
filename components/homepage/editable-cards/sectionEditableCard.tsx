@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { ImagePlus, Pencil, X, Check, Loader2, LayoutGrid } from "lucide-react"
-import { handleImageUpload } from "../functions/image-handling"
+import { handleImageUpload } from "../../functions/image-handling"
 
 interface Section {
     name: string

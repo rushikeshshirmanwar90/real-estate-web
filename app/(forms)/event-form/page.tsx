@@ -4,7 +4,7 @@ import { Field } from '@/components/types/editable-card';
 import { useSearchParams, useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import TopHeader from '@/components/TopHeader';
-import { EditableSectionCard } from '@/components/editable-cards/editable-info-card';
+import { EditableSectionCard } from '@/components/homepage/editable-cards/editable-info-card';
 import { Book, Image } from 'lucide-react';
 import axios from 'axios';
 import { EventProps } from '@/types/Events';

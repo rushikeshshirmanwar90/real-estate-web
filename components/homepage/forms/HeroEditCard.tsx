@@ -1,239 +1,190 @@
 "use client"
-import type React from "react"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { ImagePlus, Pencil, X, Check, Loader2, LayoutGrid } from "lucide-react"
-import { handleImageUpload } from "@/components/functions/image-handling"
-import { HeroSectionProps } from "@/types/HomePage"
-import Image from "next/image"
+import { HeroSectionDetails } from '@/types/HomePage';
+import React, { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { PlusCircle, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 
 interface HeroSectionEditableCardProps {
-    slid: HeroSectionProps[] | undefined
-    onSlidChange: (slid: HeroSectionProps[]) => void
+    slides: HeroSectionDetails[];
+    onSlidesChange: (slides: HeroSectionDetails[]) => void;
 }
 
-export function HeroSectionEditableCard({ slid = [], onSlidChange }: HeroSectionEditableCardProps) {
-    const [isEditing, setIsEditing] = useState(false)
-    const [isLoading, setIsLoading] = useState(false)
-    const [tmpSlidData, setTmpSlidData] = useState<HeroSectionProps[]>(slid)
-    const hasData = slid.length > 0
+export const HeroSectionEditableCard: React.FC<HeroSectionEditableCardProps> = ({
+    slides = [],
+    onSlidesChange
+}) => {
+    // Initialize with an empty array if slides is undefined
+    const [heroSlides, setHeroSlides] = useState<HeroSectionDetails[]>(slides);
 
-    const handleEdit = () => {
-        setTmpSlidData([...slid])
-        setIsEditing(true)
-    }
+    // Add a new slide with empty values
+    const addSlide = () => {
+        const newSlide: HeroSectionDetails = {
+            title: '',
+            description: '',
+            image: '',
+            buttonText: '',
+            buttonLink: ''
+        };
 
-    const handleSave = () => {
-        onSlidChange(tmpSlidData)
-        setIsEditing(false)
-    }
-
-    const handleCancel = () => {
-        setTmpSlidData([...slid])
-        setIsEditing(false)
-    }
-
-    const addSection = () => {
-        setTmpSlidData([...tmpSlidData, {
-            title: "",
-            description: "",
-            image: "",
-            buttonText: "",
-            buttonLink: ""
-        }])
-    }
-
-    const removeSection = (index: number) => {
-        setTmpSlidData(tmpSlidData.filter((_, i) => i !== index))
-    }
-
-    const updateSection = (index: number, field: keyof HeroSectionProps, value: string) => {
-        setTmpSlidData(tmpSlidData.map((section, i) => (i === index ? { ...section, [field]: value } : section)))
-    }
-
-    const handleSectionImage = async (sectionIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
-        // Create a dummy setter that matches the expected type
-        const dummySetImages: React.Dispatch<React.SetStateAction<string[]>> = () => { };
-
-        // Call the original function but ignore its state updates
-        const urls = await handleImageUpload(e, dummySetImages, setIsLoading);
-
-        // Update with just the first image URL
-        if (urls && urls.length > 0) {
-            setTmpSlidData((prev) =>
-                prev.map((section, i) =>
-                    i === sectionIndex
-                        ? { ...section, image: urls[0] }
-                        : section
-                )
-            );
-        }
+        const updatedSlides = [...heroSlides, newSlide];
+        setHeroSlides(updatedSlides);
+        onSlidesChange(updatedSlides);
     };
 
-    const removeImage = (sectionIndex: number) => {
-        setTmpSlidData((prev) =>
-            prev.map((section, i) =>
-                i === sectionIndex
-                    ? { ...section, image: "" }
-                    : section,
-            ),
-        )
-    }
+    // Remove a slide by index
+    const removeSlide = (index: number) => {
+        const updatedSlides = heroSlides.filter((_, i) => i !== index);
+        setHeroSlides(updatedSlides);
+        onSlidesChange(updatedSlides);
+    };
+
+    // Update a slide at specific index with the new value
+    const updateSlide = (index: number, field: keyof HeroSectionDetails, value: string) => {
+        const updatedSlides = [...heroSlides];
+        updatedSlides[index] = {
+            ...updatedSlides[index],
+            [field]: value
+        };
+
+        setHeroSlides(updatedSlides);
+        onSlidesChange(updatedSlides);
+    };
 
     return (
-        <Card className="w-full overflow-hidden bg-card shadow-xl">
-            <CardHeader className="border-b border-border bg-muted/30">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-semibold tracking-tight flex items-center gap-3">
-                        <div className="border border-border bg-primary/10 p-2 rounded-full">
-                            <LayoutGrid size={20} className="text-primary" />
-                        </div>
-                        Hero Sections
-                    </h2>
-                    {hasData && !isEditing && (
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={handleEdit}
-                            className="h-8 w-8 rounded-full transition-colors hover:bg-muted/50"
-                        >
-                            <Pencil className="h-4 w-4" />
-                        </Button>
-                    )}
-                </div>
-            </CardHeader>
-            <CardContent className="p-6">
-                {!hasData && !isEditing ? (
-                    <Button variant="ghost" className="hover:bg-muted/30" onClick={handleEdit}>
-                        <span className="mr-2 text-lg">+</span> Add Hero Section Slides
+        <div className="space-y-6">
+            {/* Add slide button */}
+            <div className="flex justify-end">
+                <Button
+                    type="button"
+                    onClick={addSlide}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                >
+                    <PlusCircle size={18} />
+                    Add Hero Slide
+                </Button>
+            </div>
+
+            {/* Slides list */}
+            {heroSlides.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-12 border border-dashed rounded-lg text-gray-500">
+                    <p className="mb-4 text-lg">No hero slides added yet</p>
+                    <Button type="button" onClick={addSlide} variant="outline">
+                        Add Your First Slide
                     </Button>
-                ) : (
-                    <div className="w-full">
-                        <div className="flex gap-6 overflow-x-auto pb-4">
-                            {(isEditing ? tmpSlidData : slid).map((section, index) => (
-                                <div key={index} className="relative flex-none w-80 rounded-lg bg-muted/30 p-4">
-                                    {isEditing && (
-                                        <Button
-                                            variant="destructive"
-                                            size="icon"
-                                            className="absolute -right-2 -top-2 h-6 w-6 rounded-full"
-                                            onClick={() => removeSection(index)}
-                                        >
-                                            <X className="h-4 w-4" />
-                                        </Button>
-                                    )}
-                                    {isEditing ? (
-                                        <>
-                                            <div className="space-y-2">
-                                                <label className="text-sm font-medium">Title</label>
-                                                <Input
-                                                    value={section.title}
-                                                    onChange={(e) => updateSection(index, "title", e.target.value)}
-                                                    required
-                                                />
-                                            </div>
-                                            <div className="mt-4 space-y-2">
-                                                <label className="text-sm font-medium">Description</label>
-                                                <Textarea
-                                                    value={section.description}
-                                                    onChange={(e) => updateSection(index, "description", e.target.value)}
-                                                />
-                                            </div>
-                                            <div className="mt-4 space-y-2">
-                                                <label className="text-sm font-medium">Button Text</label>
-                                                <Input
-                                                    value={section.buttonText}
-                                                    onChange={(e) => updateSection(index, "buttonText", e.target.value)}
-                                                />
-                                            </div>
-                                            <div className="mt-4 space-y-2">
-                                                <label className="text-sm font-medium">Button Link</label>
-                                                <Input
-                                                    value={section.buttonLink}
-                                                    onChange={(e) => updateSection(index, "buttonLink", e.target.value)}
-                                                />
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <div className="space-y-2">
-                                            <div className="text-lg font-medium">{section.title}</div>
-                                            <div className="text-sm text-muted-foreground">{section.description}</div>
-                                            <div className="mt-2 flex items-center gap-2">
-                                                <span className="text-sm font-medium">Button:</span>
-                                                <span className="text-sm text-muted-foreground">{section.buttonText}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-sm font-medium">Link:</span>
-                                                <span className="text-sm text-muted-foreground">{section.buttonLink}</span>
-                                            </div>
-                                        </div>
-                                    )}
-                                    <div className="mt-4">
-                                        {section.image ? (
-                                            <div className="relative aspect-video w-full">
-                                                <Image
-                                                    src={section.image || "/placeholder.svg"}
-                                                    alt={`Hero Section ${index + 1}`}
-                                                    className="h-full w-full rounded-lg object-cover"
-                                                    width={500}
-                                                    height={500}
-                                                />
-                                                {isEditing && (
-                                                    <Button
-                                                        variant="destructive"
-                                                        size="icon"
-                                                        className="absolute -right-2 -top-2 h-6 w-6 rounded-full"
-                                                        onClick={() => removeImage(index)}
-                                                    >
-                                                        <X className="h-4 w-4" />
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        ) : isEditing && (
-                                            <label className="flex aspect-video w-full cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-border hover:border-muted-foreground">
-                                                <div className="flex flex-col items-center gap-2">
-                                                    {isLoading ? (
-                                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                                    ) : (
-                                                        <ImagePlus className="h-6 w-6 text-muted-foreground" />
-                                                    )}
-                                                    <span className="text-sm text-muted-foreground">
-                                                        {isLoading ? "Adding Image" : "Add Image"}
-                                                    </span>
-                                                </div>
-                                                <input
-                                                    type="file"
-                                                    className="hidden"
-                                                    accept="image/*"
-                                                    onChange={(e) => handleSectionImage(index, e)}
-                                                />
-                                            </label>
-                                        )}
+                </div>
+            ) : (
+                <div className="space-y-6">
+                    {heroSlides.map((slide, index) => (
+                        <Card key={index} className="overflow-hidden">
+                            <CardContent className="p-6">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-xl font-bold">Hero Slide {index + 1}</h3>
+                                    <Button
+                                        type="button"
+                                        onClick={() => removeSlide(index)}
+                                        variant="outline"
+                                        size="icon"
+                                        className="text-red-500 hover:bg-red-50"
+                                    >
+                                        <Trash2 size={18} />
+                                    </Button>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Title */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor={`title-${index}`}>Title</Label>
+                                        <Input
+                                            id={`title-${index}`}
+                                            value={slide.title}
+                                            onChange={(e) => updateSlide(index, 'title', e.target.value)}
+                                            placeholder="Enter title"
+                                            required
+                                        />
+                                    </div>
+
+                                    {/* Image URL */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor={`image-${index}`}>Image URL</Label>
+                                        <Input
+                                            id={`image-${index}`}
+                                            value={slide.image}
+                                            onChange={(e) => updateSlide(index, 'image', e.target.value)}
+                                            placeholder="Enter image URL"
+                                            required
+                                        />
+                                    </div>
+
+                                    {/* Description */}
+                                    <div className="space-y-2 md:col-span-2">
+                                        <Label htmlFor={`description-${index}`}>Description</Label>
+                                        <Textarea
+                                            id={`description-${index}`}
+                                            value={slide.description}
+                                            onChange={(e) => updateSlide(index, 'description', e.target.value)}
+                                            placeholder="Enter description"
+                                            rows={3}
+                                            required
+                                        />
+                                    </div>
+
+                                    {/* Button Text */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor={`buttonText-${index}`}>Button Text</Label>
+                                        <Input
+                                            id={`buttonText-${index}`}
+                                            value={slide.buttonText}
+                                            onChange={(e) => updateSlide(index, 'buttonText', e.target.value)}
+                                            placeholder="Enter button text"
+                                            required
+                                        />
+                                    </div>
+
+                                    {/* Button Link */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor={`buttonLink-${index}`}>Button Link</Label>
+                                        <Input
+                                            id={`buttonLink-${index}`}
+                                            value={slide.buttonLink}
+                                            onChange={(e) => updateSlide(index, 'buttonLink', e.target.value)}
+                                            placeholder="Enter button link"
+                                            required
+                                        />
                                     </div>
                                 </div>
-                            ))}
-                            {isEditing && (
-                                <Button variant="outline" onClick={addSection} className="h-full min-w-48">
-                                    <span className="mr-2 text-lg">+</span> Add Hero Section
-                                </Button>
-                            )}
-                        </div>
-                    </div>
-                )}
-            </CardContent>
-            {isEditing && (
-                <CardFooter className="border-t border-border bg-muted/30 gap-4 justify-end pt-3">
-                    <Button type="button" onClick={handleCancel} variant="outline">
-                        <X className="h-4 w-4 mr-2" /> Cancel
-                    </Button>
-                    <Button type="button" onClick={handleSave}>
-                        <Check className="h-4 w-4 mr-2" /> Save Changes
-                    </Button>
-                </CardFooter>
+
+                                {/* Preview section - optional */}
+                                {slide.title && slide.image && (
+                                    <div className="mt-6 p-4 border rounded-lg">
+                                        <h4 className="text-sm font-medium mb-2">Preview</h4>
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-24 h-16 bg-gray-200 rounded overflow-hidden">
+                                                <img
+                                                    src={slide.image}
+                                                    alt={slide.title}
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        (e.target as HTMLImageElement).src = "/placeholder-image.jpg";
+                                                    }}
+                                                />
+                                            </div>
+                                            <div>
+                                                <h5 className="font-medium">{slide.title}</h5>
+                                                <p className="text-sm text-gray-500 truncate">{slide.description}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
             )}
-        </Card>
-    )
-}
+        </div>
+    );
+};

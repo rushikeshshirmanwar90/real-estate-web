@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { ChevronRight } from "lucide-react"
+import img1 from '@/assets/banner images/img-1.jpg';
+import img2 from '@/assets/banner images/img-2.jpeg'
+import img3 from '@/assets/banner images/img-3.jpg'
 import Image from "next/image";
 
 export function HeroSection() {
@@ -13,16 +16,23 @@ export function HeroSection() {
             image: img1,
             title: "Discover Your Dream Home",
             subtitle: "Luxury Properties in Prime Locations",
+            buttonText: "Explore Now",
+            buttonLink: "#projects"
         },
         {
             image: img2,
             title: "Invest in Your Future",
             subtitle: "High-Value Real Estate Opportunities",
+            buttonText: "Get Started",
+            buttonLink: "#contact"
+
         },
         {
             image: img3,
             title: "Experience Modern Living",
             subtitle: "Contemporary Designs with Premium Amenities",
+            buttonText: "See More",
+            buttonLink: "#projects"
         },
     ]
 
@@ -62,10 +72,10 @@ export function HeroSection() {
                     <p className="text-xl md:text-2xl mb-8 text-gray-200">{slides[currentSlide].subtitle}</p>
                     <div className="flex flex-col sm:flex-row gap-4">
                         <Link
-                            href="#projects"
+                            href={slides[currentSlide].buttonLink}
                             className="px-8 py-3 rounded-md bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium hover:shadow-lg transition-all text-center"
                         >
-                            Explore Projects
+                            {slides[currentSlide].buttonText}
                         </Link>
                         <Link
                             href="#contact"

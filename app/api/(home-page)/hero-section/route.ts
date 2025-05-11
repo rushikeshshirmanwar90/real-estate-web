@@ -1,231 +1,348 @@
-import connect from "@/lib/db";
-import { OurServices } from "@/lib/models/homepage/OurServices";
+import { HeroSection } from "@/lib/models/homepage/HeroSection";
 import { NextRequest, NextResponse } from "next/server";
+import connectToDatabase from "@/lib/db"; // Assuming you have a database connection utility
 
+/**
+ * GET request handler to fetch hero section by clientId
+ */
 export const GET = async (req: NextRequest) => {
   try {
-    // Get clientId from query params if provided
+    // Connect to database
+    await connectToDatabase();
+
+    // Get clientId from query parameters
     const { searchParams } = new URL(req.url);
     const clientId = searchParams.get("clientId");
 
-    await connect();
-
-    // If clientId is provided, filter by it
-    const query = clientId ? { clientId } : {};
-    const data = await OurServices.find(query);
-
-    if (!data || data.length === 0) {
+    if (!clientId) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "No services data found",
-        },
+        { message: "Client ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // Find hero section by clientId
+    const heroSection = await HeroSection.findOne({ clientId });
+
+    if (!heroSection) {
+      return NextResponse.json(
+        { message: "Hero section not found" },
         { status: 404 }
       );
     }
 
     return NextResponse.json(
-      {
-        success: true,
-        data,
-      },
+      { message: "Hero section fetched successfully", data: heroSection },
       { status: 200 }
     );
   } catch (error: unknown) {
-    if (error instanceof Error) {
-      console.error("Error fetching our services data:", error.message);
-    } else {
-      console.error("Unexpected error:", error);
-    }
-
+    console.error(
+      "Error fetching hero section:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
     return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to fetch services data",
-      },
+      { message: "Internal Server Error" },
       { status: 500 }
     );
   }
 };
 
+/**
+ * POST request handler to create a new hero section
+ */
 export const POST = async (req: NextRequest) => {
   try {
-    await connect();
-    const body = await req.json();
+    // Connect to database
+    await connectToDatabase();
 
-    // Basic validation
-    if (
-      !body.clientId ||
-      !body.subTitle ||
-      !Array.isArray(body.services) ||
-      body.services.length === 0
-    ) {
+    // Parse request body
+    const body = await req.json();
+    const { clientId, details } = body;
+
+    // Validate required fields
+    if (!clientId || !Array.isArray(details) || details.length === 0) {
       return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Missing required fields: clientId, subTitle, and services array",
-        },
+        { message: "Client ID and at least one details item are required" },
         { status: 400 }
       );
     }
 
-    // Check if services data already exists for this client
-    const existingData = await OurServices.findOne({ clientId: body.clientId });
-    if (existingData) {
+    // Validate each details item
+    for (const item of details) {
+      const { title, description, image, buttonText, buttonLink } = item;
+      if (!title || !description || !image || !buttonText || !buttonLink) {
+        return NextResponse.json(
+          { message: "All fields in details are required" },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Check if hero section already exists for this client
+    const existingHeroSection = await HeroSection.findOne({ clientId });
+    if (existingHeroSection) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "Services data already exists for this client",
-        },
+        { message: "Hero section already exists for this client" },
         { status: 409 }
       );
     }
 
-    const newOurServices = new OurServices(body);
-    const savedOurServices = await newOurServices.save();
+    // Create new hero section
+    const newHeroSection = new HeroSection({
+      clientId,
+      details,
+    });
+
+    // Save to database
+    await newHeroSection.save();
 
     return NextResponse.json(
-      {
-        success: true,
-        message: "Services data created successfully",
-        data: savedOurServices,
-      },
+      { message: "Hero section created successfully", data: newHeroSection },
       { status: 201 }
     );
   } catch (error: unknown) {
-    if (error instanceof Error) {
-      console.error("Error creating our services data:", error.message);
-    } else {
-      console.error("Unexpected error:", error);
-    }
-
+    console.error(
+      "Error creating hero section:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
     return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to create services data",
-      },
+      { message: "Internal Server Error" },
       { status: 500 }
     );
   }
 };
 
-export const DELETE = async (req: NextRequest) => {
-  const { searchParams } = new URL(req.url);
-  const id = searchParams.get("id");
-
+/**
+ * PUT request handler to update an existing hero section
+ */
+export const PUT = async (req: NextRequest) => {
   try {
-    if (!id) {
+    // Connect to database
+    await connectToDatabase();
+
+    // Parse request body
+    const body = await req.json();
+    const { clientId, details } = body;
+
+    // Validate required fields
+    if (!clientId || !Array.isArray(details) || details.length === 0) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "ID parameter is required",
-        },
+        { message: "Client ID and at least one details item are required" },
         { status: 400 }
       );
     }
 
-    await connect();
-    const deletedData = await OurServices.findByIdAndDelete(id);
+    // Validate each details item
+    for (const item of details) {
+      const { title, description, image, buttonText, buttonLink } = item;
+      if (!title || !description || !image || !buttonText || !buttonLink) {
+        return NextResponse.json(
+          { message: "All fields in details are required" },
+          { status: 400 }
+        );
+      }
+    }
 
-    if (!deletedData) {
+    // Find and update hero section
+    const updatedHeroSection = await HeroSection.findOneAndUpdate(
+      { clientId },
+      { details },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedHeroSection) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "Services data not found or already deleted",
-        },
+        { message: "Hero section not found" },
         { status: 404 }
       );
     }
 
     return NextResponse.json(
       {
-        success: true,
-        message: "Services data deleted successfully",
+        message: "Hero section updated successfully",
+        data: updatedHeroSection,
       },
       { status: 200 }
     );
   } catch (error: unknown) {
-    if (error instanceof Error) {
-      console.error("Error deleting our services data:", error.message);
-    } else {
-      console.error("Unexpected error:", error);
-    }
-
+    console.error(
+      "Error updating hero section:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
     return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to delete services data",
-      },
+      { message: "Internal Server Error" },
       { status: 500 }
     );
   }
 };
 
-export const PUT = async (req: NextRequest) => {
-  const { searchParams } = new URL(req.url);
-  const id = searchParams.get("id");
-
+/**
+ * PATCH request handler to update specific details in a hero section
+ */
+export const PATCH = async (req: NextRequest) => {
   try {
-    if (!id) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "ID parameter is required",
-        },
-        { status: 400 }
-      );
-    }
+    // Connect to database
+    await connectToDatabase();
 
-    await connect();
+    // Parse request body
     const body = await req.json();
+    const { clientId, detailsId, updates } = body;
 
-    // Basic validation
-    if (Object.keys(body).length === 0) {
+    // Validate required fields
+    if (
+      !clientId ||
+      !detailsId ||
+      !updates ||
+      Object.keys(updates).length === 0
+    ) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "No update data provided",
-        },
+        { message: "Client ID, details ID and updates are required" },
         { status: 400 }
       );
     }
 
-    const updatedData = await OurServices.findByIdAndUpdate(id, body, {
-      new: true,
-      runValidators: true, // Run schema validators on update
+    // Find hero section
+    const heroSection = await HeroSection.findOne({ clientId });
+
+    if (!heroSection) {
+      return NextResponse.json(
+        { message: "Hero section not found" },
+        { status: 404 }
+      );
+    }
+
+    // Find the specific details item to update
+    const detailsIndex = heroSection.details.findIndex(
+      (item: { _id: string }) => item._id.toString() === detailsId
+    );
+
+    if (detailsIndex === -1) {
+      return NextResponse.json(
+        { message: "Details item not found" },
+        { status: 404 }
+      );
+    }
+
+    // Update the specific fields
+    Object.keys(updates).forEach((key) => {
+      if (
+        ["title", "description", "image", "buttonText", "buttonLink"].includes(
+          key
+        )
+      ) {
+        heroSection.details[detailsIndex][key] = updates[key];
+      }
     });
 
-    if (!updatedData) {
+    // Save the updated hero section
+    await heroSection.save();
+
+    return NextResponse.json(
+      {
+        message: "Hero section details updated successfully",
+        data: heroSection,
+      },
+      { status: 200 }
+    );
+  } catch (error: unknown) {
+    console.error(
+      "Error updating hero section details:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
+    return NextResponse.json(
+      { message: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+};
+
+/**
+ * DELETE request handler to delete a hero section
+ */
+export const DELETE = async (req: NextRequest) => {
+  try {
+    // Connect to database
+    await connectToDatabase();
+
+    // Get clientId from query parameters
+    const { searchParams } = new URL(req.url);
+    const clientId = searchParams.get("clientId");
+    const detailsId = searchParams.get("detailsId");
+
+    if (!clientId) {
+      return NextResponse.json(
+        { message: "Client ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // If detailsId is provided, delete only that specific details item
+    if (detailsId) {
+      const heroSection = await HeroSection.findOne({ clientId });
+
+      if (!heroSection) {
+        return NextResponse.json(
+          { message: "Hero section not found" },
+          { status: 404 }
+        );
+      }
+
+      // Filter out the details item to delete
+      const initialLength = heroSection.details.length;
+      heroSection.details = heroSection.details.filter(
+        (item: { _id: string }) => item._id.toString() !== detailsId
+      );
+
+      // Check if any item was removed
+      if (heroSection.details.length === initialLength) {
+        return NextResponse.json(
+          { message: "Details item not found" },
+          { status: 404 }
+        );
+      }
+
+      // If no details remain, delete the entire hero section
+      if (heroSection.details.length === 0) {
+        await HeroSection.deleteOne({ clientId });
+        return NextResponse.json(
+          { message: "Hero section deleted successfully" },
+          { status: 200 }
+        );
+      }
+
+      // Save the updated hero section
+      await heroSection.save();
+
       return NextResponse.json(
         {
-          success: false,
-          message: "Services data not found or couldn't be updated",
+          message: "Hero section details item deleted successfully",
+          data: heroSection,
         },
+        { status: 200 }
+      );
+    }
+
+    // Delete the entire hero section
+    const result = await HeroSection.deleteOne({ clientId });
+
+    if (result.deletedCount === 0) {
+      return NextResponse.json(
+        { message: "Hero section not found" },
         { status: 404 }
       );
     }
 
     return NextResponse.json(
-      {
-        success: true,
-        message: "Services data updated successfully",
-        data: updatedData,
-      },
+      { message: "Hero section deleted successfully" },
       { status: 200 }
     );
   } catch (error: unknown) {
-    if (error instanceof Error) {
-      console.error("Error updating our services data:", error.message);
-    } else {
-      console.error("Unexpected error:", error);
-    }
-
+    console.error(
+      "Error deleting hero section:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
     return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to update services data",
-      },
+      { message: "Internal Server Error" },
       { status: 500 }
     );
   }

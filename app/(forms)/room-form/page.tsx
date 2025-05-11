@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { RoomsEditableCard } from "@/components/editable-cards/roomEditCard"
+import { RoomsEditableCard } from "@/components/homepage/editable-cards/roomEditCard"
 import TopHeader from "@/components/TopHeader"
 import axios from "axios"
 import domain from "@/components/utils/domain"

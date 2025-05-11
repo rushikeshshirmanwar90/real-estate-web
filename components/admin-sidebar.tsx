@@ -52,10 +52,10 @@ export function AdminSidebar() {
                 <div className="flex items-center gap-2">
                     <Avatar className="h-10 w-10 border-2 border-primary">
                         <AvatarImage src="/placeholder.svg?height=40&width=40" alt="Avatar" />
-                        <AvatarFallback className="bg-primary text-primary-foreground">JD</AvatarFallback>
+                        <AvatarFallback className="bg-primary text-primary-foreground">RS</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col">
-                        <span className="font-semibold">John Doe</span>
+                        <span className="font-semibold">Rushikesh Shrimanwar</span>
                         <span className="text-xs text-muted-foreground">Admin</span>
                     </div>
                     <DropdownMenu>

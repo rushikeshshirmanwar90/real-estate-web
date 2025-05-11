@@ -1,64 +1,73 @@
 import { model, models, Schema } from "mongoose";
 
+const projectDetailsSchema = new Schema(
+  {
+    projectName: {
+      type: String,
+      required: true,
+    },
+    projectId: {
+      type: String,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
+const buildingDetailsSchema = new Schema({
+  buildingName: {
+    type: String,
+    required: true,
+  },
+  buildingId: {
+    type: String,
+    required: true,
+  },
+  flatName: {
+    type: String,
+    required: true,
+  },
+  flatId: {
+    type: String,
+    required: true,
+  },
+});
+
+const rowHouseDetailsSchema = new Schema({
+  rowHouseName: {
+    type: String,
+    required: true,
+  },
+  rowHouseId: {
+    type: String,
+    required: true,
+  },
+});
+
 const leadSchema = new Schema(
   {
     name: { type: String, required: true },
-    email: { type: String, required: true },
     phone: { type: String, required: true },
-    message: { type: String, required: true },
 
-    clientId: {
-      type: Schema.Types.ObjectId,
-      ref: "Client",
-      require: true,
-    },
-
-    projectId: {
-      type: Schema.Types.ObjectId,
-      ref: "Projects",
+    projectDetails: {
+      type: projectDetailsSchema,
       required: true,
     },
 
-    buildingId: {
-      type: Schema.Types.ObjectId,
-      ref: "Buildings",
+    interestedType: {
+      type: String,
+      enum: ["building", "rowhouse"],
       required: true,
     },
 
-    flatId: {
-      type: Schema.Types.ObjectId,
-      ref: "Flats",
-      require: true,
+    buildingDetails: {
+      type: buildingDetailsSchema,
+      required: false,
     },
 
-    byOnline: {
-      type: Boolean,
-      require: false,
-    },
-
-    byBroker: {
-      isBroker: {
-        type: Boolean,
-        require: true,
-      },
-
-      brokerDetails: {
-        type: Schema.Types.ObjectId,
-        ref: "Broker",
-      },
-    },
-
-    byOther: {
-      type: Boolean,
-      message: {
-        type: String,
-      },
-    },
-
-    assignTo: {
-      type: Schema.Types.ObjectId || null,
-      default: null,
-      ref: "sealsMan",
+    rowHouseDetails: {
+      type: rowHouseDetailsSchema,
+      required: false,
     },
   },
   { timestamps: true }

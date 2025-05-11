@@ -7,9 +7,9 @@ import { RowHouseProps } from './types';
 import { successToast } from '@/components/toasts';
 import { addRowHouse, getSingleRowHouse, updateRowHouse } from '@/functions/rowHouse/crud';
 import TopHeader from '@/components/TopHeader';
-import { EditableSectionCard } from '@/components/editable-cards/editable-info-card';
+import { EditableSectionCard } from '@/components/homepage/editable-cards/editable-info-card';
 import { Book, Image } from 'lucide-react';
-import AmenitiesSelector from '@/components/editable-cards/AmenitiesSelector';
+import AmenitiesSelector from '@/components/homepage/editable-cards/AmenitiesSelector';
 import axios from 'axios';
 
 const Page = () => {

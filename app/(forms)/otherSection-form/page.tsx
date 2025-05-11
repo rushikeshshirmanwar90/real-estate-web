@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react'
 import { successToast } from '@/components/toasts';
 import { addOtherSection, getSingleOtherSection, updateOtherSection } from '@/functions/otherSection/crud';
 import TopHeader from '@/components/TopHeader';
-import { EditableSectionCard } from '@/components/editable-cards/editable-info-card';
+import { EditableSectionCard } from '@/components/homepage/editable-cards/editable-info-card';
 import { Book, Image } from 'lucide-react';
 import axios from 'axios';
 

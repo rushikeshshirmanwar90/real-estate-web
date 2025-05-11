@@ -50,7 +50,7 @@ import { Badge } from "@/components/ui/badge"
 import { projectProps } from "@/app/projects/types/project-props"
 
 import { AmenitiesProps } from "./types/editable-card"
-import { DisplayIcon } from "./editable-cards/AmenitiesSelector"
+import { DisplayIcon } from "./homepage/editable-cards/AmenitiesSelector"
 import { deleteProject } from "@/functions/project/crud"
 import { successToast } from "./toasts"
 import Image from "next/image"

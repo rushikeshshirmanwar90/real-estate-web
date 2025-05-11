@@ -4,8 +4,8 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Book, Image, MapPinCheck } from "lucide-react"
 
 import TopHeader from "@/components/TopHeader"
-import AmenitiesSelector from "@/components/editable-cards/AmenitiesSelector"
-import { EditableSectionCard } from "@/components/editable-cards/editable-info-card"
+import AmenitiesSelector from "@/components/homepage/editable-cards/AmenitiesSelector"
+import { EditableSectionCard } from "@/components/homepage/editable-cards/editable-info-card"
 
 import { AmenitiesProps, Field } from "@/components/types/editable-card"
 import type { FormData } from "./types"
