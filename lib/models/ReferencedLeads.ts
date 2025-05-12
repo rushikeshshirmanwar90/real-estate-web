@@ -1,29 +1,22 @@
 import { model, models, Schema } from "mongoose";
 
-const ReferenceCustomerSchema = new Schema({
-  id: {
-    type: String,
-    required: true,
-    unique: true,
-  },
+const ReferenceCustomerSchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+    },
 
-  name: {
-    type: String,
-    required: true,
+    contactNumber: {
+      type: String,
+      required: true,
+      unique: true,
+    },
   },
-
-  contactNumber: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-});
+  { _id: false }
+);
 
 const LeadSchema = new Schema({
-  id: {
-    type: String,
-    required: true,
-  },
   name: {
     type: String,
     required: true,

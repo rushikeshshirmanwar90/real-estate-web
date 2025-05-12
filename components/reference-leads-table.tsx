@@ -1,42 +1,25 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { ChevronDown, ChevronRight, User, Users, Phone } from "lucide-react"
-
-interface Lead {
-    id: string
-    name: string
-    contactNumber: string
-}
-
-interface ReferenceCustomer {
-    id: string
-    name: string
-    contactNumber: string
-}
-
-interface ReferenceLead {
-    clientId: string
-    referenceCustomer: ReferenceCustomer
-    leads: Lead[]
-}
+import { useState } from "react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronRight, User, Users, Phone } from "lucide-react";
+import { ReferralEntry } from "@/types/reference";
 
 interface ReferenceLeadsTableProps {
-    data: ReferenceLead[]
+    data: ReferralEntry[];
 }
 
 export function ReferenceLeadsTable({ data }: ReferenceLeadsTableProps) {
-    const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({})
+    const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
 
     const toggleRow = (clientId: string) => {
         setExpandedRows((prev) => ({
             ...prev,
             [clientId]: !prev[clientId],
-        }))
-    }
+        }));
+    };
 
     return (
         <Card className="shadow-sm">
@@ -63,13 +46,13 @@ export function ReferenceLeadsTable({ data }: ReferenceLeadsTableProps) {
                                 data.map((item) => (
                                     <>
                                         <TableRow
-                                            key={item.clientId}
+                                            key={item._id}
                                             className="cursor-pointer hover:bg-muted/50"
-                                            onClick={() => toggleRow(item.clientId)}
+                                            onClick={() => toggleRow(item._id)}
                                         >
                                             <TableCell>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
-                                                    {expandedRows[item.clientId] ? (
+                                                    {expandedRows[item._id] ? (
                                                         <ChevronDown className="h-4 w-4" />
                                                     ) : (
                                                         <ChevronRight className="h-4 w-4" />
@@ -96,7 +79,7 @@ export function ReferenceLeadsTable({ data }: ReferenceLeadsTableProps) {
                                             </TableCell>
                                         </TableRow>
 
-                                        {expandedRows[item.clientId] && (
+                                        {expandedRows[item._id] && (
                                             <TableRow className="bg-muted/30">
                                                 <TableCell colSpan={5} className="p-0">
                                                     <div className="p-4">
@@ -115,8 +98,8 @@ export function ReferenceLeadsTable({ data }: ReferenceLeadsTableProps) {
                                                                 </TableHeader>
                                                                 <TableBody>
                                                                     {item.leads.map((lead) => (
-                                                                        <TableRow key={lead.id}>
-                                                                            <TableCell className="font-medium">{lead.id}</TableCell>
+                                                                        <TableRow key={lead._id}>
+                                                                            <TableCell className="font-medium">{lead._id}</TableCell>
                                                                             <TableCell>
                                                                                 <div className="flex items-center">
                                                                                     <User className="mr-2 h-4 w-4 text-muted-foreground" />
@@ -146,5 +129,5 @@ export function ReferenceLeadsTable({ data }: ReferenceLeadsTableProps) {
                 </div>
             </CardContent>
         </Card>
-    )
+    );
 }
