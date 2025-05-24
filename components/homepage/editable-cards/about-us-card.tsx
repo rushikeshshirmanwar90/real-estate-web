@@ -21,6 +21,7 @@ type AboutUsProps = {
   description: string
   image: string
   points: Point[]
+  loading?: boolean
   onSave: (data: {
     clientId: string
     subTitle: string
@@ -37,6 +38,7 @@ export function AboutUsCard({
   image = "",
   points = [],
   onSave,
+  loading
 }: AboutUsProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -96,6 +98,32 @@ export function AboutUsCard({
 
   const updatePoint = (index: number, field: keyof Point, value: string) => {
     setTempPoints(tempPoints.map((point, i) => (i === index ? { ...point, [field]: value } : point)))
+  }
+
+
+  // Show loading state
+  if (loading) {
+    return (
+      <Card className="w-full overflow-hidden bg-card shadow-xl">
+        <CardHeader className="border-b border-border bg-muted/30">
+          <div className="flex items-center justify-between">
+            <h2 className="flex items-center gap-3 text-2xl font-semibold tracking-tight">
+              <div className="rounded-full border border-border bg-primary/10 p-2">
+                <Info className="h-5 w-5" />
+
+              </div>
+              About Us
+            </h2>
+          </div>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span>Loading About us section...</span>
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (

@@ -1,40 +1,32 @@
 import connect from "@/lib/db";
-import { FAQ } from "@/lib/models/homepage/FAQ";
+import { OurServices } from "@/lib/models/homepage/OurServices";
 import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (req: NextRequest) => {
   try {
+    // Get clientId from query params if provided
     const { searchParams } = new URL(req.url);
     const clientId = searchParams.get("clientId");
 
     await connect();
-
-    if (clientId) {
-      const data = await FAQ.findOne({ clientId });
-      if (!data) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: "No FAQ data found for this client",
-          },
-          { status: 404 }
-        );
-      }
+    if (!clientId) {
       return NextResponse.json(
         {
-          success: true,
-          data,
+          success: false,
+          message: "clientId parameter is required",
         },
-        { status: 200 }
+        { status: 400 }
       );
     }
 
-    const data = await FAQ.find();
+    // Fetch data from the database
+    const data = await OurServices.findOne({ clientId });
+
     if (!data || data.length === 0) {
       return NextResponse.json(
         {
           success: false,
-          message: "No FAQ data found",
+          message: "No services data found",
         },
         { status: 404 }
       );
@@ -48,11 +40,16 @@ export const GET = async (req: NextRequest) => {
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error("Error fetching FAQ data:", error);
+    if (error instanceof Error) {
+      console.error("Error fetching our services data:", error.message);
+    } else {
+      console.error("Unexpected error:", error);
+    }
+
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to fetch FAQ data",
+        message: "Failed to fetch services data",
       },
       { status: 500 }
     );
@@ -68,63 +65,53 @@ export const POST = async (req: NextRequest) => {
     if (
       !body.clientId ||
       !body.subTitle ||
-      !Array.isArray(body.FAQs) ||
-      body.FAQs.length === 0
+      !Array.isArray(body.services) ||
+      body.services.length === 0
     ) {
       return NextResponse.json(
         {
           success: false,
           message:
-            "Missing required fields: clientId, subTitle, and FAQs array",
+            "Missing required fields: clientId, subTitle, and services array",
         },
         { status: 400 }
       );
     }
 
-    if (
-      body.FAQs.some(
-        (faq: { title: string; description: string }) =>
-          !faq.title?.trim() || !faq.description?.trim()
-      )
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "All FAQs must have a non-empty title and description",
-        },
-        { status: 400 }
-      );
-    }
-
-    // Check if FAQ data already exists for this client
-    const existingData = await FAQ.findOne({ clientId: body.clientId });
+    // Check if services data already exists for this client
+    const existingData = await OurServices.findOne({ clientId: body.clientId });
     if (existingData) {
       return NextResponse.json(
         {
           success: false,
-          message: "FAQ data already exists for this client",
+          message: "Services data already exists for this client",
         },
         { status: 409 }
       );
     }
 
-    const newFAQ = new FAQ(body);
-    const savedFAQ = await newFAQ.save();
+    const newOurServices = new OurServices(body);
+    const savedOurServices = await newOurServices.save();
 
     return NextResponse.json(
       {
         success: true,
-        message: "FAQ data created successfully",
-        data: savedFAQ,
+        message: "Services data created successfully",
+        data: savedOurServices,
       },
       { status: 201 }
     );
   } catch (error: unknown) {
-    console.error("Error creating FAQ data:", error);
+    if (error instanceof Error) {
+      console.error("Error creating our services data:", error.message);
+    } else {
+      console.error("Unexpected error:", error);
+    }
+
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to create FAQ data",
+        message: "Failed to create services data",
       },
       { status: 500 }
     );
@@ -147,13 +134,13 @@ export const DELETE = async (req: NextRequest) => {
     }
 
     await connect();
-    const deletedData = await FAQ.findByIdAndDelete(id);
+    const deletedData = await OurServices.findByIdAndDelete(id);
 
     if (!deletedData) {
       return NextResponse.json(
         {
           success: false,
-          message: "FAQ data not found or already deleted",
+          message: "Services data not found or already deleted",
         },
         { status: 404 }
       );
@@ -162,16 +149,21 @@ export const DELETE = async (req: NextRequest) => {
     return NextResponse.json(
       {
         success: true,
-        message: "FAQ data deleted successfully",
+        message: "Services data deleted successfully",
       },
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error("Error deleting FAQ data:", error);
+    if (error instanceof Error) {
+      console.error("Error deleting our services data:", error.message);
+    } else {
+      console.error("Unexpected error:", error);
+    }
+
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to delete FAQ data",
+        message: "Failed to delete services data",
       },
       { status: 500 }
     );
@@ -197,36 +189,26 @@ export const PUT = async (req: NextRequest) => {
     const body = await req.json();
 
     // Basic validation
-    if (
-      !body.clientId ||
-      !body.subTitle ||
-      !Array.isArray(body.FAQs) ||
-      body.FAQs.length === 0 ||
-      body.FAQs.some(
-        (faq: { title: string; description: string }) =>
-          !faq.title?.trim() || !faq.description?.trim()
-      )
-    ) {
+    if (Object.keys(body).length === 0) {
       return NextResponse.json(
         {
           success: false,
-          message:
-            "Invalid data: clientId, subTitle, and non-empty FAQs with title and description are required",
+          message: "No update data provided",
         },
         { status: 400 }
       );
     }
 
-    const updatedData = await FAQ.findByIdAndUpdate(id, body, {
+    const updatedData = await OurServices.findByIdAndUpdate(id, body, {
       new: true,
-      runValidators: true,
+      runValidators: true, // Run schema validators on update
     });
 
     if (!updatedData) {
       return NextResponse.json(
         {
           success: false,
-          message: "FAQ data not found or couldn't be updated",
+          message: "Services data not found or couldn't be updated",
         },
         { status: 404 }
       );
@@ -235,17 +217,22 @@ export const PUT = async (req: NextRequest) => {
     return NextResponse.json(
       {
         success: true,
-        message: "FAQ data updated successfully",
+        message: "Services data updated successfully",
         data: updatedData,
       },
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error("Error updating FAQ data:", error);
+    if (error instanceof Error) {
+      console.error("Error updating our services data:", error.message);
+    } else {
+      console.error("Unexpected error:", error);
+    }
+
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to update FAQ data",
+        message: "Failed to update services data",
       },
       { status: 500 }
     );

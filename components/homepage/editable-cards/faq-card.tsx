@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Pencil, X, Check, HelpCircle, Plus, Trash2 } from "lucide-react"
+import { Pencil, X, Check, HelpCircle, Plus, Trash2, Loader2 } from "lucide-react"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
 type FAQ = {
@@ -16,7 +16,8 @@ type FAQ = {
 type FAQCardProps = {
   clientId: string
   subTitle: string
-  FAQs: FAQ[]
+  FAQs: FAQ[],
+  loading?: boolean
   onSave: (data: {
     clientId: string
     subTitle: string
@@ -24,7 +25,7 @@ type FAQCardProps = {
   }) => void
 }
 
-export function FAQCard({ clientId, subTitle = "", FAQs = [], onSave }: FAQCardProps) {
+export function FAQCard({ clientId, subTitle = "", FAQs = [], onSave, loading }: FAQCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [tempSubTitle, setTempSubTitle] = useState(subTitle)
   const [tempFAQs, setTempFAQs] = useState<FAQ[]>(FAQs)
@@ -61,6 +62,30 @@ export function FAQCard({ clientId, subTitle = "", FAQs = [], onSave }: FAQCardP
 
   const updateFAQ = (index: number, field: keyof FAQ, value: string) => {
     setTempFAQs(tempFAQs.map((faq, i) => (i === index ? { ...faq, [field]: value } : faq)))
+  }
+
+  // Show loading state
+  if (loading) {
+    return (
+      <Card className="w-full overflow-hidden bg-card shadow-xl">
+        <CardHeader className="border-b border-border bg-muted/30">
+          <div className="flex items-center justify-between">
+            <h2 className="flex items-center gap-3 text-2xl font-semibold tracking-tight">
+              <div className="rounded-full border border-border bg-primary/10 p-2">
+                <HelpCircle className="h-5 w-5" />
+              </div>
+              Frequently Asked Questions
+            </h2>
+          </div>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span>Loading FAQ data...</span>
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (

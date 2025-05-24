@@ -2,13 +2,13 @@
 import Login from '@/components/Login'
 import React, { useEffect } from 'react'
 import { useRouter } from "next/navigation"
-import { useAuthStore } from '@/hooks/use-auth'
+import { useClientAuth } from '@/hooks/use-auth'
 
-const Page = () => {
+const Page: React.FC = () => {
     const router = useRouter();
-    const { isAuthenticated } = useAuthStore()
+    const { clientId } = useClientAuth()
     useEffect(() => {
-        if (isAuthenticated) {
+        if (clientId) {
             router.push("/");
         }
     }, [])

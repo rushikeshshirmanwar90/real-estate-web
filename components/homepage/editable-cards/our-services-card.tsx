@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Pencil, X, Check, Wrench, Plus, Trash2, Search } from "lucide-react"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Pencil, X, Check, Wrench, Plus, Trash2, Search, Loader2 } from "lucide-react";
 import {
   Camera,
   Settings,
@@ -45,24 +45,26 @@ import {
   Star,
   Truck,
   Zap,
-} from "lucide-react"
+} from "lucide-react";
+import { toast } from "react-toastify";
 
 type Service = {
-  icon: string
-  title: string
-  description: string
-}
+  icon: string;
+  title: string;
+  description: string;
+};
 
 type OurServicesProps = {
-  clientId: string
-  subTitle: string
-  services: Service[]
+  clientId: string;
+  subTitle: string;
+  services: Service[];
+  loading?: boolean;
   onSave: (data: {
-    clientId: string
-    subTitle: string
-    services: Service[]
-  }) => void
-}
+    clientId: string;
+    subTitle: string;
+    services: Service[];
+  }) => void;
+};
 
 const iconComponents = {
   Camera,
@@ -104,121 +106,127 @@ const iconComponents = {
   Star,
   Truck,
   Zap,
-}
+};
 
 export const DisplayIcon = ({
   iconName,
   size = 32,
   color = "currentColor",
 }: {
-  iconName: string
-  size?: number
-  color?: string
+  iconName: string;
+  size?: number;
+  color?: string;
+  loading?: boolean
 }) => {
-  const IconComponent = iconComponents[iconName as keyof typeof iconComponents]
-  return IconComponent ? <IconComponent size={size} color={color} /> : <X size={size} />
-}
+  const IconComponent = iconComponents[iconName as keyof typeof iconComponents];
+  return IconComponent ? <IconComponent size={size} color={color} /> : <X size={size} />;
+};
 
-export function OurServicesCard({ clientId, subTitle = "", services = [], onSave }: OurServicesProps) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [tempSubTitle, setTempSubTitle] = useState(subTitle)
-  const [tempServices, setTempServices] = useState<Service[]>(services)
-  const hasData = subTitle || services.length > 0
+export function OurServicesCard({ clientId, subTitle = "", services = [], onSave, loading }: OurServicesProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [tempSubTitle, setTempSubTitle] = useState(subTitle);
+  const [tempServices, setTempServices] = useState<Service[]>(services);
+  const hasData = subTitle || services.length > 0;
 
-  // For the icon selection dialog
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [tempSelectedIcon, setTempSelectedIcon] = useState<string | null>(null)
-  const [tempServiceTitle, setTempServiceTitle] = useState("")
-  const [tempServiceDescription, setTempServiceDescription] = useState("")
-  const [editingServiceIndex, setEditingServiceIndex] = useState<number | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [tempSelectedIcon, setTempSelectedIcon] = useState<string | null>(null);
+  const [tempServiceTitle, setTempServiceTitle] = useState("");
+  const [tempServiceDescription, setTempServiceDescription] = useState("");
+  const [editingServiceIndex, setEditingServiceIndex] = useState<number | null>(null);
 
-  const availableIcons = Object.keys(iconComponents)
+  const availableIcons = Object.keys(iconComponents);
 
   const filteredIcons = searchQuery.trim()
     ? availableIcons.filter((iconName) => iconName.toLowerCase().includes(searchQuery.toLowerCase()))
-    : availableIcons
+    : availableIcons;
 
   const handleEdit = () => {
-    setTempSubTitle(subTitle)
-    setTempServices([...services])
-    setIsEditing(true)
-  }
+    setTempSubTitle(subTitle);
+    setTempServices([...services]);
+    setIsEditing(true);
+  };
 
   const handleSave = () => {
     onSave({
       clientId,
       subTitle: tempSubTitle,
       services: tempServices,
-    })
-    setIsEditing(false)
-  }
+    });
+    setIsEditing(false);
+    toast.success("Services saved successfully");
+  };
 
   const handleCancel = () => {
-    setTempSubTitle(subTitle)
-    setTempServices([...services])
-    setIsEditing(false)
-  }
+    setTempSubTitle(subTitle);
+    setTempServices([...services]);
+    setIsEditing(false);
+  };
 
   const handleIconClick = (iconName: string) => {
-    setTempSelectedIcon(iconName)
-  }
+    console.log("Selected icon:", iconName);
+    setTempSelectedIcon(iconName);
+  };
 
   const handleAddService = () => {
-    if (tempSelectedIcon && tempServiceTitle.trim()) {
-      const newService = {
-        icon: tempSelectedIcon,
-        title: tempServiceTitle.trim(),
-        description: tempServiceDescription.trim(),
-      }
-
-      if (editingServiceIndex !== null) {
-        // Update existing service
-        const updatedServices = [...tempServices]
-        updatedServices[editingServiceIndex] = newService
-        setTempServices(updatedServices)
-      } else {
-        // Add new service
-        setTempServices([...tempServices, newService])
-      }
-
-      handleCloseModal()
+    if (!tempSelectedIcon || !tempServiceTitle.trim()) {
+      toast.error("Please select an icon and enter a title");
+      return;
     }
-  }
+
+    const newService = {
+      icon: tempSelectedIcon,
+      title: tempServiceTitle.trim(),
+      description: tempServiceDescription.trim(),
+    };
+
+    if (editingServiceIndex !== null) {
+      const updatedServices = [...tempServices];
+      updatedServices[editingServiceIndex] = newService;
+      setTempServices(updatedServices);
+      toast.success("Service updated successfully");
+    } else {
+      setTempServices([...tempServices, newService]);
+      toast.success("Service added successfully");
+    }
+
+    handleCloseModal();
+  };
 
   const handleCloseModal = () => {
-    setIsModalOpen(false)
-    setTempSelectedIcon(null)
-    setTempServiceTitle("")
-    setTempServiceDescription("")
-    setSearchQuery("")
-    setEditingServiceIndex(null)
-  }
+    setIsModalOpen(false);
+    setTempSelectedIcon(null);
+    setTempServiceTitle("");
+    setTempServiceDescription("");
+    setSearchQuery("");
+    setEditingServiceIndex(null);
+  };
 
   const handleRemoveService = (index: number) => {
-    setTempServices(tempServices.filter((_, i) => i !== index))
-  }
+    setTempServices(tempServices.filter((_, i) => i !== index));
+    toast.success("Service removed successfully");
+  };
 
   const handleEditService = (index: number) => {
-    const service = tempServices[index]
-    setTempSelectedIcon(service.icon)
-    setTempServiceTitle(service.title)
-    setTempServiceDescription(service.description)
-    setEditingServiceIndex(index)
-    setIsModalOpen(true)
-  }
+    const service = tempServices[index];
+    setTempSelectedIcon(service.icon);
+    setTempServiceTitle(service.title);
+    setTempServiceDescription(service.description);
+    setEditingServiceIndex(index);
+    setIsModalOpen(true);
+  };
 
   const openAddServiceModal = () => {
-    setTempSelectedIcon(null)
-    setTempServiceTitle("")
-    setTempServiceDescription("")
-    setEditingServiceIndex(null)
-    setIsModalOpen(true)
-  }
+    setTempSelectedIcon(null);
+    setTempServiceTitle("");
+    setTempServiceDescription("");
+    setEditingServiceIndex(null);
+    setIsModalOpen(true);
+  };
 
   const renderIconGrid = () => {
     if (filteredIcons.length === 0) {
-      return <div className="py-4 text-center text-muted-foreground">No icons found matching your search</div>
+      return <div className="py-4 text-center text-muted-foreground">No icons found matching your search</div>;
     }
 
     return (
@@ -226,17 +234,40 @@ export function OurServicesCard({ clientId, subTitle = "", services = [], onSave
         {filteredIcons.map((iconName) => (
           <div
             key={iconName}
-            className={`cursor-pointer rounded-lg border p-2 transition-all ${
-              tempSelectedIcon === iconName
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-border hover:bg-primary/10"
-            }`}
+            className={`cursor-pointer rounded-lg border p-2 transition-all ${tempSelectedIcon === iconName
+              ? "border-primary bg-primary text-primary-foreground"
+              : "border-border hover:bg-primary/10"
+              }`}
             onClick={() => handleIconClick(iconName)}
           >
             <DisplayIcon iconName={iconName} size={24} />
           </div>
         ))}
       </div>
+    );
+  };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <Card className="w-full overflow-hidden bg-card shadow-xl">
+        <CardHeader className="border-b border-border bg-muted/30">
+          <div className="flex items-center justify-between">
+            <h2 className="flex items-center gap-3 text-2xl font-semibold tracking-tight">
+              <div className="rounded-full border border-border bg-primary/10 p-2">
+                <Wrench className="h-5 w-5" />
+              </div>
+              Our Team
+            </h2>
+          </div>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span>Loading services data...</span>
+          </div>
+        </CardContent>
+      </Card>
     )
   }
 
@@ -443,5 +474,5 @@ export function OurServicesCard({ clientId, subTitle = "", services = [], onSave
         </DialogContent>
       </Dialog>
     </Card>
-  )
+  );
 }

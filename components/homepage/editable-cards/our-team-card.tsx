@@ -1,13 +1,13 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { ImagePlus, Pencil, X, Check, Loader2, Users, Plus, Trash2 } from "lucide-react"
 import { handleImageUpload } from "@/components/functions/image-handling"
+import Image from "next/image"
 
 type TeamMember = {
   name: string
@@ -19,6 +19,7 @@ type OurTeamProps = {
   clientId: string
   subTitle: string
   teamMembers: TeamMember[]
+  loading?: boolean
   onSave: (data: {
     clientId: string
     subTitle: string
@@ -26,11 +27,24 @@ type OurTeamProps = {
   }) => void
 }
 
-export function OurTeamCard({ clientId, subTitle = "", teamMembers = [], onSave }: OurTeamProps) {
+export function OurTeamCard({
+  clientId,
+  subTitle = "",
+  teamMembers = [],
+  loading = false,
+  onSave
+}: OurTeamProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [tempSubTitle, setTempSubTitle] = useState(subTitle)
   const [tempTeamMembers, setTempTeamMembers] = useState<TeamMember[]>(teamMembers)
+
+  // Update internal state when props change
+  useEffect(() => {
+    setTempSubTitle(subTitle)
+    setTempTeamMembers([...teamMembers])
+  }, [subTitle, teamMembers])
+
   const hasData = subTitle || teamMembers.length > 0
 
   const handleEdit = () => {
@@ -82,6 +96,30 @@ export function OurTeamCard({ clientId, subTitle = "", teamMembers = [], onSave 
 
   const updateTeamMember = (index: number, field: keyof TeamMember, value: string) => {
     setTempTeamMembers(tempTeamMembers.map((member, i) => (i === index ? { ...member, [field]: value } : member)))
+  }
+
+  // Show loading state
+  if (loading) {
+    return (
+      <Card className="w-full overflow-hidden bg-card shadow-xl">
+        <CardHeader className="border-b border-border bg-muted/30">
+          <div className="flex items-center justify-between">
+            <h2 className="flex items-center gap-3 text-2xl font-semibold tracking-tight">
+              <div className="rounded-full border border-border bg-primary/10 p-2">
+                <Users className="h-5 w-5" />
+              </div>
+              Our Team
+            </h2>
+          </div>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span>Loading team data...</span>
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
@@ -171,11 +209,13 @@ export function OurTeamCard({ clientId, subTitle = "", teamMembers = [], onSave 
 
                       <div className="space-y-2">
                         <label className="text-sm font-medium">Photo</label>
-                        <div className="relative aspect-square w-full overflow-hidden rounded-lg border border-border">
+                        <div className="relative aspect-square w-[20rem] overflow-hidden rounded-lg border border-border">
                           {member.image ? (
-                            <img
-                              src={member.image || "/placeholder.svg"}
-                              alt={member.name}
+                            <Image
+                              width={320}
+                              height={320}
+                              src={member.image}
+                              alt={member.name || 'Team member'}
                               className="h-full w-full object-cover"
                             />
                           ) : (
@@ -216,30 +256,32 @@ export function OurTeamCard({ clientId, subTitle = "", teamMembers = [], onSave 
               <div className="space-y-6">
                 <div className="group rounded-lg bg-muted/30 p-3 transition-all hover:bg-muted/50">
                   <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Subtitle</div>
-                  <div className="mt-1 text-lg font-medium">{subTitle || "-"}</div>
+                  <div className="mt-1 text-lg font-medium">{subTitle || "No subtitle added"}</div>
                 </div>
 
                 <div className="space-y-3">
-                  <div className="text-sm font-medium">Team Members</div>
+                  <div className="text-sm font-medium">Team Members ({teamMembers.length})</div>
                   {teamMembers.length > 0 ? (
                     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                       {teamMembers.map((member, index) => (
                         <div key={index} className="flex flex-col items-center text-center">
-                          <div className="mb-3 aspect-square w-full overflow-hidden rounded-full">
+                          <div className="mb-3 aspect-square w-32 overflow-hidden rounded-lg">
                             {member.image ? (
-                              <img
-                                src={member.image || "/placeholder.svg"}
-                                alt={member.name}
+                              <Image
+                                width={128}
+                                height={128}
+                                src={member.image}
+                                alt={member.name || 'Team member'}
                                 className="h-full w-full object-cover"
                               />
                             ) : (
                               <div className="flex h-full w-full items-center justify-center bg-muted/30">
-                                <Users className="h-12 w-12 text-muted-foreground" />
+                                <Users className="h-8 w-8 text-muted-foreground" />
                               </div>
                             )}
                           </div>
-                          <h3 className="text-lg font-medium">{member.name}</h3>
-                          <p className="text-sm text-muted-foreground">{member.position}</p>
+                          <h3 className="text-lg font-medium">{member.name || 'Unnamed'}</h3>
+                          <p className="text-sm text-muted-foreground">{member.position || 'No position'}</p>
                         </div>
                       ))}
                     </div>

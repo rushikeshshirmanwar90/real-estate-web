@@ -14,7 +14,7 @@ type ContactUsProps = {
   phone2?: string
   email1: string
   email2?: string
-  mapLink: string
+  mapLink: string,
   onSave: (data: {
     subTitle: string
     address: string

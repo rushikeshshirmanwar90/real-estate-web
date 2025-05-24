@@ -40,10 +40,9 @@ export const GET = async (req: NextRequest) => {
       "Error fetching hero section:",
       error instanceof Error ? error.message : "Unknown error"
     );
-    return NextResponse.json(
-      { message: "Internal Server Error" },
-      { status: 500 }
-    );
+    if (error instanceof Error) {
+      return NextResponse.json({ message: error.message }, { status: 500 });
+    }
   }
 };
 

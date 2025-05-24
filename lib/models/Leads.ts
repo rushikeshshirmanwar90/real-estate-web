@@ -1,12 +1,12 @@
 import { model, models, Schema } from "mongoose";
 
-const propertyDetailsSchema = new Schema(
+const projectDetailsSchema = new Schema(
   {
-    propertyName: {
+    projectName: {
       type: String,
       required: true,
     },
-    propertyId: {
+    projectId: {
       type: String,
       required: true,
     },
@@ -14,18 +14,43 @@ const propertyDetailsSchema = new Schema(
   { _id: false }
 );
 
+const buildingDetailsSchema = new Schema({
+  buildingName: {
+    type: String,
+    required: true,
+  },
+  buildingId: {
+    type: String,
+    required: true,
+  },
+  flatName: {
+    type: String,
+    required: true,
+  },
+  flatId: {
+    type: String,
+    required: true,
+  },
+});
+
+const rowHouseDetailsSchema = new Schema({
+  rowHouseName: {
+    type: String,
+    required: true,
+  },
+  rowHouseId: {
+    type: String,
+    required: true,
+  },
+});
+
 const leadSchema = new Schema(
   {
-    clientId: {
-      type: String,
-      required: true,
-    },
-
     name: { type: String, required: true },
     phone: { type: String, required: true },
 
-    projectName: {
-      type: String,
+    projectDetails: {
+      type: projectDetailsSchema,
       required: true,
     },
 
@@ -35,9 +60,14 @@ const leadSchema = new Schema(
       required: true,
     },
 
-    propertyDetails: {
-      type: propertyDetailsSchema,
-      required: true,
+    buildingDetails: {
+      type: buildingDetailsSchema,
+      required: false,
+    },
+
+    rowHouseDetails: {
+      type: rowHouseDetailsSchema,
+      required: false,
     },
   },
   { timestamps: true }

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { ImagePlus, Pencil, X, Check, Loader2, ImageIcon } from "lucide-react"
 import { handleImageUpload } from "@/components/functions/image-handling"
+import Image from "next/image"
 
 type HeroSectionDetail = {
   title: string
@@ -21,10 +22,11 @@ type HeroSectionDetail = {
 type HeroSectionProps = {
   clientId: string
   details: HeroSectionDetail[]
-  onSave: (data: { clientId: string; details: HeroSectionDetail[] }) => void
+  onSave: (data: { clientId: string; details: HeroSectionDetail[] }) => void;
+  loading?: boolean;
 }
 
-export function HeroSectionCard({ clientId, details = [], onSave }: HeroSectionProps) {
+export function HeroSectionCard({ clientId, details = [], onSave, loading }: HeroSectionProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [tempDetails, setTempDetails] = useState<HeroSectionDetail[]>(details)
@@ -163,8 +165,8 @@ export function HeroSectionCard({ clientId, details = [], onSave }: HeroSectionP
     return (
       <div className="space-y-4">
         <div className="aspect-video w-full overflow-hidden rounded-lg">
-          {slide.image ? (
-            <img src={slide.image || "/placeholder.svg"} alt={slide.title} className="h-full w-full object-cover" />
+          {slide?.image ? (
+            <Image width={250} height={250} src={slide.image || "/placeholder.svg"} alt={slide.title} className="h-full w-full object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-muted/30">
               <ImageIcon className="h-12 w-12 text-muted-foreground" />
@@ -189,6 +191,30 @@ export function HeroSectionCard({ clientId, details = [], onSave }: HeroSectionP
           <div className="mt-1 text-lg font-medium">{slide.description || "-"}</div>
         </div>
       </div>
+    )
+  }
+
+  // Show loading state
+  if (loading) {
+    return (
+      <Card className="w-full overflow-hidden bg-card shadow-xl">
+        <CardHeader className="border-b border-border bg-muted/30">
+          <div className="flex items-center justify-between">
+            <h2 className="flex items-center gap-3 text-2xl font-semibold tracking-tight">
+              <div className="rounded-full border border-border bg-primary/10 p-2">
+                <ImageIcon className="h-5 w-5" />
+              </div>
+              Hero Section
+            </h2>
+          </div>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span>Loading Hero Section Data...</span>
+          </div>
+        </CardContent>
+      </Card>
     )
   }
 
