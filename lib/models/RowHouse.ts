@@ -1,4 +1,5 @@
 import { model, models, Schema } from "mongoose";
+import { AmenitiesSchema } from "./utils/Amenities";
 
 const RowHouseSchema = new Schema(
   {
@@ -38,18 +39,10 @@ const RowHouseSchema = new Schema(
       require: true,
     },
 
-    amenities: [
-      {
-        icon: {
-          type: String,
-          required: true,
-        },
-        name: {
-          type: String,
-          required: true,
-        },
-      },
-    ],
+    amenities: {
+      type: [AmenitiesSchema],
+      required: false,
+    },
   },
   {
     timestamps: true,

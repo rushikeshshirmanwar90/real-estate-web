@@ -1,4 +1,23 @@
 import { model, models, Schema } from "mongoose";
+import { AmenitiesSchema } from "./utils/Amenities";
+
+const SectionSchema = new Schema(
+  {
+    sectionId: {
+      type: String,
+    },
+    name: {
+      type: String,
+      required: true,
+    },
+    type: {
+      type: String,
+      required: true,
+      enum: ["row house", "building", "other"],
+    },
+  },
+  { _id: true }
+);
 
 const projectSchema = new Schema(
   {
@@ -51,43 +70,23 @@ const projectSchema = new Schema(
 
     longitude: {
       type: Number,
-      required: true,
+      required: false,
     },
 
     latitude: {
       type: Number,
+      required: false,
+    },
+
+    section: {
+      type: [SectionSchema],
       required: true,
     },
 
-    section: [
-      {
-        sectionId: {
-          type: String,
-        },
-        name: {
-          type: String,
-          required: true,
-        },
-        type: {
-          type: String,
-          required: true,
-          enum: ["row house", "building", "other"],
-        },
-      },
-    ],
-
-    amenities: [
-      {
-        icon: {
-          type: String,
-          required: true,
-        },
-        name: {
-          type: String,
-          required: true,
-        },
-      },
-    ],
+    amenities: {
+      type: [AmenitiesSchema],
+      required: false,
+    },
   },
   {
     timestamps: true,

@@ -1,4 +1,59 @@
 import { models, model, Schema } from "mongoose";
+import { AmenitiesSchema } from "./utils/Amenities";
+
+const SectionSchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+    },
+    description: {
+      type: String,
+    },
+    images: [String],
+  },
+  { _id: true }
+);
+
+const FlatInfoSchema = new Schema({
+  title: {
+    type: String,
+    required: true,
+  },
+
+  description: {
+    type: String,
+  },
+
+  images: {
+    type: [String],
+    required: true,
+  },
+
+  totalFlats: {
+    type: Number,
+    required: true,
+  },
+
+  totalBookedFlats: {
+    type: Number,
+    required: true,
+  },
+
+  bhk: {
+    type: Number,
+    required: true,
+  },
+
+  totalArea: {
+    type: Number,
+    required: true,
+  },
+
+  video: {
+    type: String,
+  },
+});
 
 const buildingSchema = new Schema(
   {
@@ -32,73 +87,20 @@ const buildingSchema = new Schema(
       required: true,
     },
 
-    section: [
-      {
-        name: {
-          type: String,
-          required: true,
-        },
-        description: {
-          type: String,
-        },
-        images: [String],
-      },
-    ],
+    section: {
+      type: [SectionSchema],
+      required: false,
+    },
 
-    flatInfo: [
-      {
-        title: {
-          type: String,
-          required: true,
-        },
+    flatInfo: {
+      type: [FlatInfoSchema],
+      required: false,
+    },
 
-        description: {
-          type: String,
-        },
-
-        images: {
-          type: [String],
-          required: true,
-        },
-
-        totalFlats: {
-          type: Number,
-          required: true,
-        },
-
-        totalBookedFlats: {
-          type: Number,
-          required: true,
-        },
-
-        bhk: {
-          type: Number,
-          required: true,
-        },
-
-        totalArea: {
-          type: Number,
-          required: true,
-        },
-
-        video: {
-          type: String,
-        },
-      },
-    ],
-
-    amenities: [
-      {
-        icon: {
-          type: String,
-          required: true,
-        },
-        name: {
-          type: String,
-          required: true,
-        },
-      },
-    ],
+    amenities: {
+      type: [AmenitiesSchema],
+      required: false,
+    },
   },
   {
     timestamps: true,

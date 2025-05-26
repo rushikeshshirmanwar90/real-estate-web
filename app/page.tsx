@@ -277,7 +277,7 @@ export default function Home() {
 
     updateLoadingState('faq', true)
     try {
-      const response = await api.get(`/api/faq?clientId=${clientId}`)
+      const response = await api.get(`/api/FAQs?clientId=${clientId}`)
       if (response.data?.data) {
         setFAQ(response.data.data)
       }
@@ -479,14 +479,14 @@ export default function Home() {
 
     try {
       updateLoadingState('faq', true)
-      const checkResponse = await axios.get(`${domain}/api/faq?clientId=${data.clientId}`)
+      const checkResponse = await axios.get(`${domain}/api/FAQs?clientId=${data.clientId}`)
       const checkResult = await checkResponse.data
 
       let response
       if (checkResult && checkResult.success && checkResult.data) {
         const id = checkResult.data._id
         response = await axios.put(
-          `${domain}/api/faq?id=${id}`,
+          `${domain}/api/FAQs?id=${id}`,
           data,
           { headers: { "Content-Type": "application/json" } }
         )
