@@ -36,14 +36,14 @@ export function ReferenceLeadsTable({ data }: ReferenceLeadsTableProps) {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {data.length === 0 ? (
+                            {data?.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                                         No reference leads found
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                data.map((item) => (
+                                data?.map((item) => (
                                     <>
                                         <TableRow
                                             key={item._id}

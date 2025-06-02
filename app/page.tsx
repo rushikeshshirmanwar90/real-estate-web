@@ -42,9 +42,9 @@ interface ContactUsData {
   subTitle: string;
   address: string;
   phone1: string;
-  phone2: string;
+  phone2?: string;
   email1: string;
-  email2: string;
+  email2?: string;
   mapLink: string;
 }
 
@@ -162,7 +162,7 @@ export default function Home() {
   // * Memoized axios instance
   const api = useMemo(() => axios.create({
     baseURL: domain,
-    timeout: 10000,
+    timeout: 15000,
   }), [])
 
   // !! Generic error handler

@@ -1,6 +1,7 @@
 import { AboutUs } from "@/lib/models/homepage/AboutUs";
 import { NextRequest, NextResponse } from "next/server";
-import connectToDatabase from "@/lib/db"; // Assuming you have a database connection utility
+import connectToDatabase from "@/lib/db";
+import { checkValidClient } from "@/lib/auth";
 
 /**
  * GET request handler to fetch about us section by clientId
@@ -54,6 +55,8 @@ export const GET = async (req: NextRequest) => {
  * POST request handler to create a new about us section
  */
 export const POST = async (req: NextRequest) => {
+  await checkValidClient(req);
+
   try {
     // Connect to database
     await connectToDatabase();
@@ -132,6 +135,7 @@ export const POST = async (req: NextRequest) => {
  * PUT request handler to update an existing about us section
  */
 export const PUT = async (req: NextRequest) => {
+  await checkValidClient(req);
   try {
     // Connect to database
     await connectToDatabase();
@@ -217,6 +221,7 @@ export const PUT = async (req: NextRequest) => {
  * DELETE request handler to delete an about us section
  */
 export const DELETE = async (req: NextRequest) => {
+  await checkValidClient(req);
   try {
     // Connect to database
     await connectToDatabase();

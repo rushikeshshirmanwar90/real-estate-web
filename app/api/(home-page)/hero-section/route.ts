@@ -1,6 +1,7 @@
 import { HeroSection } from "@/lib/models/homepage/HeroSection";
 import { NextRequest, NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db"; // Assuming you have a database connection utility
+import { checkValidClient } from "@/lib/auth";
 
 /**
  * GET request handler to fetch hero section by clientId
@@ -50,6 +51,8 @@ export const GET = async (req: NextRequest) => {
  * POST request handler to create a new hero section
  */
 export const POST = async (req: NextRequest) => {
+  await checkValidClient(req);
+
   try {
     // Connect to database
     await connectToDatabase();
@@ -115,6 +118,7 @@ export const POST = async (req: NextRequest) => {
  * PUT request handler to update an existing hero section
  */
 export const PUT = async (req: NextRequest) => {
+  await checkValidClient(req);
   try {
     // Connect to database
     await connectToDatabase();
@@ -179,6 +183,8 @@ export const PUT = async (req: NextRequest) => {
  * PATCH request handler to update specific details in a hero section
  */
 export const PATCH = async (req: NextRequest) => {
+  await checkValidClient(req);
+
   try {
     // Connect to database
     await connectToDatabase();
@@ -259,6 +265,8 @@ export const PATCH = async (req: NextRequest) => {
  * DELETE request handler to delete a hero section
  */
 export const DELETE = async (req: NextRequest) => {
+  await checkValidClient(req);
+
   try {
     // Connect to database
     await connectToDatabase();

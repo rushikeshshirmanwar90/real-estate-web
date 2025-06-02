@@ -1,3 +1,4 @@
+import { checkValidClient } from "@/lib/auth";
 import connect from "@/lib/db";
 import { OurTeam } from "@/lib/models/homepage/OurTeam";
 import { NextRequest, NextResponse } from "next/server";
@@ -49,6 +50,8 @@ export const GET = async (req: NextRequest) => {
 };
 
 export const POST = async (req: NextRequest) => {
+  await checkValidClient(req);
+
   try {
     await connect();
     const body = await req.json();
@@ -111,6 +114,8 @@ export const POST = async (req: NextRequest) => {
 };
 
 export const DELETE = async (req: NextRequest) => {
+  await checkValidClient(req);
+
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
 
@@ -163,6 +168,8 @@ export const DELETE = async (req: NextRequest) => {
 };
 
 export const PUT = async (req: NextRequest) => {
+  await checkValidClient(req);
+
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
 

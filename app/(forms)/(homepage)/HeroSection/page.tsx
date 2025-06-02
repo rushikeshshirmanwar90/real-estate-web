@@ -7,13 +7,14 @@ import { PlusCircle, Trash2, ImagePlus, X, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import Image from 'next/image';
 
 interface HeroSectionEditableCardProps {
     slides: HeroSectionDetails[];
     onSlidesChange: (slides: HeroSectionDetails[]) => void;
 }
 
-export const HeroSectionEditableCard: React.FC<HeroSectionEditableCardProps> = ({
+const HeroSectionEditableCard: React.FC<HeroSectionEditableCardProps> = ({
     slides = [],
     onSlidesChange
 }) => {
@@ -148,13 +149,15 @@ export const HeroSectionEditableCard: React.FC<HeroSectionEditableCardProps> = (
                                         <Label>Image</Label>
                                         {slide.image ? (
                                             <div className="relative aspect-video rounded-lg overflow-hidden border">
-                                                <img
+                                                <Image
                                                     src={slide.image}
                                                     alt={slide.title || `Hero Slide ${index + 1}`}
                                                     className="w-full h-full object-cover"
                                                     onError={(e) => {
                                                         (e.target as HTMLImageElement).src = "/placeholder-image.jpg";
                                                     }}
+                                                    width={500}
+                                                    height={500}
                                                 />
                                                 <Button
                                                     variant="destructive"
@@ -231,7 +234,9 @@ export const HeroSectionEditableCard: React.FC<HeroSectionEditableCardProps> = (
                                         <h4 className="text-sm font-medium mb-2">Preview</h4>
                                         <div className="flex items-center gap-4">
                                             <div className="w-24 h-16 bg-gray-200 rounded overflow-hidden">
-                                                <img
+                                                <Image
+                                                    width={500}
+                                                    height={500}
                                                     src={slide.image}
                                                     alt={slide.title}
                                                     className="w-full h-full object-cover"
@@ -255,3 +260,16 @@ export const HeroSectionEditableCard: React.FC<HeroSectionEditableCardProps> = (
         </div>
     );
 };
+
+// Only export the page component as default
+export default function HeroSectionPage() {
+    // You can fetch slides from props, context, or leave empty for now
+    const [slides, setSlides] = React.useState<HeroSectionDetails[]>([]);
+
+    return (
+        <HeroSectionEditableCard
+            slides={slides}
+            onSlidesChange={setSlides}
+        />
+    );
+}

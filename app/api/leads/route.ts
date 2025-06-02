@@ -1,183 +1,122 @@
 import { Lead } from "@/lib/models/Leads";
 import { NextRequest, NextResponse } from "next/server";
+import connect from "@/lib/db";
 
+// GET all Leads records or a specific one by ID
 export const GET = async (req: NextRequest | Request) => {
-  const { searchParams } = new URL(req.url);
-  const clientId = searchParams.get("clientId");
-
-  if (!clientId) {
-    return NextResponse.json(
-      { message: "clientId and interestedType are required" },
-      {
-        status: 400,
-      }
-    );
-  }
-
   try {
-    const leads = await Lead.find({
-      clientId,
-    });
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    const clientId = searchParams.get("clientId");
 
-    if (leads.length === 0) {
+    if (!clientId) {
       return NextResponse.json(
         {
-          message: "No Lead Found",
+          message: "Client ID is required",
+        },
+        { status: 400 }
+      );
+    }
+
+    await connect();
+
+    if (id) {
+      const leads = await Lead.findById(id);
+      if (!leads) {
+        return NextResponse.json(
+          {
+            message: "no leads are found with this ID",
+          },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json(leads);
+    }
+
+    const allLeads = await Lead.find({ clientId });
+    if (!allLeads || allLeads.length === 0) {
+      return NextResponse.json(
+        {
+          message: "no Leads records found",
         },
         { status: 404 }
       );
     }
-
+    return NextResponse.json(allLeads);
+  } catch (error: unknown) {
+    console.error(error);
     return NextResponse.json(
       {
-        leads,
+        message: "error fetching Leads records",
+        error: error,
       },
-      { status: 200 }
+      { status: 500 }
     );
-  } catch (error) {
-    if (error instanceof Error) {
-      return NextResponse.json(
-        {
-          message: "can't fetch leads",
-          error: error.message,
-        },
-        { status: 500 }
-      );
-    }
   }
 };
 
+// POST a new Lead record
 export const POST = async (req: NextRequest | Request) => {
-  const body = await req.json();
-
-  const {
-    clientId,
-    name,
-    phone,
-    projectDetails,
-    interestedType,
-    propertyDetails,
-  } = body;
-
-  if (!clientId || !name || !phone || !projectDetails || !interestedType) {
-    return NextResponse.json(
-      { message: "All fields are required" },
-      {
-        status: 400,
-      }
-    );
-  }
-
   try {
-    const lead = await Lead.create({
-      clientId,
-      name,
-      phone,
-      projectDetails,
-      interestedType,
-      propertyDetails,
-    });
+    const body = await req.json();
+    await connect();
+
+    const newLead = new Lead(body);
+    await newLead.save();
+
+    if (!newLead) {
+      return NextResponse.json(
+        {
+          message: "new Lead record not created",
+        },
+        { status: 400 }
+      );
+    }
 
     return NextResponse.json(
-      {
-        message: "Lead created successfully",
-        data: lead,
-      },
+      { message: "Lead record created successfully", newLead },
       { status: 201 }
     );
-  } catch (error) {
-    if (error instanceof Error) {
-      return NextResponse.json(
-        {
-          message: "can't able to add lead",
-          error: error.message,
-        },
-        { status: 500 }
-      );
-    }
-  }
-};
-
-export const DELETE = async (req: NextRequest | Request) => {
-  const { searchParams } = new URL(req.url);
-  const leadId = searchParams.get("leadId");
-
-  if (!leadId) {
-    return NextResponse.json(
-      { message: "leadId is required" },
-      {
-        status: 400,
-      }
-    );
-  }
-
-  try {
-    const lead = await Lead.findByIdAndDelete(leadId);
-
-    if (!lead) {
-      return NextResponse.json(
-        {
-          message: "Lead not found",
-        },
-        { status: 404 }
-      );
-    }
-
+  } catch (error: unknown) {
+    console.error(error);
     return NextResponse.json(
       {
-        message: "Lead deleted successfully",
-        lead,
+        message: "can't add the Lead record",
+        error: error,
       },
-      { status: 200 }
+      { status: 500 }
     );
-  } catch (error) {
-    if (error instanceof Error) {
-      return NextResponse.json(
-        {
-          message: "can't able to delete lead",
-          error: error.message,
-        },
-        { status: 500 }
-      );
-    }
   }
 };
 
+// PUT/UPDATE an Lead record
 export const PUT = async (req: NextRequest | Request) => {
-  const { searchParams } = new URL(req.url);
-  const leadIdParams = searchParams.get("leadId");
-  const body = await req.json();
-  const { leadId, ...restData } = body;
-
-  console.log(leadId);
-
-  if (!leadIdParams) {
-    return NextResponse.json(
-      { message: "leadId is required" },
-      {
-        status: 400,
-      }
-    );
-  }
-
-  if (!restData) {
-    return NextResponse.json(
-      { message: "body is required" },
-      {
-        status: 400,
-      }
-    );
-  }
-
   try {
-    const lead = await Lead.findByIdAndUpdate(leadIdParams, restData, {
-      new: true,
-    });
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    const body = await req.json();
 
-    if (!lead) {
+    await connect();
+
+    if (!id) {
       return NextResponse.json(
         {
-          message: "Lead not found",
+          message: "ID is required for updating an Lead record",
+        },
+        { status: 400 }
+      );
+    }
+
+    const updatedLead = await Lead.findByIdAndUpdate(
+      id,
+      { $set: body },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedLead) {
+      return NextResponse.json(
+        {
+          message: "Lead record not found or not updated",
         },
         { status: 404 }
       );
@@ -185,20 +124,63 @@ export const PUT = async (req: NextRequest | Request) => {
 
     return NextResponse.json(
       {
-        message: "Lead updated successfully",
-        data: lead,
+        message: "Lead record updated successfully",
+        interested: updatedLead,
       },
       { status: 200 }
     );
-  } catch (error) {
-    if (error instanceof Error) {
+  } catch (error: unknown) {
+    console.error(error);
+    return NextResponse.json(
+      {
+        message: "error updating interested record",
+        error: error,
+      },
+      { status: 500 }
+    );
+  }
+};
+
+// DELETE an Lead record
+export const DELETE = async (req: NextRequest | Request) => {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    await connect();
+
+    if (!id) {
       return NextResponse.json(
         {
-          message: "can't able to update lead",
-          error: error.message,
+          message: "ID is required for deleting an Lead record",
         },
-        { status: 500 }
+        { status: 400 }
       );
     }
+
+    const deletedLead = await Lead.findByIdAndDelete(id);
+
+    if (!deletedLead) {
+      return NextResponse.json(
+        {
+          message: "Lead record not found or not deleted",
+        },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      { message: "Lead record deleted successfully" },
+      { status: 200 }
+    );
+  } catch (error: unknown) {
+    console.error(error);
+    return NextResponse.json(
+      {
+        message: "error deleting Lead record",
+        error: error,
+      },
+      { status: 500 }
+    );
   }
 };

@@ -1,24 +1,40 @@
 import { Projects } from "@/lib/models/Project";
 import connect from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-import { validateClient } from "@/components/functions/validateClient";
 import { ObjectId } from "mongodb";
+import { checkValidClient } from "@/lib/auth";
 
 export const GET = async (req: NextRequest | Request) => {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
+    const clientId = searchParams.get("clientId");
+
+    if (!clientId) {
+      return NextResponse.json(
+        {
+          message: "Client ID is required",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
 
     await connect();
     if (id) {
-      const project = await Projects.findById(id);
+      // Find project by both _id and clientId
+      const project = await Projects.findOne({
+        _id: new ObjectId(id),
+        clientId: new ObjectId(clientId),
+      });
       if (!project) {
         return new Response("Project not found", { status: 404 });
       }
       return NextResponse.json(project);
     }
 
-    const projects = await Projects.find();
+    const projects = await Projects.find({ clientId });
 
     if (!projects) {
       return NextResponse.json(
@@ -50,44 +66,35 @@ export const GET = async (req: NextRequest | Request) => {
 };
 
 export const POST = async (req: NextRequest | Request) => {
+  await checkValidClient(req);
+
   try {
     await connect();
-    const isValidClient = await validateClient();
 
-    if (isValidClient) {
-      const body = await req.json();
+    const body = await req.json();
 
-      // Ensure clientId is converted to ObjectId before saving
-      const formattedBody = {
-        ...body,
-        clientId: new ObjectId(body.clientId),
-      };
+    const formattedBody = {
+      ...body,
+      clientId: new ObjectId(body.clientId),
+    };
 
-      const newProject = await new Projects(formattedBody);
-      await newProject.save();
+    const newProject = await new Projects(formattedBody);
+    await newProject.save();
 
-      if (!newProject) {
-        return NextResponse.json(
-          {
-            message: "Unable to add the project",
-          },
-          { status: 400 }
-        );
-      }
+    if (!newProject) {
       return NextResponse.json(
         {
-          message: "Project created successfully",
-          project: newProject,
+          message: "Unable to add the project",
         },
-        { status: 201 }
+        { status: 400 }
       );
     }
-
     return NextResponse.json(
       {
-        message: "Client not found",
+        message: "Project created successfully",
+        project: newProject,
       },
-      { status: 400 }
+      { status: 201 }
     );
   } catch (error: unknown) {
     console.log(error);
@@ -102,6 +109,8 @@ export const POST = async (req: NextRequest | Request) => {
 };
 
 export const DELETE = async (req: NextRequest | Request) => {
+  await checkValidClient(req);
+
   try {
     await connect();
 
@@ -143,6 +152,8 @@ export const DELETE = async (req: NextRequest | Request) => {
 };
 
 export const PUT = async (req: NextRequest | Request) => {
+  await checkValidClient(req);
+
   try {
     await connect();
 

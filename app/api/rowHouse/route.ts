@@ -1,3 +1,4 @@
+import { checkValidClient } from "@/lib/auth";
 import connect from "@/lib/db";
 import { Projects } from "@/lib/models/Project";
 import { RowHouse } from "@/lib/models/RowHouse";
@@ -46,6 +47,7 @@ export const GET = async (req: NextRequest | Request) => {
 };
 
 export const POST = async (req: NextRequest | Request) => {
+  await checkValidClient(req);
   try {
     await connect();
     const data = await req.json();
@@ -99,6 +101,8 @@ export const POST = async (req: NextRequest | Request) => {
 };
 
 export const DELETE = async (req: NextRequest | Request) => {
+  await checkValidClient(req);
+
   const { searchParams } = new URL(req.url);
   const projectId = searchParams.get("projectId");
   const sectionId = searchParams.get("sectionId");
@@ -154,6 +158,8 @@ export const DELETE = async (req: NextRequest | Request) => {
 };
 
 export const PUT = async (req: NextRequest | Request) => {
+  await checkValidClient(req);
+
   const { searchParams } = new URL(req.url);
   const rowHouseId = searchParams.get("rh");
   const newData = await req.json();

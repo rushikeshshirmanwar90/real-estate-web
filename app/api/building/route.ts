@@ -2,6 +2,7 @@ import { Building } from "@/lib/models/Building";
 import { Projects } from "@/lib/models/Project";
 import connect from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { checkValidClient } from "@/lib/auth";
 
 export const GET = async (req: NextRequest | Request) => {
   try {
@@ -48,6 +49,7 @@ export const GET = async (req: NextRequest | Request) => {
 };
 
 export const POST = async (req: NextRequest | Request) => {
+  await checkValidClient(req);
   try {
     await connect();
 
@@ -104,6 +106,7 @@ export const POST = async (req: NextRequest | Request) => {
 };
 
 export const DELETE = async (req: NextRequest | Request) => {
+  await checkValidClient(req);
   try {
     await connect();
 
@@ -152,6 +155,7 @@ export const DELETE = async (req: NextRequest | Request) => {
 };
 
 export const PUT = async (req: NextRequest | Request) => {
+  await checkValidClient(req);
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
@@ -196,6 +200,7 @@ export const PUT = async (req: NextRequest | Request) => {
 };
 
 export const PATCH = async (req: NextRequest | Request) => {
+  await checkValidClient(req);
   try {
     await connect();
 

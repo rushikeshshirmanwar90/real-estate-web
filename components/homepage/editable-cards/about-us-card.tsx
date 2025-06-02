@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { ImagePlus, Pencil, X, Check, Loader2, Info, Plus, Trash2 } from "lucide-react"
 import { handleImageUpload } from "@/components/functions/image-handling"
+import Image from "next/image"
 
 type Point = {
   title: string
@@ -182,7 +183,7 @@ export function AboutUsCard({
                     <label className="text-sm font-medium">Image</label>
                     <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border">
                       {tempImage ? (
-                        <img
+                        <Image
                           src={tempImage || "/placeholder.svg"}
                           alt="About Us"
                           className="h-full w-full object-cover"
