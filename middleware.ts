@@ -11,6 +11,7 @@ function applyCorsHeaders(response: NextResponse, request: NextRequest) {
     "http://localhost:8080",
     "http://localhost:3000",
     "https://real-estate-frontend-smoky.vercel.app",
+    "https://manthan-infracare-website.vercel.app",
   ];
 
   // Check if the request origin is in our allowed list
