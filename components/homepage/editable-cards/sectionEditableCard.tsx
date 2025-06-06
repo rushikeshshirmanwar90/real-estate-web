@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { ImagePlus, Pencil, X, Check, Loader2, LayoutGrid } from "lucide-react"
 import { handleImageUpload } from "../../functions/image-handling"
+import Image from "next/image"
 
 interface Section {
     name: string
@@ -149,10 +150,12 @@ export function SectionEditableCard({ sections = [], onSectionsChange }: Section
                                     <div className="mt-4 grid grid-cols-2 gap-4">
                                         {(section.images || []).map((image, imageIndex) => (
                                             <div key={imageIndex} className="relative aspect-square">
-                                                <img
+                                                <Image
                                                     src={image || "/placeholder.svg"}
                                                     alt={`Section ${index + 1} image ${imageIndex + 1}`}
                                                     className="h-full w-full rounded-lg object-cover"
+                                                    width={500}
+                                                    height={500}
                                                 />
                                                 {isEditing && (
                                                     <Button

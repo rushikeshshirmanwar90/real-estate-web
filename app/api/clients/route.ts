@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import connect from "@/lib/db";
-import { Client } from "@/lib/models/Client";
+import { Client } from "@/lib/models/super-admin/Client";
 import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (req: NextRequest | Request) => {

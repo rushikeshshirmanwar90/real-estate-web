@@ -7,30 +7,21 @@ const clientSchema = new Schema(
       required: true,
     },
 
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-
     phoneNumber: {
       type: Number,
       require: true,
       unique: true,
     },
 
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+
     password: {
       type: String,
-      required: true,
-    },
-
-    logo: {
-      type: String,
-    },
-
-    state: {
-      type: String,
-      required: true,
+      required: false,
     },
 
     city: {
@@ -38,13 +29,24 @@ const clientSchema = new Schema(
       required: true,
     },
 
-    area: {
+    state: {
       type: String,
+      required: true,
     },
 
     address: {
       type: String,
       required: true,
+    },
+
+    logo: {
+      type: String,
+      required: true,
+    },
+    agency: {
+      type: Schema.Types.ObjectId,
+      ref: "Agency",
+      required: false,
     },
   },
   {

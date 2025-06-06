@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { Client } from "@/lib/models/Client";
+import { Client } from "@/lib/models/super-admin/Client";
 import jwt from "jsonwebtoken"
 
 interface cookieDataProps {

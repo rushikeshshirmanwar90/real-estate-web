@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { cookies } from "next/headers";
 
-import { Client } from "@/lib/models/Client";
+import { Client } from "@/lib/models/super-admin/Client";
 import connect from "@/lib/db";
 
 export const POST = async (req: NextRequest | Request) => {
