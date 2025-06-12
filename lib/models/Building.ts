@@ -101,6 +101,7 @@ const buildingSchema = new Schema(
       type: [AmenitiesSchema],
       required: false,
     },
+
   },
   {
     timestamps: true,

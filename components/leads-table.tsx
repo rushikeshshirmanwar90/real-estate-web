@@ -7,34 +7,30 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ChevronDown, ChevronRight, Building, Home, Phone, Briefcase } from "lucide-react"
 
-interface ProjectDetails {
-    projectName: string
-    projectId: string
+
+interface LeadProps {
+    name: string;
+    phone: string;
+    projectDetails: {
+        projectName: string;
+        projectId: string;
+    };
+    interestedType: string;
+    buildingDetails?: {
+        buildingName: string;
+        buildingId: string;
+        flatName: string;
+        flatId: string;
+    };
+    rowHouseDetails?: {
+        rowHouseName: string;
+        rowHouseId: string;
+    };
 }
 
-interface BuildingDetails {
-    buildingName: string
-    buildingId: string
-    flatName: string
-    flatId: string
-}
-
-interface RowHouseDetails {
-    rowHouseName: string
-    rowHouseId: string
-}
-
-interface Lead {
-    name: string
-    phone: string
-    projectDetails: ProjectDetails
-    interestedType: "building" | "rowhouse"
-    buildingDetails?: BuildingDetails
-    rowHouseDetails?: RowHouseDetails
-}
 
 interface LeadsTableProps {
-    data: Lead[]
+    data: LeadProps[]
 }
 
 export function LeadsTable({ data }: LeadsTableProps) {

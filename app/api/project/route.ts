@@ -4,37 +4,37 @@ import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { checkValidClient } from "@/lib/auth";
 
-export const GET = async (req: NextRequest | Request) => {
+export const GET = async () => {
   try {
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
-    const clientId = searchParams.get("clientId");
+    // const { searchParams } = new URL(req.url);
+    // const id = searchParams.get("id");
+    // const clientId = searchParams.get("clientId");
 
-    if (!clientId) {
-      return NextResponse.json(
-        {
-          message: "Client ID is required",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
+    // if (!clientId) {
+    //   return NextResponse.json(
+    //     {
+    //       message: "Client ID is required",
+    //     },
+    //     {
+    //       status: 400,
+    //     }
+    //   );
+    // }
 
     await connect();
-    if (id) {
-      // Find project by both _id and clientId
-      const project = await Projects.findOne({
-        _id: new ObjectId(id),
-        clientId: new ObjectId(clientId),
-      });
-      if (!project) {
-        return new Response("Project not found", { status: 404 });
-      }
-      return NextResponse.json(project);
-    }
+    // if (id) {
+    //   // Find project by both _id and clientId
+    //   const project = await Projects.findOne({
+    //     _id: new ObjectId(id),
+    //     clientId: new ObjectId(clientId),
+    //   });
+    //   if (!project) {
+    //     return new Response("Project not found", { status: 404 });
+    //   }
+    //   return NextResponse.json(project);
+    // }
 
-    const projects = await Projects.find({ clientId });
+    const projects = await Projects.find();
 
     if (!projects) {
       return NextResponse.json(

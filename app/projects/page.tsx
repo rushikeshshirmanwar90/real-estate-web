@@ -18,7 +18,7 @@ export default function Page() {
         setIsProjectLoading(true);
         setError(null);
         try {
-            const res = await axios.get(`${domain}/api/project?clientId=${process.env.NEXT_PUBLIC_CLIENT_ID}`);
+            const res = await axios.get(`${domain}/api/project/client?clientId=${process.env.NEXT_PUBLIC_CLIENT_ID}`);
             const data = res.data;
             setProjectData(data);
         } catch (error) {

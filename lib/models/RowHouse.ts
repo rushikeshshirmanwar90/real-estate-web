@@ -43,6 +43,7 @@ const RowHouseSchema = new Schema(
       type: [AmenitiesSchema],
       required: false,
     },
+
   },
   {
     timestamps: true,

@@ -29,7 +29,7 @@ export function ReferenceLeadsTable({ data }: ReferenceLeadsTableProps) {
                         <TableHeader>
                             <TableRow className="bg-muted/50">
                                 <TableHead className="w-10"></TableHead>
-                                <TableHead>Client ID</TableHead>
+                                <TableHead>Reference ID</TableHead>
                                 <TableHead>Reference Customer</TableHead>
                                 <TableHead>Contact Number</TableHead>
                                 <TableHead className="text-right">Total Leads</TableHead>
@@ -59,7 +59,7 @@ export function ReferenceLeadsTable({ data }: ReferenceLeadsTableProps) {
                                                     )}
                                                 </Button>
                                             </TableCell>
-                                            <TableCell className="font-medium">{item.clientId}</TableCell>
+                                            <TableCell className="font-medium">{item._id}</TableCell>
                                             <TableCell>
                                                 <div className="flex items-center">
                                                     <User className="mr-2 h-4 w-4 text-muted-foreground" />
@@ -94,26 +94,44 @@ export function ReferenceLeadsTable({ data }: ReferenceLeadsTableProps) {
                                                                         <TableHead>Lead ID</TableHead>
                                                                         <TableHead>Name</TableHead>
                                                                         <TableHead>Contact Number</TableHead>
+                                                                        <TableHead>Copy Link</TableHead>
                                                                     </TableRow>
                                                                 </TableHeader>
                                                                 <TableBody>
-                                                                    {item.leads.map((lead) => (
-                                                                        <TableRow key={lead._id}>
-                                                                            <TableCell className="font-medium">{lead._id}</TableCell>
-                                                                            <TableCell>
-                                                                                <div className="flex items-center">
-                                                                                    <User className="mr-2 h-4 w-4 text-muted-foreground" />
-                                                                                    {lead.name}
-                                                                                </div>
-                                                                            </TableCell>
-                                                                            <TableCell>
-                                                                                <div className="flex items-center">
-                                                                                    <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
-                                                                                    {lead.contactNumber}
-                                                                                </div>
-                                                                            </TableCell>
-                                                                        </TableRow>
-                                                                    ))}
+                                                                    {item.leads.map((lead) => {
+                                                                        const leadData = JSON.stringify({
+                                                                            name: lead.name,
+                                                                            contactNumber: lead.contactNumber
+                                                                        });
+                                                                        const referenceLink = `http://localhost:3000/reference?clientId=${process.env.NEXT_PUBLIC_CLIENT_ID}&&data=${encodeURIComponent(leadData)}`;
+                                                                        
+                                                                        return (
+                                                                            <TableRow key={lead._id}>
+                                                                                <TableCell className="font-medium">{lead._id}</TableCell>
+                                                                                <TableCell>
+                                                                                    <div className="flex items-center">
+                                                                                        <User className="mr-2 h-4 w-4 text-muted-foreground" />
+                                                                                        {lead.name}
+                                                                                    </div>
+                                                                                </TableCell>
+                                                                                <TableCell>
+                                                                                    <div className="flex items-center">
+                                                                                        <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
+                                                                                        {lead.contactNumber}
+                                                                                    </div>
+                                                                                </TableCell>
+                                                                                <TableCell>
+                                                                                    <Button
+                                                                                        variant="ghost"
+                                                                                        size="sm"
+                                                                                        onClick={() => navigator.clipboard.writeText(referenceLink)}
+                                                                                    >
+                                                                                        Copy Link
+                                                                                    </Button>
+                                                                                </TableCell>
+                                                                            </TableRow>
+                                                                        );
+                                                                    })}
                                                                 </TableBody>
                                                             </Table>
                                                         </div>

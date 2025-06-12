@@ -10,7 +10,6 @@ const ReferenceCustomerSchema = new Schema(
     contactNumber: {
       type: String,
       required: true,
-      unique: true,
     },
   },
   { _id: false }
@@ -24,6 +23,7 @@ const LeadSchema = new Schema({
   contactNumber: {
     type: String,
     required: true,
+    unique: true,
   },
 });
 
@@ -35,6 +35,17 @@ const ReferencedLeadsSchema = new Schema({
   referenceCustomer: ReferenceCustomerSchema,
   leads: [LeadSchema],
 });
+
+ReferencedLeadsSchema.index(
+  {
+    clientId: 1,
+    "referenceCustomer.contactNumber": 1,
+  },
+  {
+    unique: true,
+    name: "clientId_referenceCustomer_contactNumber_unique", // Give it a specific name
+  }
+);
 
 export const ReferenceLeads =
   models.ReferencedLeads || model("ReferencedLeads", ReferencedLeadsSchema);
