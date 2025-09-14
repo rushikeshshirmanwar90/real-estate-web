@@ -10,6 +10,17 @@ export const POST = async (req: NextRequest | Request) => {
     const body = await req.json();
     const { email, userType } = body;
 
+    if (!userType) {
+      return NextResponse.json(
+        {
+          message: "userType is required",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
     if (!email) {
       return NextResponse.json(
         {
