@@ -9,6 +9,7 @@ function applyCorsHeaders(response: NextResponse, request: NextRequest) {
   const allowedOrigins = [
     "https://real-estate-web-pied.vercel.app",
     "http://localhost:8080",
+    "http://localhost:8000",
     "http://localhost:3000",
     "https://real-estate-frontend-red.vercel.app",
     "https://manthan-infracare-website.vercel.app",

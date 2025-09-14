@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ImagePlus, Pencil, X, Check, Loader2 } from "lucide-react"
 import { handleImageUpload } from "../../functions/image-handling"
 import type { EditableSectionCardProps, Field } from "../../types/editable-card"
+import Image from "next/image"
 
 export function EditableSectionCard({
     title,
@@ -82,7 +83,9 @@ export function EditableSectionCard({
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                 {displayImages.map((image, index) => (
                     <div key={index} className="relative aspect-square">
-                        <img
+                        <Image
+                            width={500}
+                            height={500}
                             src={image || "/placeholder.svg"}
                             alt={`Uploaded image ${index + 1}`}
                             className="h-full w-full rounded-lg object-cover"

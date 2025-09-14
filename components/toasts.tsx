@@ -11,6 +11,7 @@ export const successToast = (msg: string) => {
         type: "success"
     });
 }
+
 export const errorToast = (msg: string) => {
     toast(msg, {
         position: "top-center",

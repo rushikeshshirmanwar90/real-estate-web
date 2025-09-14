@@ -43,11 +43,6 @@ const clientSchema = new Schema(
       type: String,
       required: true,
     },
-    agency: {
-      type: Schema.Types.ObjectId,
-      ref: "Agency",
-      required: false,
-    },
   },
   {
     timestamps: true,

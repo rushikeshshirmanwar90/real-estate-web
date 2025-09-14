@@ -28,7 +28,7 @@ const projectSchema = new Schema(
 
     images: {
       type: [String],
-      required: true,
+      required: false,
     },
 
     state: {
@@ -53,7 +53,7 @@ const projectSchema = new Schema(
 
     description: {
       type: String,
-      required: true,
+      required: false,
     },
 
     clientId: {
@@ -66,6 +66,7 @@ const projectSchema = new Schema(
       type: String,
       required: true,
       enum: ["ongoing", "upcoming", "completed"],
+      default: "ongoing",
     },
 
     longitude: {
@@ -80,7 +81,7 @@ const projectSchema = new Schema(
 
     section: {
       type: [SectionSchema],
-      required: true,
+      required: false,
     },
 
     amenities: {

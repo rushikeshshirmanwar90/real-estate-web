@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Plus, Trash2 } from "lucide-react"
 import { useState } from "react"
+import Image from "next/image"
 
 interface Contact {
     name: string
@@ -45,7 +46,7 @@ export default function Component() {
                     <CardHeader className="text-center">
                         {/* Manthan Infracare Logo */}
                         <div className="mx-auto mb-4">
-                            <img src="/logo-mini.png" alt="Manthan Infracare Logo" className="h-16 w-auto mx-auto" />
+                            <Image width={500} height={500} src="/logo-mini.png" alt="Manthan Infracare Logo" className="h-16 w-auto mx-auto" />
                         </div>
                         <CardTitle className="text-2xl font-bold text-gray-800">Manthan Infracare</CardTitle>
                         <CardDescription className="text-lg font-medium text-gray-600 mb-2">
