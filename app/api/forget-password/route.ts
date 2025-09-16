@@ -2,6 +2,7 @@ import connect from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { Customer } from "@/lib/models/Customer";
 import { Client } from "@/lib/models/super-admin/Client";
+import { LoginUser } from "@/lib/models/LoginUsers";
 
 export const POST = async (req: NextRequest | Request) => {
   try {
@@ -17,12 +18,15 @@ export const POST = async (req: NextRequest | Request) => {
         { password: "" },
         { new: true }
       );
+
+      await LoginUser.findOneAndUpdate({ email }, { password: "" });
     } else if (userType === "user") {
       updatedPassword = await Customer.findOneAndUpdate(
         { email },
         { password: "" },
         { new: true }
       );
+      await LoginUser.findOneAndUpdate({ email }, { password: "" });
     }
 
     if (!updatedPassword) {
