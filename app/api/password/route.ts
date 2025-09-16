@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import { Customer } from "@/lib/models/Customer";
 import { Client } from "@/lib/models/super-admin/Client";
+import { LoginUser } from "@/lib/models/LoginUsers";
 
 export const POST = async (req: NextRequest | Request) => {
   try {
@@ -20,8 +21,20 @@ export const POST = async (req: NextRequest | Request) => {
         { password: hashedPassword },
         { new: true }
       );
+
+      await LoginUser.findOneAndUpdate(
+        { email },
+        { password: hashedPassword },
+        { new: true }
+      );
     } else if (userType === "user") {
       updatedPassword = await Customer.findOneAndUpdate(
+        { email },
+        { password: hashedPassword },
+        { new: true }
+      );
+
+      await LoginUser.findOneAndUpdate(
         { email },
         { password: hashedPassword },
         { new: true }

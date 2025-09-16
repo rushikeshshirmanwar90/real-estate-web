@@ -1,7 +1,6 @@
 import connect from "@/lib/db";
 import { LoginUser } from "@/lib/models/LoginUsers";
 import bcrypt from "bcrypt";
-
 import { NextRequest, NextResponse } from "next/server";
 
 export const POST = async (req: NextRequest | Request) => {
@@ -16,70 +15,79 @@ export const POST = async (req: NextRequest | Request) => {
           message: "Email and password are required",
         },
         { status: 400 }
-      ); // Changed to 400 Bad Request
+      );
     }
 
     // Find user
     const user = await LoginUser.findOne({ email });
-
     if (!user) {
       return NextResponse.json(
         {
-          message: "User not found",
+          message: "Invalid credentials", // Don't reveal if user exists or not
         },
-        { status: 404 }
+        { status: 401 }
       );
     }
 
-    // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    // Check if user.password exists and is a string
+    if (!user.password || typeof user.password !== "string") {
+      console.error("User password is invalid:", typeof user.password);
+      return NextResponse.json(
+        {
+          message: "Invalid credentials",
+        },
+        { status: 401 }
+      );
+    }
+
+    // Verify password with proper error handling
+    let isValidPassword = false;
+    try {
+      isValidPassword = await bcrypt.compare(password, user.password);
+    } catch (bcryptError) {
+      console.error("Bcrypt comparison error:", bcryptError);
+      return NextResponse.json(
+        {
+          message: "Authentication error",
+        },
+        { status: 500 }
+      );
+    }
 
     if (!isValidPassword) {
       return NextResponse.json(
         {
-          message: "Invalid password",
+          message: "Invalid credentials",
         },
-        {
-          status: 403,
-        }
+        { status: 401 }
       );
     }
 
-    if (password != user.password) {
-      return NextResponse.json(
-        {
-          message: "Invalid password",
-        },
-        {
-          status: 403,
-        }
-      );
-    }
-
-    // Success response - you might want to add more user data or a token here
+    // Success response
     return NextResponse.json(
       {
         message: "User logged in successfully",
         user: {
           id: user._id,
           email: user.email,
-          // Add any other user properties you want to return
         },
       },
       { status: 200 }
     );
   } catch (error: unknown) {
-    // Error handling
     console.error("Login error:", error);
+
+    // More detailed error logging
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    }
 
     return NextResponse.json(
       {
         message: "An error occurred during login",
-        error: error || "Internal server error",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 };
