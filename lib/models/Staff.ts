@@ -32,7 +32,7 @@ const StaffSchema = new Schema({
     enum: ["site-engineer", "material-manager"],
     required: true,
   },
-  assignSites: {
+  assignedProjects: {
     type: [String],
     required: false,
   },
