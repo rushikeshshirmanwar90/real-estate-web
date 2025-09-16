@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import connect from "@/lib/db";
 import { Client } from "@/lib/models/super-admin/Client";
 import { NextRequest, NextResponse } from "next/server";
+import { LoginUser } from "@/lib/models/LoginUsers";
 
 export const GET = async (req: NextRequest | Request) => {
   try {
@@ -50,6 +51,13 @@ export const POST = async (req: NextRequest) => {
     const addClient = new Client(data);
     await addClient.save();
 
+    const { email, ...otherData } = data;
+
+    console.log(otherData);
+    const payload = { email, userType: "client" };
+    const newEntry = new LoginUser(payload);
+    await newEntry.save();
+
     return NextResponse.json({ message: "Client added successfully" });
   } catch (error: unknown) {
     console.error("Error: " + error);
@@ -64,9 +72,9 @@ export const DELETE = async (req: NextRequest) => {
   try {
     const { searchParams } = new URL(req.url);
 
-    const id = searchParams.get("id");
+    const email = searchParams.get("email");
 
-    if (!id) {
+    if (!email) {
       return NextResponse.json(
         { message: "Client not found" },
         { status: 402 }
@@ -75,9 +83,10 @@ export const DELETE = async (req: NextRequest) => {
 
     await connect();
 
-    const deletedClient = await Client.findByIdAndDelete(id);
+    const deletedClient = await Client.findOneAndDelete({ email });
+    const deletedLoginUser = await LoginUser.findOneAndDelete({ email });
 
-    if (!deletedClient) {
+    if (!deletedClient || !deletedLoginUser) {
       return NextResponse.json(
         { message: "Something went wrong can't Delete Client" },
         { status: 500 }

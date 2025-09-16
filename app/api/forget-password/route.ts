@@ -1,6 +1,5 @@
 import connect from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-import bcrypt from "bcrypt";
 import { Customer } from "@/lib/models/Customer";
 import { Client } from "@/lib/models/super-admin/Client";
 
@@ -8,22 +7,20 @@ export const POST = async (req: NextRequest | Request) => {
   try {
     await connect();
 
-    const { email, password, userType } = await req.json();
-
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const { email, userType } = await req.json();
 
     let updatedPassword: string | null = "";
 
     if (userType === "client") {
       updatedPassword = await Client.findOneAndUpdate(
         { email },
-        { password: hashedPassword },
+        { password: "" },
         { new: true }
       );
     } else if (userType === "user") {
       updatedPassword = await Customer.findOneAndUpdate(
         { email },
-        { password: hashedPassword },
+        { password: "" },
         { new: true }
       );
     }
@@ -31,7 +28,7 @@ export const POST = async (req: NextRequest | Request) => {
     if (!updatedPassword) {
       return NextResponse.json(
         {
-          message: "can't able to update the user, please try again",
+          message: "something went wrong please try again",
         },
         { status: 404 }
       );
@@ -39,7 +36,7 @@ export const POST = async (req: NextRequest | Request) => {
 
     return NextResponse.json(
       {
-        message: "updated updated successfully",
+        message: "now you can update the password",
       },
       { status: 200 }
     );

@@ -1,6 +1,6 @@
 import { Schema, model, models } from "mongoose";
 
-const userSchema = new Schema(
+const CustomerSchema = new Schema(
   {
     firstName: {
       type: String,
@@ -22,12 +22,6 @@ const userSchema = new Schema(
       type: String,
       unique: true,
       required: true,
-    },
-
-    userType: {
-      type: String,
-      required: true,
-      enum: ["customer", "staff"],
     },
 
     password: {
@@ -53,6 +47,4 @@ const userSchema = new Schema(
   }
 );
 
-const User = models.User || model("User", userSchema);
-
-export { User };
+export const Customer = models.User || model("User", CustomerSchema);

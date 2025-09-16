@@ -1,5 +1,5 @@
 import connect from "@/lib/db";
-import { User } from "@/lib/models/Users";
+import { Customer } from "@/lib/models/Customer";
 import { NextRequest, NextResponse } from "next/server";
 
 export const POST = async (req: NextRequest | Request) => {
@@ -17,7 +17,7 @@ export const POST = async (req: NextRequest | Request) => {
       );
     }
 
-    const user = await User.findOne({ email });
+    const user = await Customer.findOne({ email });
 
     if (!user) {
       return NextResponse.json(
@@ -39,7 +39,7 @@ export const POST = async (req: NextRequest | Request) => {
       );
     }
 
-    const updateOtp = await User.findOneAndUpdate({ email }, { otp: 0 });
+    const updateOtp = await Customer.findOneAndUpdate({ email }, { otp: 0 });
 
     if (!updateOtp) {
       return NextResponse.json(

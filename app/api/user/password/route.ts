@@ -1,7 +1,7 @@
 import connect from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcrypt";
-import { User } from "@/lib/models/Users";
+import { Customer } from "@/lib/models/Customer";
 
 export const POST = async (req: NextRequest | Request) => {
   try {
@@ -11,7 +11,7 @@ export const POST = async (req: NextRequest | Request) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const updatedPassword = await User.findOneAndUpdate(
+    const updatedPassword = await Customer.findOneAndUpdate(
       { email },
       { password: hashedPassword },
       { new: true }

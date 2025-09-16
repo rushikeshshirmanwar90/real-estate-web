@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import connect from "@/lib/db";
-import { User } from "@/lib/models/Users";
+import { Customer } from "@/lib/models/Customer";
 import { CustomerDetails } from "@/lib/models/CustomerDetails";
 
 // For POST and PUT requests
 interface UserCreateRequest {
   email: string;
   phoneNumber: string;
-  userType: "customer" | "staff" | "admin";
-  name?: string;
-  firstName?: string;
-  lastName?: string;
+  firstName: string;
+  lastName: string;
   password?: string;
+  clientId: string;
+  verified?: boolean;
+  otp?: number;
   properties?: PropertyInput[];
-  clientId?: string;
 }
 
 // For GET response
@@ -21,10 +21,11 @@ interface UserResponse {
   _id: string;
   email: string;
   phoneNumber: string;
-  userType: "customer" | "staff" | "admin";
-  name?: string;
-  firstName?: string;
-  lastName?: string;
+  firstName: string;
+  lastName: string;
+  clientId: string;
+  verified: boolean;
+  otp?: number;
   properties?: CustomerDetailsResponse;
   createdAt?: string;
   updatedAt?: string;
@@ -84,11 +85,11 @@ export const GET = async (req: NextRequest | Request) => {
     let res;
 
     if (id) {
-      // Find user by ID and populate the properties field
-      res = await User.findById(id);
+      // Find Customer by ID and populate the properties field
+      res = await Customer.findById(id).populate("properties");
     } else {
-      // Get all users and populate the properties field
-      res = await User.find();
+      // Get all Customers and populate the properties field
+      res = await Customer.find().populate("properties");
     }
 
     if (!res) {
@@ -102,11 +103,11 @@ export const GET = async (req: NextRequest | Request) => {
 
     return NextResponse.json(res);
   } catch (error: unknown) {
-    console.error("Error fetching user data:", error);
+    console.error("Error fetching customer data:", error);
     return NextResponse.json(
       {
         error: error,
-        message: "An error occurred while fetching user data",
+        message: "An error occurred while fetching customer data",
       } as ErrorResponse,
       { status: 500 }
     );
@@ -119,20 +120,31 @@ export const POST = async (req: NextRequest | Request) => {
 
     const data = (await req.json()) as UserCreateRequest;
 
-    const userData = { ...data };
-    let propertiesData: PropertyInput[] | undefined;
+    const { email, phoneNumber, firstName, lastName, clientId } = data;
 
-    const { email, phoneNumber } = data;
-
-    const findUser = await User.findOne({
-      $or: [{ email }, { phoneNumber }],
-    });
-
-    if (findUser) {
+    // Validate required fields
+    if (!firstName || !lastName || !email || !phoneNumber || !clientId) {
       return NextResponse.json(
         {
           message:
-            "User Already Exists, please register with another email and phone number",
+            "firstName, lastName, email, phoneNumber, and clientId are required",
+        } as ErrorResponse,
+        { status: 400 }
+      );
+    }
+
+    const customerData = { ...data };
+    let propertiesData: PropertyInput[] | undefined;
+
+    const findCustomer = await Customer.findOne({
+      $or: [{ email }, { phoneNumber }],
+    });
+
+    if (findCustomer) {
+      return NextResponse.json(
+        {
+          message:
+            "Customer already exists, please register with another email and phone number",
         } as ErrorResponse,
         {
           status: 409,
@@ -140,32 +152,28 @@ export const POST = async (req: NextRequest | Request) => {
       );
     }
 
-    if (data.userType === "customer") {
-      propertiesData = userData.properties;
-      delete userData.properties;
+    // Handle properties data separately
+    if (customerData.properties) {
+      propertiesData = customerData.properties;
+      delete customerData.properties;
     }
 
-    const newUser = new User(userData);
-    const savedUser = await newUser.save();
+    const newCustomer = new Customer(customerData);
+    const savedCustomer = await newCustomer.save();
 
-    if (!savedUser) {
+    if (!savedCustomer) {
       return NextResponse.json(
         {
-          message: "Unknown error occurred, couldn't add the user",
+          message: "Unknown error occurred, couldn't add the customer",
         } as ErrorResponse,
         { status: 404 }
       );
     }
 
-    if (
-      data.userType === "customer" &&
-      propertiesData &&
-      propertiesData.length > 0
-    ) {
-      // Modified part: Now we're storing only the property IDs in the CustomerDetails
+    // Handle customer details if properties are provided
+    if (propertiesData && propertiesData.length > 0) {
       const customerDetailsData = {
-        userId: savedUser._id,
-        // Just push the property id as requested
+        userId: savedCustomer._id,
         property: propertiesData.map((prop: PropertyInput) => ({
           id: prop.id,
           projectId: prop.projectId,
@@ -181,34 +189,34 @@ export const POST = async (req: NextRequest | Request) => {
       const newCustomerDetails = new CustomerDetails(customerDetailsData);
       const savedCustomerDetails = await newCustomerDetails.save();
 
-      // Update the user with reference to CustomerDetails
-      await User.findByIdAndUpdate(savedUser._id, {
+      // Update the customer with reference to CustomerDetails
+      await Customer.findByIdAndUpdate(savedCustomer._id, {
         properties: savedCustomerDetails._id,
       });
 
-      // Fetch the updated user with populated properties
-      const updatedUser = await User.findById(savedUser._id).populate(
-        "properties"
-      );
+      // Fetch the updated customer with populated properties
+      const updatedCustomer = await Customer.findById(
+        savedCustomer._id
+      ).populate("properties");
 
-      // Return the complete user with customer details
+      // Return the complete customer with details
       return NextResponse.json(
         {
-          user: updatedUser,
+          user: updatedCustomer,
           customerDetails: savedCustomerDetails,
         } as UserWithDetailsResponse,
         { status: 200 }
       );
     }
 
-    // For staff users, just return the saved user
-    return NextResponse.json(savedUser as UserResponse, { status: 200 });
+    // Return the saved customer without properties
+    return NextResponse.json(savedCustomer as UserResponse, { status: 200 });
   } catch (error: unknown) {
-    console.error("Error creating user:", error);
+    console.error("Error creating customer:", error);
     return NextResponse.json(
       {
         error: error,
-        message: "An error occurred while creating the user",
+        message: "An error occurred while creating the customer",
       } as ErrorResponse,
       { status: 500 }
     );
@@ -224,7 +232,7 @@ export const PUT = async (req: NextRequest | Request) => {
 
     if (!id) {
       return NextResponse.json(
-        { message: "User ID is required" } as ErrorResponse,
+        { message: "Customer ID is required" } as ErrorResponse,
         { status: 400 }
       );
     }
@@ -240,9 +248,9 @@ export const PUT = async (req: NextRequest | Request) => {
         query.push({ phoneNumber: data.phoneNumber, _id: { $ne: id } });
 
       if (query.length > 0) {
-        const existingUser = await User.findOne({ $or: query });
+        const existingCustomer = await Customer.findOne({ $or: query });
 
-        if (existingUser) {
+        if (existingCustomer) {
           return NextResponse.json(
             {
               message: "Email or phone number already in use",
@@ -253,27 +261,28 @@ export const PUT = async (req: NextRequest | Request) => {
       }
     }
 
-    const userData = { ...data };
+    const customerData = { ...data };
     let propertiesData: PropertyInput[] | undefined;
 
-    if (userData.properties) {
-      propertiesData = userData.properties;
-      delete userData.properties;
+    if (customerData.properties) {
+      propertiesData = customerData.properties;
+      delete customerData.properties;
     }
 
-    // Update user data
-    const updatedUser = await User.findByIdAndUpdate(id, userData, {
+    // Update customer data
+    const updatedCustomer = await Customer.findByIdAndUpdate(id, customerData, {
       new: true,
     });
 
-    if (!updatedUser) {
-      return NextResponse.json({ message: "User not found" } as ErrorResponse, {
-        status: 404,
-      });
+    if (!updatedCustomer) {
+      return NextResponse.json(
+        { message: "Customer not found" } as ErrorResponse,
+        { status: 404 }
+      );
     }
 
-    // If properties are being updated and user is a customer
-    if (propertiesData && updatedUser.userType === "customer") {
+    // Handle properties update
+    if (propertiesData) {
       // Find existing customer details
       let customerDetails = await CustomerDetails.findOne({ userId: id });
 
@@ -296,7 +305,7 @@ export const PUT = async (req: NextRequest | Request) => {
       } else {
         // Create new customer details if not exist
         const customerDetailsData = {
-          userId: updatedUser._id,
+          userId: updatedCustomer._id,
           property: propertiesData.map((prop: PropertyInput) => ({
             id: prop.id,
             projectId: prop.projectId,
@@ -312,33 +321,33 @@ export const PUT = async (req: NextRequest | Request) => {
         customerDetails = new CustomerDetails(customerDetailsData);
         await customerDetails.save();
 
-        // Update the user with reference to CustomerDetails
-        await User.findByIdAndUpdate(updatedUser._id, {
+        // Update the customer with reference to CustomerDetails
+        await Customer.findByIdAndUpdate(updatedCustomer._id, {
           properties: customerDetails._id,
         });
       }
 
-      // Fetch the updated user with populated properties
-      const finalUser = await User.findById(id).populate("properties");
+      // Fetch the updated customer with populated properties
+      const findCustomer = await Customer.findById(id).populate("properties");
 
       return NextResponse.json(
         {
-          user: finalUser,
+          user: findCustomer,
           customerDetails: customerDetails,
         } as UserWithDetailsResponse,
         { status: 200 }
       );
     }
 
-    // For non-customer users or no property updates, return the updated user
-    const finalUser = await User.findById(id).populate("properties");
-    return NextResponse.json(finalUser, { status: 200 });
+    // For no property updates, return the updated customer
+    const findCustomer = await Customer.findById(id).populate("properties");
+    return NextResponse.json(findCustomer, { status: 200 });
   } catch (error: unknown) {
-    console.error("Error updating user:", error);
+    console.error("Error updating customer:", error);
     return NextResponse.json(
       {
         error: error,
-        message: "An error occurred while updating the user",
+        message: "An error occurred while updating the customer",
       } as ErrorResponse,
       { status: 500 }
     );
@@ -354,45 +363,44 @@ export const DELETE = async (req: NextRequest | Request) => {
 
     if (!id) {
       return NextResponse.json(
-        { message: "User ID is required" } as ErrorResponse,
+        { message: "Customer ID is required" } as ErrorResponse,
         { status: 400 }
       );
     }
 
-    // First, find the user to check if it exists and get its type
-    const user = await User.findById(id);
+    // First, find the customer to check if it exists
+    const customer = await Customer.findById(id);
 
-    if (!user) {
-      return NextResponse.json({ message: "User not found" } as ErrorResponse, {
-        status: 404,
-      });
-    }
-
-    // If the user is a customer, delete their customer details first
-    if (user.userType === "customer") {
-      await CustomerDetails.findOneAndDelete({ userId: id });
-    }
-
-    // Delete the user
-    const deletedUser = await User.findByIdAndDelete(id);
-
-    if (!deletedUser) {
+    if (!customer) {
       return NextResponse.json(
-        { message: "Error deleting user" } as ErrorResponse,
+        { message: "Customer not found" } as ErrorResponse,
+        { status: 404 }
+      );
+    }
+
+    // Delete customer details first (if they exist)
+    await CustomerDetails.findOneAndDelete({ userId: id });
+
+    // Delete the customer
+    const deletedCustomer = await Customer.findByIdAndDelete(id);
+
+    if (!deletedCustomer) {
+      return NextResponse.json(
+        { message: "Error deleting customer" } as ErrorResponse,
         { status: 500 }
       );
     }
 
     return NextResponse.json(
-      { message: "User deleted successfully" },
+      { message: "Customer deleted successfully" },
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error("Error deleting user:", error);
+    console.error("Error deleting customer:", error);
     return NextResponse.json(
       {
         error: error,
-        message: "An error occurred while deleting the user",
+        message: "An error occurred while deleting the customer",
       } as ErrorResponse,
       { status: 500 }
     );

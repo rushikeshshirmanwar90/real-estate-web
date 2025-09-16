@@ -1,5 +1,5 @@
 import connect from "@/lib/db";
-import { User } from "@/lib/models/Users";
+import { Customer } from "@/lib/models/Customer";
 import { NextRequest, NextResponse } from "next/server";
 
 export const POST = async (req: NextRequest | Request) => {
@@ -15,7 +15,7 @@ export const POST = async (req: NextRequest | Request) => {
         }
 
         // Find user
-        const user = await User.findOne({ email });
+        const user = await Customer.findOne({ email });
 
         if (!user) {
             return NextResponse.json({

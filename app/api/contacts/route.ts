@@ -1,6 +1,6 @@
 import connect from "@/lib/db";
 import { Contacts } from "@/lib/models/Contacts";
-import { User } from "@/lib/models/Users";
+import { Customer } from "@/lib/models/Customer";
 import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (req: NextRequest | Request) => {
@@ -108,7 +108,7 @@ export const POST = async (req: NextRequest | Request) => {
     }
 
     // Get the user's verification status
-    const user = await User.findOne({ _id: validContacts[0].userId });
+    const user = await Customer.findOne({ _id: validContacts[0].userId });
     if (!user) {
       return NextResponse.json(
         {
@@ -142,7 +142,11 @@ export const POST = async (req: NextRequest | Request) => {
     }
 
     // Update user's verification status
-    await User.findByIdAndUpdate(user._id, { verified: true }, { new: true });
+    await Customer.findByIdAndUpdate(
+      user._id,
+      { verified: true },
+      { new: true }
+    );
 
     return NextResponse.json(
       {

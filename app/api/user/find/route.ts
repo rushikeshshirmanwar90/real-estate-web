@@ -1,5 +1,5 @@
 import connect from "@/lib/db";
-import { User } from "@/lib/models/Users";
+import { Customer } from "@/lib/models/Customer";
 import { NextRequest, NextResponse } from "next/server";
 
 export const POST = async (req: NextRequest | Request) => {
@@ -20,7 +20,7 @@ export const POST = async (req: NextRequest | Request) => {
       );
     }
 
-    const isUser = await User.findOne({ email });
+    const isUser = await Customer.findOne({ email });
 
     if (!isUser) {
       return NextResponse.json(

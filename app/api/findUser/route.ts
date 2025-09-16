@@ -1,6 +1,6 @@
 import connect from "@/lib/db";
 import { Client } from "@/lib/models/super-admin/Client";
-import { User } from "@/lib/models/Users";
+import { Customer } from "@/lib/models/Customer";
 import { NextRequest, NextResponse } from "next/server";
 
 export const POST = async (req: NextRequest | Request) => {
@@ -33,7 +33,7 @@ export const POST = async (req: NextRequest | Request) => {
     }
 
     if (userType == "user") {
-      const isUser = await User.findOne({ email });
+      const isUser = await Customer.findOne({ email });
 
       if (!isUser) {
         return NextResponse.json(

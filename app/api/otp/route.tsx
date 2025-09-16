@@ -1,5 +1,5 @@
 import connect from "@/lib/db";
-import { User } from "@/lib/models/Users";
+import { Customer } from "@/lib/models/Customer";
 import { NextRequest, NextResponse } from "next/server";
 import { render } from "@react-email/components";
 import { transporter } from "@/lib/transporter";
@@ -19,7 +19,7 @@ export const POST = async (req: NextRequest | Request) => {
       html: emailHtml,
     });
 
-    await User.findOneAndUpdate(
+    await Customer.findOneAndUpdate(
       { email },
       { otp: OTP },
       { new: true }
