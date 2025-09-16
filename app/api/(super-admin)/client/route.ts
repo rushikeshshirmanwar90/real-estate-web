@@ -1,4 +1,5 @@
 import connect from "@/lib/db";
+import { LoginUser } from "@/lib/models/LoginUsers";
 import { Client } from "@/lib/models/super-admin/Client";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -49,79 +50,64 @@ export const GET = async (req: NextRequest | Request) => {
   }
 };
 
-export const POST = async (req: NextRequest | Request) => {
-  const data = await req.json();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { password, ...allowedData } = data;
-
+export const POST = async (req: NextRequest) => {
   try {
     await connect();
-    const clientData = await Client.create(allowedData);
 
-    if (!clientData) {
-      return NextResponse.json(
-        {
-          message: "client not created",
-        },
-        { status: 400 }
-      );
-    }
+    const data = await req.json();
 
-    return NextResponse.json({ clientData }, { status: 200 });
+    const addClient = new Client(data);
+    await addClient.save();
+
+    const { email, ...otherData } = data;
+
+    console.log(otherData);
+    const payload = { email, userType: "client" };
+    const newEntry = new LoginUser(payload);
+    await newEntry.save();
+
+    return NextResponse.json({ message: "Client added successfully" });
   } catch (error: unknown) {
-    if (error instanceof Error) {
-      return NextResponse.json(
-        {
-          message: error.message,
-        },
-        { status: 500 }
-      );
-    }
+    console.error("Error: " + error);
     return NextResponse.json(
-      {
-        message: "Internal Server Error",
-      },
+      { message: "An error occurred", error: error },
       { status: 500 }
     );
   }
 };
-
-export const DELETE = async (req: NextRequest | Request) => {
-  const { searchParams } = new URL(req.url);
-  const id = searchParams.get("id");
-
+export const DELETE = async (req: NextRequest) => {
   try {
-    await connect();
-    const clientData = await Client.findByIdAndDelete(id);
+    const { searchParams } = new URL(req.url);
 
-    if (!clientData) {
+    const email = searchParams.get("email");
+
+    if (!email) {
       return NextResponse.json(
-        {
-          message: "client not found",
-        },
-        {
-          status: 200,
-        }
+        { message: "Client not found" },
+        { status: 402 }
       );
     }
 
-    return NextResponse.json(
-      { message: "client deleted", data: clientData },
-      { status: 200 }
-    );
-  } catch (error: unknown) {
-    if (error instanceof Error) {
+    await connect();
+
+    const deletedClient = await Client.findOneAndDelete({ email });
+    const deletedLoginUser = await LoginUser.findOneAndDelete({ email });
+
+    if (!deletedClient || !deletedLoginUser) {
       return NextResponse.json(
-        {
-          message: error.message,
-        },
+        { message: "Something went wrong can't Delete Client" },
         { status: 500 }
       );
     }
+
+    return NextResponse.json({
+      message: "Client Deleted Successfully",
+      data: deletedClient,
+    });
+  } catch (error: unknown) {
+    console.error("Internal Server Error:", error);
     return NextResponse.json(
-      {
-        message: "Internal Server Error",
-      },
+      { message: "Internal Server Error", error: error },
       { status: 500 }
     );
   }
