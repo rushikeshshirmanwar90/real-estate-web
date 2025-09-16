@@ -29,7 +29,7 @@ const StaffSchema = new Schema({
   },
   role: {
     type: String,
-    enum: ["site-engineer", "material-manager"],
+    enum: ["site-engineer", "supervisor", "manager"],
     required: true,
   },
   assignedProjects: {
