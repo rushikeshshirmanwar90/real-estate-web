@@ -1,5 +1,7 @@
 import connect from "@/lib/db";
 import { Customer } from "@/lib/models/Customer";
+import bcrypt from "bcrypt";
+
 import { NextRequest, NextResponse } from "next/server";
 
 export const POST = async (req: NextRequest | Request) => {
@@ -24,15 +26,15 @@ export const POST = async (req: NextRequest | Request) => {
         }
 
         // Verify password
-        // const isValidPassword = await bcrypt.compare(password, user.password);
+        const isValidPassword = await bcrypt.compare(password, user.password);
 
-        // if (!isValidPassword) {
-        //     return NextResponse.json({
-        //         message: "Invalid password"
-        //     }, {
-        //         status: 403
-        //     })
-        // }
+        if (!isValidPassword) {
+            return NextResponse.json({
+                message: "Invalid password"
+            }, {
+                status: 403
+            })
+        }
 
         if (password != user.password) {
             return NextResponse.json({
