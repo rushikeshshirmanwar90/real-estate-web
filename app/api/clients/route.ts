@@ -105,7 +105,7 @@ export const POST = async (req: NextRequest) => {
     const { email, ...otherData } = data;
 
     console.log(otherData);
-    const payload = { email, userType: "client" };
+    const payload = { email, userType: "clients" };
     const newEntry = new LoginUser(payload);
     await newEntry.save();
 
@@ -127,7 +127,7 @@ export const DELETE = async (req: NextRequest) => {
 
     if (!email) {
       return NextResponse.json(
-        { message: "Client not found" },
+        { message: "email must required" },
         { status: 402 }
       );
     }
