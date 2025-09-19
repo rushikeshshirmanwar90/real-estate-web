@@ -21,7 +21,7 @@ const SectionSchema = new Schema(
 
 const StaffSchema = new Schema(
   {
-    id: {
+    _id: {
       type: String,
       required: true,
     },
