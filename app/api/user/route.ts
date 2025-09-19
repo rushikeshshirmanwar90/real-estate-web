@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import connect from "@/lib/db";
 import { Customer } from "@/lib/models/Customer";
 import { CustomerDetails } from "@/lib/models/CustomerDetails";
+import { Types } from "mongoose";
 
 // For POST and PUT requests
 interface UserCreateRequest {
@@ -75,42 +76,87 @@ interface ErrorResponse {
   error?: unknown;
 }
 
-export const GET = async (req: NextRequest | Request) => {
+// Helper function to validate MongoDB ObjectId
+const isValidObjectId = (id: string): boolean => {
+  return Types.ObjectId.isValid(id);
+};
+
+// Helper function for error responses
+const errorResponse = (message: string, status: number, error?: unknown) => {
+  return NextResponse.json(
+    {
+      success: false,
+      message,
+      ...(error && typeof error === "object"
+        ? { error: error instanceof Error ? error.message : error }
+        : {}),
+    },
+    { status }
+  );
+};
+
+// Helper function for success responses
+const successResponse = (
+  data: unknown,
+  message?: string,
+  status: number = 200
+) => {
+  return NextResponse.json(
+    {
+      success: true,
+      ...(message && { message }),
+      data,
+    },
+    { status }
+  );
+};
+
+export const GET = async (req: NextRequest) => {
   try {
     await connect();
-
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
+    const email = searchParams.get("email");
 
-    let res;
-
+    // Get specific user by ID
     if (id) {
-      // Find Customer by ID and populate the properties field
-      res = await Customer.findById(id).populate("properties");
-    } else {
-      // Get all Customers and populate the properties field
-      res = await Customer.find().populate("properties");
+      if (!isValidObjectId(id)) {
+        return errorResponse("Invalid staff ID format", 400);
+      }
+
+      const userData = await Customer.findById(id);
+      if (!userData) {
+        return errorResponse("user not found", 404);
+      }
+
+      return successResponse(userData, "user retrieved successfully");
     }
 
-    if (!res) {
-      return NextResponse.json(
-        {
-          message: `Unable to get the data`,
-        },
-        { status: 400 }
-      );
+    // Get specific user by email
+    if (email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return errorResponse("Invalid email format", 400);
+      }
+
+      const userData = await Customer.findOne({ email });
+      if (!userData) {
+        return errorResponse("user not found with this email", 404);
+      }
+
+      return successResponse(userData, "user retrieved successfully");
     }
 
-    return NextResponse.json(res);
-  } catch (error: unknown) {
-    console.error("Error fetching customer data:", error);
-    return NextResponse.json(
-      {
-        error: error,
-        message: "An error occurred while fetching customer data",
-      } as ErrorResponse,
-      { status: 500 }
+    // Get all users members
+    const userData = await Customer.find().sort({ createdAt: -1 });
+
+    return successResponse(
+      userData,
+      `Retrieved ${userData.length} user(s) successfully`
     );
+  } catch (error: unknown) {
+    console.error("GET /user error:", error);
+    return errorResponse("Failed to fetch users data", 500, error);
   }
 };
 

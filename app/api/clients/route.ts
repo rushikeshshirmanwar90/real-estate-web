@@ -3,38 +3,89 @@ import connect from "@/lib/db";
 import { Client } from "@/lib/models/super-admin/Client";
 import { NextRequest, NextResponse } from "next/server";
 import { LoginUser } from "@/lib/models/LoginUsers";
+import { Types } from "mongoose";
 
-export const GET = async (req: NextRequest | Request) => {
+// Helper function to validate MongoDB ObjectId
+const isValidObjectId = (id: string): boolean => {
+  return Types.ObjectId.isValid(id);
+};
+
+// Helper function for error responses
+const errorResponse = (message: string, status: number, error?: unknown) => {
+  return NextResponse.json(
+    {
+      success: false,
+      message,
+      ...(error && typeof error === "object"
+        ? { error: error instanceof Error ? error.message : error }
+        : {}),
+    },
+    { status }
+  );
+};
+
+// Helper function for success responses
+const successResponse = (
+  data: unknown,
+  message?: string,
+  status: number = 200
+) => {
+  return NextResponse.json(
+    {
+      success: true,
+      ...(message && { message }),
+      data,
+    },
+    { status }
+  );
+};
+
+export const GET = async (req: NextRequest) => {
   try {
+    await connect();
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
-    await connect();
+    const email = searchParams.get("email");
 
-    if (!id) {
-      const clientData = await Client.find();
+    // Get specific Client by ID
+    if (id) {
+      if (!isValidObjectId(id)) {
+        return errorResponse("Invalid staff ID format", 400);
+      }
 
+      const clientData = await Client.findById(id);
       if (!clientData) {
-        return NextResponse.json(
-          { message: "Client not found" },
-          { status: 404 }
-        );
+        return errorResponse("Client not found", 404);
       }
 
-      return NextResponse.json(clientData, {
-        status: 200,
-      });
-    } else {
-      const client = await Client.findById(id);
-      if (!client) {
-        return NextResponse.json(
-          { message: "Client not found" },
-          { status: 404 }
-        );
-      }
-      return NextResponse.json(client);
+      return successResponse(clientData, "Client retrieved successfully");
     }
+
+    // Get specific client by email
+    if (email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return errorResponse("Invalid email format", 400);
+      }
+
+      const clientData = await Client.findOne({ email });
+      if (!clientData) {
+        return errorResponse("Client not found with this email", 404);
+      }
+
+      return successResponse(clientData, "Client retrieved successfully");
+    }
+
+    // Get all client members
+    const clientData = await Client.find().sort({ createdAt: -1 });
+
+    return successResponse(
+      clientData,
+      `Retrieved ${clientData.length} clients(s) successfully`
+    );
   } catch (error: unknown) {
-    console.error("Error : " + error);
+    console.error("GET /client error:", error);
+    return errorResponse("Failed to fetch client data", 500, error);
   }
 };
 
