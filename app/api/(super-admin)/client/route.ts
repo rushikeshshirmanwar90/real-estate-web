@@ -1,5 +1,5 @@
 import connect from "@/lib/db";
-import { LoginUser } from "@/lib/models/LoginUsers";
+import { LoginUser } from "@/lib/models/Xsite/LoginUsers";
 import { Client } from "@/lib/models/super-admin/Client";
 import { NextRequest, NextResponse } from "next/server";
 

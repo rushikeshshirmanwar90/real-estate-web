@@ -1,5 +1,5 @@
 import connect from "@/lib/db";
-import { LoginUser } from "@/lib/models/LoginUsers";
+import { LoginUser } from "@/lib/models/Xsite/LoginUsers";
 import { NextRequest, NextResponse } from "next/server";
 
 export const POST = async (req: NextRequest | Request) => {

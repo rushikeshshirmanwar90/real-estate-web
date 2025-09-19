@@ -1,5 +1,5 @@
 import connect from "@/lib/db";
-import { LoginUser } from "@/lib/models/LoginUsers";
+import { LoginUser } from "@/lib/models/Xsite/LoginUsers";
 import bcrypt from "bcrypt";
 import { NextRequest, NextResponse } from "next/server";
 

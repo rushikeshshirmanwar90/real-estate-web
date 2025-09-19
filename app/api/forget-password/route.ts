@@ -2,7 +2,7 @@ import connect from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { Customer } from "@/lib/models/Customer";
 import { Client } from "@/lib/models/super-admin/Client";
-import { LoginUser } from "@/lib/models/LoginUsers";
+import { LoginUser } from "@/lib/models/Xsite/LoginUsers";
 
 export const POST = async (req: NextRequest | Request) => {
   try {

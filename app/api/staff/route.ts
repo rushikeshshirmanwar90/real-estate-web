@@ -1,5 +1,5 @@
 import connect from "@/lib/db";
-import { LoginUser } from "@/lib/models/LoginUsers";
+import { LoginUser } from "@/lib/models/Xsite/LoginUsers";
 import { Staff } from "@/lib/models/Staff";
 import { NextRequest, NextResponse } from "next/server";
 import { Types } from "mongoose";

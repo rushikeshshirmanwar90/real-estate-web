@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import connect from "@/lib/db";
 import { Client } from "@/lib/models/super-admin/Client";
 import { NextRequest, NextResponse } from "next/server";
-import { LoginUser } from "@/lib/models/LoginUsers";
+import { LoginUser } from "@/lib/models/Xsite/LoginUsers";
 import { Types } from "mongoose";
 
 // Helper function to validate MongoDB ObjectId
