@@ -19,6 +19,20 @@ const SectionSchema = new Schema(
   { _id: true }
 );
 
+const StaffSchema = new Schema(
+  {
+    id: {
+      type: String,
+      required: true,
+    },
+    fullName: {
+      type: String,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
 const projectSchema = new Schema(
   {
     name: {
@@ -86,6 +100,11 @@ const projectSchema = new Schema(
 
     amenities: {
       type: [AmenitiesSchema],
+      required: false,
+    },
+
+    assignedStaff: {
+      type: [StaffSchema],
       required: false,
     },
   },
