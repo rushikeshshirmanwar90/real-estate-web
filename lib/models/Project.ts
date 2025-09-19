@@ -47,17 +47,17 @@ const projectSchema = new Schema(
 
     state: {
       type: String,
-      required: true,
+      required: false,
     },
 
     city: {
       type: String,
-      required: true,
+      required: false,
     },
 
     area: {
       type: String,
-      required: true,
+      required: false,
     },
 
     address: {
@@ -67,7 +67,7 @@ const projectSchema = new Schema(
 
     description: {
       type: String,
-      required: false,
+      required: true,
     },
 
     clientId: {
@@ -78,7 +78,7 @@ const projectSchema = new Schema(
 
     projectType: {
       type: String,
-      required: true,
+      required: false,
       enum: ["ongoing", "upcoming", "completed"],
       default: "ongoing",
     },
