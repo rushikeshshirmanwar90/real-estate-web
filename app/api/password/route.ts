@@ -16,7 +16,7 @@ export const POST = async (req: NextRequest | Request) => {
 
     let updatedPassword: string | null = "";
 
-    if (userType === "client") {
+    if (userType === "clients") {
       updatedPassword = await Client.findOneAndUpdate(
         { email },
         { password: hashedPassword },
