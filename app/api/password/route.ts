@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import { Customer } from "@/lib/models/Customer";
 import { Client } from "@/lib/models/super-admin/Client";
 import { LoginUser } from "@/lib/models/LoginUsers";
+import { Staff } from "@/lib/models/Staff";
 
 export const POST = async (req: NextRequest | Request) => {
   try {
@@ -29,6 +30,18 @@ export const POST = async (req: NextRequest | Request) => {
       );
     } else if (userType === "user") {
       updatedPassword = await Customer.findOneAndUpdate(
+        { email },
+        { password: hashedPassword },
+        { new: true }
+      );
+
+      await LoginUser.findOneAndUpdate(
+        { email },
+        { password: hashedPassword },
+        { new: true }
+      );
+    } else if (userType === "staff") {
+      updatedPassword = await Staff.findOneAndUpdate(
         { email },
         { password: hashedPassword },
         { new: true }
