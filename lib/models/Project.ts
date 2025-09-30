@@ -107,6 +107,21 @@ const projectSchema = new Schema(
       type: [StaffSchema],
       required: false,
     },
+
+    budget: {
+      type: Number,
+      required: false,
+    },
+
+    spent: {
+      type: Number,
+      required: false,
+    },
+
+    progress: {
+      type: Number,
+      required: false,
+    },
   },
   {
     timestamps: true,

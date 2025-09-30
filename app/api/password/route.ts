@@ -41,6 +41,8 @@ export const POST = async (req: NextRequest | Request) => {
         { new: true }
       );
     } else if (userType === "staff") {
+      console.log("i am here in staff");
+
       updatedPassword = await Staff.findOneAndUpdate(
         { email },
         { password: hashedPassword },
