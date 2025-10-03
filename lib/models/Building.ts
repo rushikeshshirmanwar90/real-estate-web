@@ -62,29 +62,30 @@ const buildingSchema = new Schema(
       required: true,
     },
 
-    description: {
-      type: String,
-    },
-
-    location: {
-      type: String,
-      required: true,
-    },
-
-    area: {
-      type: Number,
-      require: true,
-    },
-
     projectId: {
       type: Schema.Types.ObjectId,
       ref: "Projects",
       require: true,
     },
 
+    description: {
+      type: String,
+      required: false,
+    },
+
+    location: {
+      type: String,
+      required: false,
+    },
+
+    area: {
+      type: Number,
+      require: false,
+    },
+
     images: {
       type: [String],
-      required: true,
+      required: false,
     },
 
     section: {
@@ -101,7 +102,6 @@ const buildingSchema = new Schema(
       type: [AmenitiesSchema],
       required: false,
     },
-
   },
   {
     timestamps: true,

@@ -24,10 +24,10 @@ export interface Amenity {
 
 export interface BuildingFormProps {
     _id?: string;
+    projectId: string;
     name: string;
     description?: string;
     location: string
-    projectId: string;
     area: number;
     images: string[];
     amenities?: Amenity[];

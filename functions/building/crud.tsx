@@ -3,6 +3,7 @@ import domain from "@/components/utils/domain"
 
 export const addBuilding = async (data: BuildingFormProps) => {
     try {
+
         const res = await fetch(`${domain}/api/building`, {
             method: "POST",
             headers: {
