@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Customer } from "@/lib/models/Customer";
 import { Client } from "@/lib/models/super-admin/Client";
 import { LoginUser } from "@/lib/models/Xsite/LoginUsers";
+import { Staff } from "@/lib/models/Staff";
 
 export const POST = async (req: NextRequest | Request) => {
   try {
@@ -22,6 +23,13 @@ export const POST = async (req: NextRequest | Request) => {
       await LoginUser.findOneAndUpdate({ email }, { password: "" });
     } else if (userType === "user") {
       updatedPassword = await Customer.findOneAndUpdate(
+        { email },
+        { password: "" },
+        { new: true }
+      );
+      await LoginUser.findOneAndUpdate({ email }, { password: "" });
+    } else if (userType === "staff") {
+      updatedPassword = await Staff.findOneAndUpdate(
         { email },
         { password: "" },
         { new: true }
