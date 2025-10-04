@@ -8,27 +8,7 @@ const RowHouseSchema = new Schema(
       require: true,
     },
 
-    description: {
-      type: String,
-      require: false,
-    },
-
-    images: {
-      type: [String],
-      require: false,
-    },
-
     totalHouse: {
-      type: Number,
-      require: true,
-    },
-
-    bookedHouse: {
-      type: Number,
-      require: true,
-    },
-
-    area: {
       type: Number,
       require: true,
     },
@@ -39,11 +19,30 @@ const RowHouseSchema = new Schema(
       require: true,
     },
 
+    description: {
+      type: String,
+      require: false,
+    },
+
+    images: {
+      type: [String],
+      require: false,
+    },
+
+    bookedHouse: {
+      type: Number,
+      require: false,
+    },
+
+    area: {
+      type: Number,
+      require: false,
+    },
+
     amenities: {
       type: [AmenitiesSchema],
       required: false,
     },
-
   },
   {
     timestamps: true,

@@ -6,24 +6,24 @@ const OtherSectionSchema = new Schema({
     require: true,
   },
 
-  images: {
-    type: [String],
-    require: true,
-  },
-
-  area: {
-    type: Number,
-    require: true,
-  },
-
   projectId: {
     type: String,
     require: true,
   },
 
+  images: {
+    type: [String],
+    require: false,
+  },
+
+  area: {
+    type: Number,
+    require: false,
+  },
+
   description: {
     type: String,
-    require: true,
+    require: false,
   },
 });
 
