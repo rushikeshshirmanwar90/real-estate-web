@@ -1,9 +1,9 @@
 import connect from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-import { Customer } from "@/lib/models/Customer";
+import { Customer } from "@/lib/models/users/Customer";
 import { Client } from "@/lib/models/super-admin/Client";
 import { LoginUser } from "@/lib/models/Xsite/LoginUsers";
-import { Staff } from "@/lib/models/Staff";
+import { Staff } from "@/lib/models/users/Staff";
 
 export const POST = async (req: NextRequest | Request) => {
   try {

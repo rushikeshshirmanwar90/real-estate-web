@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import connect from "@/lib/db";
-import { Customer } from "@/lib/models/Customer";
+import { Customer } from "@/lib/models/users/Customer";
 import { CustomerDetails } from "@/lib/models/CustomerDetails";
 import { Types } from "mongoose";
 

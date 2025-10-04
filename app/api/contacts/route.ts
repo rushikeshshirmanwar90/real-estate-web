@@ -1,6 +1,6 @@
 import connect from "@/lib/db";
 import { Contacts } from "@/lib/models/Contacts";
-import { Customer } from "@/lib/models/Customer";
+import { Customer } from "@/lib/models/users/Customer";
 import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (req: NextRequest | Request) => {

@@ -1,5 +1,5 @@
 import connect from "@/lib/db";
-import { Customer } from "@/lib/models/Customer";
+import { Customer } from "@/lib/models/users/Customer";
 import { NextRequest, NextResponse } from "next/server";
 
 export const POST = async (req: NextRequest | Request) => {
