@@ -1,6 +1,11 @@
 import { models, model, Schema } from "mongoose";
 
 const AdminSchema = new Schema({
+  clientId: {
+    type: String,
+    required: true,
+  },
+
   firstName: {
     type: String,
     required: true,
@@ -9,23 +14,20 @@ const AdminSchema = new Schema({
     type: String,
     required: true,
   },
-  phoneNumber: {
+
+  email: {
     type: String,
     required: true,
   },
-  email: {
-    type: String,
+
+  phoneNumber: {
+    type: Number,
     required: true,
   },
 
   password: {
     type: String,
     required: false,
-  },
-
-  clientId: {
-    type: String,
-    required: true,
   },
 });
 
