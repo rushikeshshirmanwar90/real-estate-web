@@ -1,5 +1,4 @@
 import connect from "@/lib/db";
-import { LoginUser } from "@/lib/models/Xsite/LoginUsers";
 import { Client } from "@/lib/models/super-admin/Client";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -59,13 +58,6 @@ export const POST = async (req: NextRequest) => {
     const addClient = new Client(data);
     await addClient.save();
 
-    const { email, ...otherData } = data;
-
-    console.log(otherData);
-    const payload = { email, userType: "client" };
-    const newEntry = new LoginUser(payload);
-    await newEntry.save();
-
     return NextResponse.json({ message: "Client added successfully" });
   } catch (error: unknown) {
     console.error("Error: " + error);
@@ -91,9 +83,8 @@ export const DELETE = async (req: NextRequest) => {
     await connect();
 
     const deletedClient = await Client.findOneAndDelete({ email });
-    const deletedLoginUser = await LoginUser.findOneAndDelete({ email });
 
-    if (!deletedClient || !deletedLoginUser) {
+    if (!deletedClient) {
       return NextResponse.json(
         { message: "Something went wrong can't Delete Client" },
         { status: 500 }
