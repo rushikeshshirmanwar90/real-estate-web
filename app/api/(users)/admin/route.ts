@@ -45,6 +45,7 @@ export const GET = async (req: NextRequest) => {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     const email = searchParams.get("email");
+    const clientId = searchParams.get("clientId");
 
     // Get specific admin by ID
     if (id) {
@@ -75,6 +76,19 @@ export const GET = async (req: NextRequest) => {
       return successResponse(adminData, "Admin retrieved successfully");
     }
 
+    if (clientId) {
+      if (!isValidObjectId(clientId)) {
+        return errorResponse("Invalid Id format", 400);
+      }
+
+      const adminData = await Admin.findOne({ clientId });
+      if (!adminData) {
+        return errorResponse("Admin not found with this clientId", 404);
+      }
+
+      return successResponse(adminData, "Admin retrieved successfully");
+    }
+
     // Get all admins
     const adminData = await Admin.find().sort({ createdAt: -1 });
 
@@ -96,6 +110,9 @@ export const POST = async (req: NextRequest) => {
     // Validate required fields
     if (!data.email) {
       return errorResponse("Email is required", 400);
+    }
+    if (!data.clientId) {
+      return errorResponse("ClientId is required", 400);
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
