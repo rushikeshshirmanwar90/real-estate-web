@@ -1,5 +1,6 @@
 import { model, models, Schema } from "mongoose";
 import { AmenitiesSchema } from "./utils/Amenities";
+import { MaterialSchema } from "./Xsite/request-material";
 
 const SectionSchema = new Schema(
   {
@@ -120,6 +121,16 @@ const projectSchema = new Schema(
 
     progress: {
       type: Number,
+      required: false,
+    },
+
+    materialUsed: {
+      type: [MaterialSchema],
+      required: false,
+    },
+
+    materialAvailable: {
+      type: [MaterialSchema],
       required: false,
     },
   },
