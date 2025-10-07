@@ -14,7 +14,7 @@ const LoginUserSchema = new Schema({
   userType: {
     type: String,
     required: true,
-    enum: ["clients", "users", "staff"],
+    enum: ["admin", "users", "staff"],
   },
 });
 
