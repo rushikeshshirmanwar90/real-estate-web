@@ -2,9 +2,9 @@ import connect from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import { Customer } from "@/lib/models/users/Customer";
-import { Client } from "@/lib/models/super-admin/Client";
 import { LoginUser } from "@/lib/models/Xsite/LoginUsers";
 import { Staff } from "@/lib/models/users/Staff";
+import { Admin } from "@/lib/models/users/Admin";
 
 export const POST = async (req: NextRequest | Request) => {
   try {
@@ -16,8 +16,8 @@ export const POST = async (req: NextRequest | Request) => {
 
     let updatedPassword: string | null = "";
 
-    if (userType === "clients") {
-      updatedPassword = await Client.findOneAndUpdate(
+    if (userType === "admin") {
+      updatedPassword = await Admin.findOneAndUpdate(
         { email },
         { password: hashedPassword },
         { new: true }
@@ -72,6 +72,7 @@ export const POST = async (req: NextRequest | Request) => {
       { status: 200 }
     );
   } catch (error: unknown) {
+    console.log(error);
     return NextResponse.json(
       {
         message: "can't able update the password, please try again",
