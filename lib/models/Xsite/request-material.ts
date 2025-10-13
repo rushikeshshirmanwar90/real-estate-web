@@ -5,9 +5,17 @@ export const MaterialSchema = new Schema({
     type: String,
     required: true,
   },
-  qnt: {
+  unit: {
     type: String,
     required: true,
+  },
+  specs: {
+    type: Object,
+    default: {},
+  },
+  cost: {
+    type: Number,
+    default: 0,
   },
 });
 
