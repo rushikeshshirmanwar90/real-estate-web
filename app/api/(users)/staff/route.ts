@@ -1,42 +1,13 @@
 import connect from "@/lib/db";
 import { LoginUser } from "@/lib/models/Xsite/LoginUsers";
 import { Staff } from "@/lib/models/users/Staff";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { Types } from "mongoose";
+import { errorResponse, successResponse } from "@/lib/models/utils/API";
 
 // Helper function to validate MongoDB ObjectId
 const isValidObjectId = (id: string): boolean => {
   return Types.ObjectId.isValid(id);
-};
-
-// Helper function for error responses
-const errorResponse = (message: string, status: number, error?: unknown) => {
-  return NextResponse.json(
-    {
-      success: false,
-      message,
-      ...(error && typeof error === "object"
-        ? { error: error instanceof Error ? error.message : error }
-        : {}),
-    },
-    { status }
-  );
-};
-
-// Helper function for success responses
-const successResponse = (
-  data: unknown,
-  message?: string,
-  status: number = 200
-) => {
-  return NextResponse.json(
-    {
-      success: true,
-      ...(message && { message }),
-      data,
-    },
-    { status }
-  );
 };
 
 export const GET = async (req: NextRequest) => {
@@ -93,7 +64,6 @@ export const POST = async (req: NextRequest) => {
     await connect();
     const data = await req.json();
 
-    // Validate required fields
     if (!data.email) {
       return errorResponse("Email is required", 400);
     }
