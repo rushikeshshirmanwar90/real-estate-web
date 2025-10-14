@@ -1,234 +1,152 @@
 import connect from "@/lib/db";
+import { Projects } from "@/lib/models/Project";
+import { Section } from "@/lib/models/Xsite/Section";
 import { RequestedMaterial } from "@/lib/models/Xsite/request-material";
-import { NextRequest, NextResponse } from "next/server";
-import { Types } from "mongoose";
+import { errorResponse, successResponse } from "@/lib/models/utils/API";
+import { NextRequest } from "next/server";
 
-// Helper function to validate MongoDB ObjectId
-const isValidObjectId = (id: string): boolean => {
-  return Types.ObjectId.isValid(id);
-};
+export const GET = async (req: NextRequest | Request) => {
+  const { searchParams } = new URL(req.url);
+  const projectId = searchParams.get("projectId");
+  const mainSectionId = searchParams.get("mainSectionId");
+  const sectionId = searchParams.get("sectionId");
 
-// Helper function for error responses
-const errorResponse = (message: string, status: number, error?: unknown) => {
-  return NextResponse.json(
-    {
-      success: false,
-      message,
-      ...(error && typeof error === "object"
-        ? { error: error instanceof Error ? error.message : error }
-        : {}),
-    },
-    { status }
-  );
-};
-
-// Helper function for success responses
-const successResponse = (
-  data: unknown,
-  message?: string,
-  status: number = 200
-) => {
-  return NextResponse.json(
-    {
-      success: true,
-      ...(message && { message }),
-      data,
-    },
-    { status }
-  );
-};
-
-export const GET = async (req: NextRequest) => {
   try {
     await connect();
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
-    const clientId = searchParams.get("clientId");
-    const projectId = searchParams.get("projectId");
-
-    // Get specific requested material by ID
-    if (id) {
-      if (!isValidObjectId(id)) {
-        return errorResponse("Invalid requested material ID format", 400);
-      }
-
-      const requestedMaterial = await RequestedMaterial.findById(id);
-      if (!requestedMaterial) {
-        return errorResponse("Requested material not found", 404);
-      }
-
-      return successResponse(
-        requestedMaterial,
-        "Requested material retrieved successfully"
-      );
-    }
-
-    // Get requested materials by client ID
-    if (clientId) {
-      const requestedMaterials = await RequestedMaterial.find({
-        clientId,
-      }).sort({ createdAt: -1 });
-
-      return successResponse(
-        requestedMaterials,
-        `Retrieved ${requestedMaterials.length} requested material(s) for client successfully`
-      );
-    }
-
-    // Get requested materials by project ID
     if (projectId) {
-      const requestedMaterials = await RequestedMaterial.find({
-        projectId,
-      }).sort({ createdAt: -1 });
-
-      return successResponse(
-        requestedMaterials,
-        `Retrieved ${requestedMaterials.length} requested material(s) for project successfully`
-      );
+      const getMaterials = await RequestedMaterial.find({ projectId });
+      if (!getMaterials) {
+        errorResponse(
+          `can't able to get Requested Material with mentioned projectId : ${projectId}`,
+          404
+        );
+      }
+      successResponse(getMaterials, "Data fetched successfully", 200);
+    } else if (mainSectionId) {
+      const getMaterials = await RequestedMaterial.find({ mainSectionId });
+      if (!getMaterials) {
+        errorResponse(
+          `can't able to get Requested Material with mentioned MainSectionId : ${mainSectionId}`,
+          404
+        );
+      }
+      successResponse(getMaterials, "Data fetched successfully", 200);
+    } else if (sectionId) {
+      const getMaterials = await RequestedMaterial.find({ sectionId });
+      if (!getMaterials) {
+        errorResponse(
+          `can't able to get Requested Material with mentioned sectionId : ${sectionId}`,
+          404
+        );
+      }
+      successResponse(getMaterials, "Data fetched successfully", 200);
+    } else {
+      errorResponse("invalid params", 406);
     }
-
-    // Get all requested materials
-    const requestedMaterials = await RequestedMaterial.find().sort({
-      createdAt: -1,
-    });
-
-    return successResponse(
-      requestedMaterials,
-      `Retrieved ${requestedMaterials.length} requested material(s) successfully`
-    );
   } catch (error: unknown) {
-    console.error("GET /requested-materials error:", error);
-    return errorResponse(
-      "Failed to fetch requested materials data",
-      500,
-      error
-    );
+    if (error instanceof Error) {
+      errorResponse("Something went wrong", 500, error.message);
+    }
+    errorResponse("Unknown error occurred", 500);
   }
 };
 
-export const POST = async (req: NextRequest) => {
+export const POST = async (req: NextRequest | Request) => {
   try {
     await connect();
-    const data = await req.json();
 
-    // Validate required fields
-    if (!data.clientId) {
-      return errorResponse("Client ID is required", 400);
+    const { projectId, sectionId, mainSectionId, materials, message } =
+      await req.json();
+
+    if (!projectId || !sectionId || !mainSectionId) {
+      errorResponse(
+        "projectId, sectionId, and mainSectionId are all required",
+        406
+      );
     }
 
-    if (!data.projectId) {
-      return errorResponse("Project ID is required", 400);
+    if (!Array.isArray(materials) || materials.length === 0) {
+      errorResponse("Materials array cannot be empty", 406);
     }
 
-    if (!data.materials) {
-      return errorResponse("Materials array is required", 400);
+    const getProject = await Projects.findById(projectId);
+    if (!getProject) {
+      errorResponse("Project not found", 404);
     }
 
-    // Create new requested material
-    const newRequestedMaterial = new RequestedMaterial(data);
-    const savedRequestedMaterial = await newRequestedMaterial.save();
+    const getSection = await Section.findById(sectionId);
+    if (!getSection) {
+      errorResponse("Section not found", 404);
+    }
 
-    return successResponse(
-      savedRequestedMaterial,
-      "Requested material created successfully",
+    const clientId = getProject.clientId;
+
+    const sectionMatch = getProject.section.find(
+      (sec: { sectionId: string }) => sec.sectionId === mainSectionId
+    );
+    if (!sectionMatch) {
+      errorResponse("mainSectionId not found in this project", 406);
+    }
+
+    if (
+      getSection.projectDetails?.projectId &&
+      getSection.projectDetails.projectId.toString() !== projectId
+    ) {
+      errorResponse("Section does not belong to this project", 406);
+    }
+
+    // ✅ Prepare payload
+    const payload = {
+      clientId,
+      projectId,
+      mainSectionId,
+      sectionId,
+      materials,
+      message,
+    };
+
+    const newRequestMaterial = new RequestedMaterial(payload);
+    await newRequestMaterial.save();
+
+    successResponse(
+      newRequestMaterial,
+      "Material request created successfully",
       201
     );
   } catch (error: unknown) {
-    console.error("POST /requested-materials error:", error);
-
-    // Handle mongoose validation errors
-    if (
-      error &&
-      typeof error === "object" &&
-      "name" in error &&
-      error.name === "ValidationError"
-    ) {
-      return errorResponse("Validation failed", 400, error);
+    if (error instanceof Error) {
+      errorResponse("Something went wrong", 500, error.message);
     }
-
-    return errorResponse("Failed to create requested material", 500, error);
+    errorResponse("Unknown error occurred", 500);
   }
 };
 
-export const PUT = async (req: NextRequest) => {
+export const DELETE = async (req: NextRequest | Request) => {
   try {
     await connect();
+
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
 
     if (!id) {
-      return errorResponse("Requested material ID is required for update", 400);
+      errorResponse("Requested material id is required for deletion", 406);
     }
 
-    if (!isValidObjectId(id)) {
-      return errorResponse("Invalid requested material ID format", 400);
+    const deletedRequest = await RequestedMaterial.findByIdAndDelete(id);
+
+    if (!deletedRequest) {
+      errorResponse("Requested material not found", 404);
     }
 
-    const data = await req.json();
-
-    // Find and update the requested material
-    const updatedRequestedMaterial = await RequestedMaterial.findByIdAndUpdate(
-      id,
-      { ...data, updatedAt: new Date() },
-      { new: true, runValidators: true }
-    );
-
-    if (!updatedRequestedMaterial) {
-      return errorResponse("Requested material not found", 404);
-    }
-
-    return successResponse(
-      updatedRequestedMaterial,
-      "Requested material updated successfully"
+    successResponse(
+      deletedRequest,
+      "Requested material deleted successfully",
+      200
     );
   } catch (error: unknown) {
-    console.error("PUT /requested-materials error:", error);
-
-    // Handle mongoose validation errors
-    if (
-      error &&
-      typeof error === "object" &&
-      "name" in error &&
-      error.name === "ValidationError"
-    ) {
-      return errorResponse("Validation failed", 400, error);
+    if (error instanceof Error) {
+      errorResponse("Something went wrong", 500, error.message);
     }
-
-    return errorResponse("Failed to update requested material", 500, error);
-  }
-};
-
-export const DELETE = async (req: NextRequest) => {
-  try {
-    await connect();
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
-
-    if (!id) {
-      return errorResponse(
-        "Requested material ID is required for deletion",
-        400
-      );
-    }
-
-    if (!isValidObjectId(id)) {
-      return errorResponse("Invalid requested material ID format", 400);
-    }
-
-    // Find and delete the requested material
-    const deletedRequestedMaterial =
-      await RequestedMaterial.findByIdAndDelete(id);
-
-    if (!deletedRequestedMaterial) {
-      return errorResponse("Requested material not found", 404);
-    }
-
-    return successResponse(
-      deletedRequestedMaterial,
-      "Requested material deleted successfully"
-    );
-  } catch (error: unknown) {
-    console.error("DELETE /requested-materials error:", error);
-    return errorResponse("Failed to delete requested material", 500, error);
+    errorResponse("Unknown error occurred", 500);
   }
 };

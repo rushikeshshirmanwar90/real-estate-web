@@ -16,6 +16,8 @@ const SectionSchema = new Schema(
       required: true,
       enum: ["row house", "building", "other"],
     },
+    materialUsed: [MaterialSchema],
+    MaterialAvailable: [MaterialSchema],
   },
   { _id: true }
 );
@@ -124,12 +126,12 @@ const projectSchema = new Schema(
       required: false,
     },
 
-    materialUsed: {
+    MaterialUsed: {
       type: [MaterialSchema],
       required: false,
     },
 
-    materialAvailable: {
+    MaterialAvailable: {
       type: [MaterialSchema],
       required: false,
     },

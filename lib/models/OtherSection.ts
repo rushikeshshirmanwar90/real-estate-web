@@ -1,4 +1,5 @@
 import { model, models, Schema } from "mongoose";
+import { MaterialSchema } from "./Xsite/request-material";
 
 const OtherSectionSchema = new Schema({
   name: {
@@ -24,6 +25,16 @@ const OtherSectionSchema = new Schema({
   description: {
     type: String,
     require: false,
+  },
+
+  MaterialUsed: {
+    type: [MaterialSchema],
+    required: false,
+  },
+
+  MaterialAvailable: {
+    type: [MaterialSchema],
+    required: false,
   },
 });
 

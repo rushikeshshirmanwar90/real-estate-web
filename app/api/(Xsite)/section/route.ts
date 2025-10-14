@@ -20,8 +20,6 @@ interface payloadProps {
 }
 
 export const GET = async (req: NextRequest | Request) => {
-  await connect();
-
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
   const projectId = searchParams.get("projectId");
@@ -39,6 +37,8 @@ export const GET = async (req: NextRequest | Request) => {
   }
 
   try {
+    await connect();
+
     if (id) {
       const sectionData = await Section.findById(id);
       if (!sectionData) {
@@ -58,16 +58,16 @@ export const GET = async (req: NextRequest | Request) => {
     }
   } catch (error: unknown) {
     if (error instanceof Error) {
-      return errorResponse("something went wrong", 500, error.message);
+      errorResponse("something went wrong", 500, error.message);
     }
-    return errorResponse("Unknown error occurred", 500);
+    errorResponse("Unknown error occurred", 500);
   }
 };
 
 export const POST = async (req: NextRequest | Request) => {
-  await connect();
-
   try {
+    await connect();
+
     const data: payloadProps = await req.json();
 
     const newSection = await new Section(data);
@@ -78,19 +78,19 @@ export const POST = async (req: NextRequest | Request) => {
     }
   } catch (error: unknown) {
     if (error instanceof Error) {
-      return errorResponse("something went wrong", 500, error.message);
+      errorResponse("something went wrong", 500, error.message);
     }
-    return errorResponse("Unknown error occurred", 500);
+    errorResponse("Unknown error occurred", 500);
   }
 };
 
 export const PUT = async (req: NextRequest | Request) => {
-  await connect();
-
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
 
   try {
+    await connect();
+
     if (!id) errorResponse("sectionId is required", 406);
 
     const { name } = await req.json();
@@ -109,19 +109,19 @@ export const PUT = async (req: NextRequest | Request) => {
     successResponse(updatedData, "data updated successfully", 200);
   } catch (error: unknown) {
     if (error instanceof Error) {
-      return errorResponse("something went wrong", 500, error.message);
+      errorResponse("something went wrong", 500, error.message);
     }
-    return errorResponse("Unknown error occurred", 500);
+    errorResponse("Unknown error occurred", 500);
   }
 };
 
 export const DELETE = async (req: NextRequest | Request) => {
-  await connect();
-
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
 
   try {
+    await connect();
+
     if (id) {
       errorResponse("id is required", 406);
     }
@@ -129,14 +129,14 @@ export const DELETE = async (req: NextRequest | Request) => {
     const removedData = await Section.findByIdAndDelete(id);
 
     if (removedData) {
-      return successResponse(removedData, "data deleted successfully", 200);
+      successResponse(removedData, "data deleted successfully", 200);
     } else {
-      return errorResponse(`data not found with this id : ${id}`, 406);
+      errorResponse(`data not found with this id : ${id}`, 406);
     }
   } catch (error: unknown) {
     if (error instanceof Error) {
-      return errorResponse("something went wrong", 500, error.message);
+      errorResponse("something went wrong", 500, error.message);
     }
-    return errorResponse("Unknown error occurred", 500);
+    errorResponse("Unknown error occurred", 500);
   }
 };

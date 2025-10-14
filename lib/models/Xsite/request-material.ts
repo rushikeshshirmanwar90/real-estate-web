@@ -30,15 +30,31 @@ const RequestedMaterialSchema = new Schema({
     required: true,
   },
 
+  mainSectionId: {
+    type: String,
+    required: true,
+  },
+
+  sectionId: {
+    type: String,
+    required: true,
+  },
+
   materials: {
     type: [MaterialSchema],
     required: true,
   },
 
-  approved: {
-    type: Boolean,
+  status: {
+    type: String,
     required: false,
-    default: false,
+    enum: ["pending", "approved", "rejected", "imported"],
+    default: "pending",
+  },
+
+  message: {
+    type: String,
+    required: false,
   },
 });
 
