@@ -12,16 +12,23 @@ export const POST = async (req: NextRequest | Request) => {
       });
 
       if (!updateRequest) {
-        errorResponse("unable to approve the request please try again", 500);
+        return errorResponse(
+          "unable to approve the request please try again",
+          500
+        );
       }
 
-      successResponse(updateRequest, "request approved successfully", 200);
+      return successResponse(
+        updateRequest,
+        "request approved successfully",
+        200
+      );
     }
   } catch (error: unknown) {
     if (error instanceof Error) {
-      errorResponse("something went wrong", 500, error.message);
+      return errorResponse("something went wrong", 500, error.message);
     }
 
-    errorResponse("something went wrong", 500);
+    return errorResponse("something went wrong", 500);
   }
 };

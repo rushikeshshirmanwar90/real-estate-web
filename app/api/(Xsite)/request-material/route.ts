@@ -16,38 +16,38 @@ export const GET = async (req: NextRequest | Request) => {
     if (projectId) {
       const getMaterials = await RequestedMaterial.find({ projectId });
       if (!getMaterials) {
-        errorResponse(
+        return errorResponse(
           `can't able to get Requested Material with mentioned projectId : ${projectId}`,
           404
         );
       }
-      successResponse(getMaterials, "Data fetched successfully", 200);
+      return successResponse(getMaterials, "Data fetched successfully", 200);
     } else if (mainSectionId) {
       const getMaterials = await RequestedMaterial.find({ mainSectionId });
       if (!getMaterials) {
-        errorResponse(
+        return errorResponse(
           `can't able to get Requested Material with mentioned MainSectionId : ${mainSectionId}`,
           404
         );
       }
-      successResponse(getMaterials, "Data fetched successfully", 200);
+      return successResponse(getMaterials, "Data fetched successfully", 200);
     } else if (sectionId) {
       const getMaterials = await RequestedMaterial.find({ sectionId });
       if (!getMaterials) {
-        errorResponse(
+        return errorResponse(
           `can't able to get Requested Material with mentioned sectionId : ${sectionId}`,
           404
         );
       }
-      successResponse(getMaterials, "Data fetched successfully", 200);
+      return successResponse(getMaterials, "Data fetched successfully", 200);
     } else {
-      errorResponse("invalid params", 406);
+      return errorResponse("invalid params", 406);
     }
   } catch (error: unknown) {
     if (error instanceof Error) {
-      errorResponse("Something went wrong", 500, error.message);
+      return errorResponse("Something went wrong", 500, error.message);
     }
-    errorResponse("Unknown error occurred", 500);
+    return errorResponse("Unknown error occurred", 500);
   }
 };
 
@@ -59,24 +59,24 @@ export const POST = async (req: NextRequest | Request) => {
       await req.json();
 
     if (!projectId || !sectionId || !mainSectionId) {
-      errorResponse(
+      return errorResponse(
         "projectId, sectionId, and mainSectionId are all required",
         406
       );
     }
 
     if (!Array.isArray(materials) || materials.length === 0) {
-      errorResponse("Materials array cannot be empty", 406);
+      return errorResponse("Materials array cannot be empty", 406);
     }
 
     const getProject = await Projects.findById(projectId);
     if (!getProject) {
-      errorResponse("Project not found", 404);
+      return errorResponse("Project not found", 404);
     }
 
     const getSection = await Section.findById(sectionId);
     if (!getSection) {
-      errorResponse("Section not found", 404);
+      return errorResponse("Section not found", 404);
     }
 
     const clientId = getProject.clientId;
@@ -85,14 +85,14 @@ export const POST = async (req: NextRequest | Request) => {
       (sec: { sectionId: string }) => sec.sectionId === mainSectionId
     );
     if (!sectionMatch) {
-      errorResponse("mainSectionId not found in this project", 406);
+      return errorResponse("mainSectionId not found in this project", 406);
     }
 
     if (
       getSection.projectDetails?.projectId &&
       getSection.projectDetails.projectId.toString() !== projectId
     ) {
-      errorResponse("Section does not belong to this project", 406);
+      return errorResponse("Section does not belong to this project", 406);
     }
 
     // ✅ Prepare payload
@@ -108,16 +108,16 @@ export const POST = async (req: NextRequest | Request) => {
     const newRequestMaterial = new RequestedMaterial(payload);
     await newRequestMaterial.save();
 
-    successResponse(
+    return successResponse(
       newRequestMaterial,
       "Material request created successfully",
       201
     );
   } catch (error: unknown) {
     if (error instanceof Error) {
-      errorResponse("Something went wrong", 500, error.message);
+      return errorResponse("Something went wrong", 500, error.message);
     }
-    errorResponse("Unknown error occurred", 500);
+    return errorResponse("Unknown error occurred", 500);
   }
 };
 
@@ -129,24 +129,27 @@ export const DELETE = async (req: NextRequest | Request) => {
     const id = searchParams.get("id");
 
     if (!id) {
-      errorResponse("Requested material id is required for deletion", 406);
+      return errorResponse(
+        "Requested material id is required for deletion",
+        406
+      );
     }
 
     const deletedRequest = await RequestedMaterial.findByIdAndDelete(id);
 
     if (!deletedRequest) {
-      errorResponse("Requested material not found", 404);
+      return errorResponse("Requested material not found", 404);
     }
 
-    successResponse(
+    return successResponse(
       deletedRequest,
       "Requested material deleted successfully",
       200
     );
   } catch (error: unknown) {
     if (error instanceof Error) {
-      errorResponse("Something went wrong", 500, error.message);
+      return errorResponse("Something went wrong", 500, error.message);
     }
-    errorResponse("Unknown error occurred", 500);
+    return errorResponse("Unknown error occurred", 500);
   }
 };

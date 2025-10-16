@@ -26,14 +26,14 @@ export const GET = async (req: NextRequest | Request) => {
   const sectionId = searchParams.get("sectionId");
 
   if (!id && !projectId && !sectionId) {
-    errorResponse(
+    return errorResponse(
       "{id, projectId, sectionId} from this at least one parameter is required",
       400
     );
   }
 
   if (projectId && !sectionId) {
-    errorResponse("with projectId, sectionId is also required", 400);
+    return errorResponse("with projectId, sectionId is also required", 400);
   }
 
   try {
@@ -42,25 +42,33 @@ export const GET = async (req: NextRequest | Request) => {
     if (id) {
       const sectionData = await Section.findById(id);
       if (!sectionData) {
-        errorResponse("data not found", 204);
+        return errorResponse("data not found", 204);
       }
-      successResponse(sectionData, "Section data fetched successfully", 200);
+      return successResponse(
+        sectionData,
+        "Section data fetched successfully",
+        200
+      );
     } else if (sectionId) {
       const sectionData = await Section.find({
         "mainSectionDetails.sectionId": sectionId,
       });
 
       if (!sectionData) {
-        errorResponse("data not found", 204);
+        return errorResponse("data not found", 204);
       }
 
-      successResponse(sectionData, "Section data fetched successfully", 200);
+      return successResponse(
+        sectionData,
+        "Section data fetched successfully",
+        200
+      );
     }
   } catch (error: unknown) {
     if (error instanceof Error) {
-      errorResponse("something went wrong", 500, error.message);
+      return errorResponse("something went wrong", 500, error.message);
     }
-    errorResponse("Unknown error occurred", 500);
+    return errorResponse("Unknown error occurred", 500);
   }
 };
 
@@ -74,13 +82,13 @@ export const POST = async (req: NextRequest | Request) => {
     await newSection.save();
 
     if (newSection) {
-      successResponse(newSection, "section created successfully", 201);
+      return successResponse(newSection, "section created successfully", 201);
     }
   } catch (error: unknown) {
     if (error instanceof Error) {
-      errorResponse("something went wrong", 500, error.message);
+      return errorResponse("something went wrong", 500, error.message);
     }
-    errorResponse("Unknown error occurred", 500);
+    return errorResponse("Unknown error occurred", 500);
   }
 };
 
@@ -91,12 +99,12 @@ export const PUT = async (req: NextRequest | Request) => {
   try {
     await connect();
 
-    if (!id) errorResponse("sectionId is required", 406);
+    if (!id) return errorResponse("sectionId is required", 406);
 
     const { name } = await req.json();
 
     if (!name) {
-      errorResponse("only name can update", 406);
+      return errorResponse("only name can update", 406);
     }
 
     const updatedData = await Section.findByIdAndUpdate(
@@ -106,12 +114,12 @@ export const PUT = async (req: NextRequest | Request) => {
     );
     await updatedData.save();
 
-    successResponse(updatedData, "data updated successfully", 200);
+    return successResponse(updatedData, "data updated successfully", 200);
   } catch (error: unknown) {
     if (error instanceof Error) {
-      errorResponse("something went wrong", 500, error.message);
+      return errorResponse("something went wrong", 500, error.message);
     }
-    errorResponse("Unknown error occurred", 500);
+    return errorResponse("Unknown error occurred", 500);
   }
 };
 
@@ -123,20 +131,20 @@ export const DELETE = async (req: NextRequest | Request) => {
     await connect();
 
     if (id) {
-      errorResponse("id is required", 406);
+      return errorResponse("id is required", 406);
     }
 
     const removedData = await Section.findByIdAndDelete(id);
 
     if (removedData) {
-      successResponse(removedData, "data deleted successfully", 200);
+      return successResponse(removedData, "data deleted successfully", 200);
     } else {
-      errorResponse(`data not found with this id : ${id}`, 406);
+      return errorResponse(`data not found with this id : ${id}`, 406);
     }
   } catch (error: unknown) {
     if (error instanceof Error) {
-      errorResponse("something went wrong", 500, error.message);
+      return errorResponse("something went wrong", 500, error.message);
     }
-    errorResponse("Unknown error occurred", 500);
+    return errorResponse("Unknown error occurred", 500);
   }
 };
