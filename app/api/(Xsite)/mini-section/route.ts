@@ -21,35 +21,19 @@ interface payloadProps {
 
 export const GET = async (req: NextRequest | Request) => {
   const { searchParams } = new URL(req.url);
-  const id = searchParams.get("id");
-  const projectId = searchParams.get("projectId");
   const sectionId = searchParams.get("sectionId");
 
-  if (!id && !projectId && !sectionId) {
+  if (!sectionId) {
     return errorResponse(
-      "{id, projectId, sectionId} from this at least one parameter is required",
+      "sectionId from this at least one parameter is required",
       400
     );
-  }
-
-  if (projectId && !sectionId) {
-    return errorResponse("with projectId, sectionId is also required", 400);
   }
 
   try {
     await connect();
 
-    if (id) {
-      const sectionData = await Section.findById(id);
-      if (!sectionData) {
-        return errorResponse("data not found", 204);
-      }
-      return successResponse(
-        sectionData,
-        "Section data fetched successfully",
-        200
-      );
-    } else if (sectionId) {
+    if (sectionId) {
       const sectionData = await Section.find({
         "mainSectionDetails.sectionId": sectionId,
       });
@@ -63,6 +47,8 @@ export const GET = async (req: NextRequest | Request) => {
         "Section data fetched successfully",
         200
       );
+    } else {
+      return errorResponse("something went wrong in params", 406);
     }
   } catch (error: unknown) {
     if (error instanceof Error) {
