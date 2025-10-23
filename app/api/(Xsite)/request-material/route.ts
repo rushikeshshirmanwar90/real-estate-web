@@ -3,14 +3,13 @@ import { Projects } from "@/lib/models/Project";
 import { Section } from "@/lib/models/Xsite/Section";
 import { RequestedMaterial } from "@/lib/models/Xsite/request-material";
 import { errorResponse, successResponse } from "@/lib/models/utils/API";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (req: NextRequest | Request) => {
   const { searchParams } = new URL(req.url);
   const projectId = searchParams.get("projectId");
   const mainSectionId = searchParams.get("mainSectionId");
   const sectionId = searchParams.get("sectionId");
-
   try {
     await connect();
     if (projectId) {
@@ -51,51 +50,28 @@ export const GET = async (req: NextRequest | Request) => {
   }
 };
 
-export const POST = async (req: NextRequest | Request) => {
+export const POST = async (req: NextResponse | Request) => {
+  const { searchParams } = new URL(req.url);
+  const sectionId = searchParams.get("sectionId");
+
   try {
-    await connect();
-
-    const { projectId, sectionId, mainSectionId, materials, message } =
-      await req.json();
-
-    if (!projectId || !sectionId || !mainSectionId) {
-      return errorResponse(
-        "projectId, sectionId, and mainSectionId are all required",
-        406
-      );
+    const { materials, message, clientId } = await req.json();
+    if (!clientId) {
+      return errorResponse("clientId is required", 406)
     }
+
+    const sectionData = await Section.findById(sectionId);
+    if (!sectionData) {
+      return errorResponse("section data not found", 404)
+    }
+
+    const projectId = sectionData.projectDetails.projectId;
+    const mainSectionId = sectionData.mainSectionDetails.sectionId;
 
     if (!Array.isArray(materials) || materials.length === 0) {
       return errorResponse("Materials array cannot be empty", 406);
     }
 
-    const getProject = await Projects.findById(projectId);
-    if (!getProject) {
-      return errorResponse("Project not found", 404);
-    }
-
-    const getSection = await Section.findById(sectionId);
-    if (!getSection) {
-      return errorResponse("Section not found", 404);
-    }
-
-    const clientId = getProject.clientId;
-
-    const sectionMatch = getProject.section.find(
-      (sec: { sectionId: string }) => sec.sectionId === mainSectionId
-    );
-    if (!sectionMatch) {
-      return errorResponse("mainSectionId not found in this project", 406);
-    }
-
-    if (
-      getSection.projectDetails?.projectId &&
-      getSection.projectDetails.projectId.toString() !== projectId
-    ) {
-      return errorResponse("Section does not belong to this project", 406);
-    }
-
-    // ✅ Prepare payload
     const payload = {
       clientId,
       projectId,
@@ -119,7 +95,7 @@ export const POST = async (req: NextRequest | Request) => {
     }
     return errorResponse("Unknown error occurred", 500);
   }
-};
+}
 
 export const DELETE = async (req: NextRequest | Request) => {
   try {
