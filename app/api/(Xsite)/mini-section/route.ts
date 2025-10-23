@@ -116,7 +116,7 @@ export const DELETE = async (req: NextRequest | Request) => {
   try {
     await connect();
 
-    if (id) {
+    if (!id) {
       return errorResponse("id is required", 406);
     }
 
