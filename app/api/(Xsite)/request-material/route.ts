@@ -1,5 +1,4 @@
 import connect from "@/lib/db";
-import { Projects } from "@/lib/models/Project";
 import { Section } from "@/lib/models/Xsite/Section";
 import { RequestedMaterial } from "@/lib/models/Xsite/request-material";
 import { errorResponse, successResponse } from "@/lib/models/utils/API";
@@ -51,11 +50,8 @@ export const GET = async (req: NextRequest | Request) => {
 };
 
 export const POST = async (req: NextResponse | Request) => {
-  const { searchParams } = new URL(req.url);
-  const sectionId = searchParams.get("sectionId");
-
   try {
-    const { materials, message, clientId } = await req.json();
+    const { materials, message, clientId, sectionId } = await req.json();
     if (!clientId) {
       return errorResponse("clientId is required", 406)
     }
@@ -89,6 +85,7 @@ export const POST = async (req: NextResponse | Request) => {
       "Material request created successfully",
       201
     );
+
   } catch (error: unknown) {
     if (error instanceof Error) {
       return errorResponse("Something went wrong", 500, error.message);

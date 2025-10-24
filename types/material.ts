@@ -2,5 +2,5 @@ export interface MaterialProps {
   name: string;
   unit: string;
   specs: unknown;
-  cost: string;
+  cost: number;
 }
