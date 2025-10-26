@@ -1,6 +1,6 @@
 import connect from "@/lib/db";
 import { errorResponse, successResponse } from "@/lib/models/utils/API";
-import { Section } from "@/lib/models/Xsite/Section";
+import { MiniSection as Section } from "@/lib/models/Xsite/mini-section";
 import { NextRequest } from "next/server";
 
 interface projectDetailProps {

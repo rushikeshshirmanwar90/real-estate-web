@@ -1,8 +1,8 @@
 import connect from "@/lib/db";
-import { Section } from "@/lib/models/Xsite/Section";
+import { MiniSection as Section } from "@/lib/models/Xsite/mini-section";
 import { RequestedMaterial } from "@/lib/models/Xsite/request-material";
 import { errorResponse, successResponse } from "@/lib/models/utils/API";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
 export const GET = async (req: NextRequest | Request) => {
   const { searchParams } = new URL(req.url);
@@ -49,9 +49,10 @@ export const GET = async (req: NextRequest | Request) => {
   }
 };
 
-export const POST = async (req: NextResponse | Request) => {
+export const POST = async (req: NextRequest | Request) => {
   try {
-    const { materials, message, clientId, sectionId } = await req.json();
+    await connect();
+    const { materials, message, clientId, sectionId, qnt } = await req.json();
     if (!clientId) {
       return errorResponse("clientId is required", 406)
     }
@@ -75,6 +76,7 @@ export const POST = async (req: NextResponse | Request) => {
       sectionId,
       materials,
       message,
+      qnt
     };
 
     const newRequestMaterial = new RequestedMaterial(payload);

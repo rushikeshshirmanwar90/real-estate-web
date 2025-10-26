@@ -13,6 +13,10 @@ export const MaterialSchema = new Schema({
     type: Object,
     default: {},
   },
+  qnt : {
+    type : Number,
+    required : true,
+  },
   cost: {
     type: Number,
     default: 0,

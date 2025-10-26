@@ -47,4 +47,4 @@ const SectionSchema = new Schema(
   { timestamps: true }
 );
 
-export const Section = models.Section || model("Section", SectionSchema);
+export const MiniSection = models.MiniSection || model("MiniSection", SectionSchema);

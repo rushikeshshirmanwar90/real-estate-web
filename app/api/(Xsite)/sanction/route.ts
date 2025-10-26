@@ -1,29 +1,73 @@
 import { errorResponse, successResponse } from "@/lib/models/utils/API";
 import { RequestedMaterial } from "@/lib/models/Xsite/request-material";
+import {MiniSection as Section } from "@/lib/models/Xsite/mini-section";
 import { NextRequest } from "next/server";
+import connect from "@/lib/db";
 
 export const POST = async (req: NextRequest | Request) => {
   try {
+    await connect();
+
     const { isApproved, id } = await req.json();
 
-    if (isApproved) {
-      const updateRequest = await RequestedMaterial.findByIdAndUpdate(id, {
-        status: "approved",
-      });
+    if (!id) {
+      return errorResponse("id is required", 400);
+    }
 
-      if (!updateRequest) {
-        return errorResponse(
-          "unable to approve the request please try again",
-          500
-        );
+    // Fetch the existing request to validate state
+    const existing = await RequestedMaterial.findById(id);
+    if (!existing) {
+      return errorResponse("Material request not found", 404);
+    }
+
+    if (isApproved) {
+      // Prevent double-approving
+      if (existing.status === "approved" || existing.status === "imported") {
+        return errorResponse("Request already approved or imported", 409);
       }
 
-      return successResponse(
-        updateRequest,
-        "request approved successfully",
-        200
+      // Find the section to push materials into
+      const section = await Section.findById(existing.sectionId);
+      if (!section) {
+        return errorResponse("Section not found to add materials", 404);
+      }
+
+      const pushResult = await Section.findByIdAndUpdate(
+        section._id,
+        { $push: { MaterialAvailable: { $each: existing.materials || [] } } },
+        { new: true }
       );
+
+      if (!pushResult) {
+        return errorResponse("unable to add materials to section", 500);
+      }
+
+      // After materials successfully pushed, mark the request as approved
+      const updated = await RequestedMaterial.findByIdAndUpdate(
+        id,
+        { status: "approved" },
+        { new: true }
+      );
+
+      if (!updated) {
+        return errorResponse("unable to approve the request please try again", 500);
+      }
+
+      return successResponse({ request: updated, section: pushResult }, "request approved and materials added to section", 200);
     }
+
+    // If not approved, mark as rejected
+    const rejected = await RequestedMaterial.findByIdAndUpdate(
+      id,
+      { status: "rejected" },
+      { new: true }
+    );
+
+    if (!rejected) {
+      return errorResponse("unable to reject the request please try again", 500);
+    }
+
+    return successResponse(rejected, "request rejected successfully", 200);
   } catch (error: unknown) {
     if (error instanceof Error) {
       return errorResponse("something went wrong", 500, error.message);

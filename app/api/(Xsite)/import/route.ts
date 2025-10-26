@@ -3,7 +3,7 @@ import { errorResponse, successResponse } from "@/lib/models/utils/API";
 import { NextRequest } from "next/server";
 import { RequestedMaterial } from "@/lib/models/Xsite/request-material";
 import { Projects } from "@/lib/models/Project";
-import { Section } from "@/lib/models/Xsite/Section";
+import { MiniSection as Section } from "@/lib/models/Xsite/mini-section";
 
 export const POST = async (req: NextRequest | Request) => {
   try {
