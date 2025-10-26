@@ -9,6 +9,8 @@ export const GET = async (req: NextRequest | Request) => {
   const projectId = searchParams.get("projectId");
   const mainSectionId = searchParams.get("mainSectionId");
   const sectionId = searchParams.get("sectionId");
+  const clientId = searchParams.get("clientId");
+
   try {
     await connect();
     if (projectId) {
@@ -34,6 +36,15 @@ export const GET = async (req: NextRequest | Request) => {
       if (!getMaterials) {
         return errorResponse(
           `can't able to get Requested Material with mentioned sectionId : ${sectionId}`,
+          404
+        );
+      }
+      return successResponse(getMaterials, "Data fetched successfully", 200);
+    } else if( clientId ){
+      const getMaterials = await RequestedMaterial.find({ clientId });
+      if (!getMaterials) {
+        return errorResponse(
+          `can't able to get Requested Material with mentioned clientId : ${clientId}`,
           404
         );
       }
