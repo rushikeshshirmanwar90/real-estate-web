@@ -39,7 +39,9 @@ export const GET = async (req: NextRequest | Request) => {
           404
         );
       }
+      
       return successResponse(getMaterials, "Data fetched successfully", 200);
+
     } else if( clientId ){
       const getMaterials = await RequestedMaterial.find({ clientId });
       if (!getMaterials) {
