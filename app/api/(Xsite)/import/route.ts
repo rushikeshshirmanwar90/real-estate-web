@@ -2,12 +2,11 @@ import connect from "@/lib/db";
 import { errorResponse, successResponse } from "@/lib/models/utils/API";
 import { NextRequest } from "next/server";
 import { RequestedMaterial } from "@/lib/models/Xsite/request-material";
-import { Projects } from "@/lib/models/Project";
 import { MiniSection as Section } from "@/lib/models/Xsite/mini-section";
 
 export const POST = async (req: NextRequest | Request) => {
   try {
-    const { requestId } = await req.json();
+    const { requestId, materials } = await req.json();
 
     // Validate requestId
     if (!requestId) {
@@ -18,6 +17,8 @@ export const POST = async (req: NextRequest | Request) => {
 
     // Find the requested material
     const findRequestMaterial = await RequestedMaterial.findById(requestId);
+
+    const sectionId = findRequestMaterial?.sectionId;
 
     if (!findRequestMaterial) {
       return errorResponse("Material request not found", 404);
@@ -33,71 +34,7 @@ export const POST = async (req: NextRequest | Request) => {
       return errorResponse("Material request already imported", 409);
     }
 
-    const { projectId, mainSectionId, sectionId, materials } =
-      findRequestMaterial;
-
-    // Validate required fields
-    if (
-      !projectId ||
-      !mainSectionId ||
-      !materials ||
-      !sectionId ||
-      materials.length === 0
-    ) {
-      return errorResponse("Invalid request material data", 400);
-    }
-
-    // Find the project
-    const projectData = await Projects.findById(projectId);
-
-    if (!projectData) {
-      return errorResponse("Project not found", 404);
-    }
-
-    // Find the section with matching mainSectionId
-    const sectionIndex = projectData.section?.findIndex(
-      (sec: { sectionId: string }) => sec.sectionId === mainSectionId
-    );
-
-    if (sectionIndex === -1 || sectionIndex === undefined) {
-      return errorResponse("Section not found in the project", 404);
-    }
-
-    // Verify section exists before updating
-    const sectionExists = await Section.findById(sectionId);
-
-    if (!sectionExists) {
-      return errorResponse("Section record not found in database", 404);
-    }
-
-    // Perform all updates in parallel for better performance
-    const [updatedProject, updatedSection, updatedRequest] = await Promise.all([
-      // Update main project MaterialAvailable
-      Projects.findByIdAndUpdate(
-        projectId,
-        {
-          $push: {
-            MaterialAvailable: { $each: materials },
-          },
-        },
-        { new: true, runValidators: true }
-      ),
-
-      // Update specific section MaterialAvailable in project
-      Projects.findByIdAndUpdate(
-        projectId,
-        {
-          $push: {
-            [`section.${sectionIndex}.MaterialAvailable`]: {
-              $each: materials,
-            },
-          },
-        },
-        { new: true, runValidators: true }
-      ),
-
-      // Update section collection
-      Section.findByIdAndUpdate(
+    const updatedSection = await Section.findByIdAndUpdate(
         sectionId,
         {
           $push: {
@@ -105,11 +42,10 @@ export const POST = async (req: NextRequest | Request) => {
           },
         },
         { new: true, runValidators: true }
-      ),
-    ]);
+      );
 
     // Check if any update failed
-    if (!updatedProject || !updatedSection || !updatedRequest) {
+    if (!updatedSection) {
       return errorResponse("Failed to update materials in all locations", 500);
     }
 

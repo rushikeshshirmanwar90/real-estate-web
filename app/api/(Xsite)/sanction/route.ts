@@ -32,16 +32,6 @@ export const POST = async (req: NextRequest | Request) => {
         return errorResponse("Section not found to add materials", 404);
       }
 
-      const pushResult = await Section.findByIdAndUpdate(
-        section._id,
-        { $push: { MaterialAvailable: { $each: existing.materials || [] } } },
-        { new: true }
-      );
-
-      if (!pushResult) {
-        return errorResponse("unable to add materials to section", 500);
-      }
-
       // After materials successfully pushed, mark the request as approved
       const updated = await RequestedMaterial.findByIdAndUpdate(
         id,
@@ -53,7 +43,7 @@ export const POST = async (req: NextRequest | Request) => {
         return errorResponse("unable to approve the request please try again", 500);
       }
 
-      return successResponse({ request: updated, section: pushResult }, "request approved and materials added to section", 200);
+      return successResponse({ request: updated,  }, "request approved and materials added to section", 200);
     }
 
     // If not approved, mark as rejected
