@@ -24,9 +24,9 @@ export const GET = async (req: NextRequest | Request) => {
   const sectionId = searchParams.get("sectionId");
   const id = searchParams.get("id");
 
-  if (!sectionId) {
+  if (!sectionId || !id) {
     return errorResponse(
-      "sectionId from this at least one parameter is required",
+      "sectionId or id parameter is required",
       400
     );
   }
