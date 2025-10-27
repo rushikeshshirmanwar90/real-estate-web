@@ -24,13 +24,6 @@ export const GET = async (req: NextRequest | Request) => {
   const sectionId = searchParams.get("sectionId");
   const id = searchParams.get("id");
 
-  if (!sectionId || !id) {
-    return errorResponse(
-      "sectionId or id parameter is required",
-      400
-    );
-  }
-
   try {
     await connect();
 
