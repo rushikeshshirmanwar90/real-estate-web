@@ -1,6 +1,20 @@
 import connect from "@/lib/db";
 import { MiniSection } from "@/lib/models/Xsite/mini-section";
 import { NextRequest, NextResponse } from "next/server";
+import { Types } from "mongoose";
+
+// Local types matching MaterialSchema
+type Specs = Record<string, unknown>;
+
+type MaterialSubdoc = {
+    _id?: Types.ObjectId | string;
+    name: string;
+    unit: string;
+    specs?: Specs;
+    qnt: number;
+    cost?: number;
+};
+
 
 export const POST = async (req: NextRequest | Request) => {
     try {
@@ -44,8 +58,8 @@ export const POST = async (req: NextRequest | Request) => {
         }
 
         // Find material in MaterialAvailable by _id
-        const availIndex = section.MaterialAvailable?.findIndex(
-            (m: any) => String(m._id) === String(materialId)
+        const availIndex = (section.MaterialAvailable || []).findIndex(
+            (m: MaterialSubdoc) => String(m._id) === String(materialId)
         );
 
         if (availIndex == null || availIndex < 0) {
@@ -58,7 +72,7 @@ export const POST = async (req: NextRequest | Request) => {
             );
         }
 
-        const available = section.MaterialAvailable[availIndex];
+    const available = section.MaterialAvailable![availIndex] as MaterialSubdoc;
 
         // Check sufficient quantity
         if (available.qnt < qnt) {
@@ -75,7 +89,7 @@ export const POST = async (req: NextRequest | Request) => {
         available.qnt = available.qnt - qnt;
 
         // Prepare used material clone
-        const usedClone: any = {
+        const usedClone: MaterialSubdoc = {
             name: available.name,
             unit: available.unit,
             specs: available.specs || {},
@@ -84,7 +98,7 @@ export const POST = async (req: NextRequest | Request) => {
         };
 
         // If same material (matching name+unit+specs+cost) exists in MaterialUsed, add qnt there
-        const usedIndex = section.MaterialUsed?.findIndex((m: any) => {
+        const usedIndex = (section.MaterialUsed || []).findIndex((m: MaterialSubdoc) => {
             try {
                 return (
                     m.name === usedClone.name &&
@@ -92,19 +106,19 @@ export const POST = async (req: NextRequest | Request) => {
                     JSON.stringify(m.specs || {}) === JSON.stringify(usedClone.specs || {}) &&
                     Number(m.cost || 0) === Number(usedClone.cost || 0)
                 );
-            } catch (e) {
+            } catch (_e) {
+                console.error("Error comparing material specs:", _e);
                 return false;
             }
         });
 
         if (usedIndex != null && usedIndex >= 0) {
-            // Add to existing used material
-            section.MaterialUsed[usedIndex].qnt = 
-                Number(section.MaterialUsed[usedIndex].qnt || 0) + qnt;
+            section.MaterialUsed![usedIndex].qnt = 
+                Number(section.MaterialUsed![usedIndex].qnt || 0) + qnt;
         } else {
             // Push new entry into MaterialUsed
             section.MaterialUsed = section.MaterialUsed || [];
-            section.MaterialUsed.push(usedClone as any);
+            section.MaterialUsed.push(usedClone);
         }
 
         // If available quantity becomes zero, remove it from array
@@ -129,12 +143,13 @@ export const POST = async (req: NextRequest | Request) => {
             }, 
             { status: 200 }
         );
-    } catch (error: any) {
-        console.error("Error in add-material-usage:", error);
+    } catch (error: unknown) {
+        const msg = error instanceof Error ? error.message : String(error);
+        console.error("Error in add-material-usage:", msg);
         return NextResponse.json(
             { 
                 success: false,
-                error: error?.message || String(error) 
+                error: msg
             }, 
             { status: 500 }
         );
