@@ -22,6 +22,7 @@ interface payloadProps {
 export const GET = async (req: NextRequest | Request) => {
   const { searchParams } = new URL(req.url);
   const sectionId = searchParams.get("sectionId");
+  const id = searchParams.get("id");
 
   if (!sectionId) {
     return errorResponse(
@@ -44,6 +45,18 @@ export const GET = async (req: NextRequest | Request) => {
 
       return successResponse(
         sectionData,
+        "Section data fetched successfully",
+        200
+      );
+    } else if (id) {
+      const sectionDataById = await Section.findById(id);
+      
+      if (!sectionDataById) {
+        return errorResponse("data not found", 204);
+      }
+      
+      return successResponse(
+        sectionDataById,
         "Section data fetched successfully",
         200
       );
