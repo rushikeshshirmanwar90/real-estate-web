@@ -2,50 +2,88 @@ import connect from "@/lib/db";
 import { MiniSection } from "@/lib/models/Xsite/mini-section";
 import { NextRequest, NextResponse } from "next/server";
 
-
 export const POST = async (req: NextRequest | Request) => {
     try {
         await connect();
-
         const body = await req.json();
-        // expected body: { sectionId, materialId, qnt }
+
+        // Expected body: { sectionId, materialId, qnt }
         const { sectionId, materialId, qnt } = body;
 
+        // Validation
         if (!sectionId || !materialId || typeof qnt !== "number") {
-            return NextResponse.json({ error: "sectionId, materialId and numeric qnt are required" }, { status: 400 });
+            return NextResponse.json(
+                { 
+                    success: false,
+                    error: "sectionId, materialId and numeric qnt are required" 
+                }, 
+                { status: 400 }
+            );
         }
 
+        if (qnt <= 0) {
+            return NextResponse.json(
+                { 
+                    success: false,
+                    error: "Quantity must be greater than 0" 
+                }, 
+                { status: 400 }
+            );
+        }
+
+        // Find section
         const section = await MiniSection.findById(sectionId);
         if (!section) {
-            return NextResponse.json({ error: "MiniSection not found" }, { status: 404 });
+            return NextResponse.json(
+                { 
+                    success: false,
+                    error: "MiniSection not found" 
+                }, 
+                { status: 404 }
+            );
         }
 
         // Find material in MaterialAvailable by _id
-        const availIndex = section.MaterialAvailable?.findIndex((m: any) => String(m._id) === String(materialId));
+        const availIndex = section.MaterialAvailable?.findIndex(
+            (m: any) => String(m._id) === String(materialId)
+        );
 
         if (availIndex == null || availIndex < 0) {
-            return NextResponse.json({ error: "Material not found in MaterialAvailable" }, { status: 404 });
+            return NextResponse.json(
+                { 
+                    success: false,
+                    error: "Material not found in MaterialAvailable" 
+                }, 
+                { status: 404 }
+            );
         }
 
         const available = section.MaterialAvailable[availIndex];
 
+        // Check sufficient quantity
         if (available.qnt < qnt) {
-            return NextResponse.json({ error: "Insufficient quantity available" }, { status: 400 });
+            return NextResponse.json(
+                { 
+                    success: false,
+                    error: `Insufficient quantity available. Available: ${available.qnt}, Requested: ${qnt}` 
+                }, 
+                { status: 400 }
+            );
         }
 
-        // reduce available qnt
+        // Reduce available quantity
         available.qnt = available.qnt - qnt;
 
-        // prepare used material clone
+        // Prepare used material clone
         const usedClone: any = {
             name: available.name,
             unit: available.unit,
-            specs: available.specs,
+            specs: available.specs || {},
             qnt: qnt,
-            cost: available.cost,
+            cost: available.cost || 0,
         };
 
-        // If same material (matching name+unit+specs+cost) exists in MaterialUsed, add qnt there, else push
+        // If same material (matching name+unit+specs+cost) exists in MaterialUsed, add qnt there
         const usedIndex = section.MaterialUsed?.findIndex((m: any) => {
             try {
                 return (
@@ -60,24 +98,45 @@ export const POST = async (req: NextRequest | Request) => {
         });
 
         if (usedIndex != null && usedIndex >= 0) {
-            section.MaterialUsed[usedIndex].qnt = Number(section.MaterialUsed[usedIndex].qnt || 0) + qnt;
+            // Add to existing used material
+            section.MaterialUsed[usedIndex].qnt = 
+                Number(section.MaterialUsed[usedIndex].qnt || 0) + qnt;
         } else {
-            // push into MaterialUsed
+            // Push new entry into MaterialUsed
             section.MaterialUsed = section.MaterialUsed || [];
             section.MaterialUsed.push(usedClone as any);
         }
 
-        // if available.qnt becomes zero, remove it from array
+        // If available quantity becomes zero, remove it from array
         if (available.qnt <= 0) {
             section.MaterialAvailable.splice(availIndex, 1);
         }
 
+        // Save changes
         await section.save();
 
-        return NextResponse.json({ success: true, section }, { status: 200 });
+        // Return success with updated data
+        return NextResponse.json(
+            { 
+                success: true,
+                message: `Successfully added ${qnt} ${available.unit} of ${available.name} to used materials`,
+                data: {
+                    sectionId: section._id,
+                    materialAvailable: section.MaterialAvailable,
+                    materialUsed: section.MaterialUsed,
+                    usedMaterial: usedClone
+                }
+            }, 
+            { status: 200 }
+        );
     } catch (error: any) {
-        console.error(error);
-        return NextResponse.json({ error: error?.message || String(error) }, { status: 500 });
+        console.error("Error in add-material-usage:", error);
+        return NextResponse.json(
+            { 
+                success: false,
+                error: error?.message || String(error) 
+            }, 
+            { status: 500 }
+        );
     }
 };
-
