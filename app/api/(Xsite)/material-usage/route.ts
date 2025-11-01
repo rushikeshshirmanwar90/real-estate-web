@@ -15,7 +15,6 @@ type MaterialSubdoc = {
     cost?: number;
 };
 
-
 export const POST = async (req: NextRequest | Request) => {
     try {
         await connect();
@@ -48,6 +47,7 @@ export const POST = async (req: NextRequest | Request) => {
         // Find section
         const section = await MiniSection.findById(sectionId);
         if (!section) {
+            console.error("MiniSection not found for ID:", sectionId);
             return NextResponse.json(
                 { 
                     success: false,
