@@ -39,10 +39,6 @@ const SectionSchema = new Schema(
       required: false,
     },
 
-    MaterialAvailable: {
-      type: [MaterialSchema],
-      required: false,
-    },
   },
   { timestamps: true }
 );

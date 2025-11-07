@@ -141,6 +141,30 @@ const projectSchema = new Schema(
   }
 );
 
+// Normalize section.type to match enum values before validation
+projectSchema.pre("validate", function (next) {
+  try {
+    // `this` is the document
+    const doc: any = this;
+    if (Array.isArray(doc.section)) {
+      doc.section.forEach((sec: any) => {
+        if (!sec || !sec.type) return;
+        const t = String(sec.type).toLowerCase().trim();
+        if (t.includes("build")) {
+          sec.type = "building";
+        } else if (t.includes("row") || t.includes("row house") || t.includes("row-house")) {
+          sec.type = "row house";
+        } else {
+          sec.type = "other";
+        }
+      });
+    }
+  } catch (e) {
+    // swallow normalization errors - validation will catch invalid values
+  }
+  next();
+});
+
 const Projects = models.Projects || model("Projects", projectSchema);
 
 export { Projects };

@@ -32,10 +32,6 @@ const OtherSectionSchema = new Schema({
     required: false,
   },
 
-  MaterialAvailable: {
-    type: [MaterialSchema],
-    required: false,
-  },
 });
 
 export const OtherSection =

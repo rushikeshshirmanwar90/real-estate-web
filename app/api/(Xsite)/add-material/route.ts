@@ -1,9 +1,9 @@
 import connect from "@/lib/db";
-import { MiniSection } from "@/lib/models/Xsite/mini-section";
+import { Projects } from "@/lib/models/Project";
 import { NextRequest, NextResponse } from "next/server";
 
 interface AddMaterialStockRequest {
-    sectionId: string;
+    projectId: string;
     materialName: string;
     unit: string;
     specs?: Record<string, any>;
@@ -18,21 +18,21 @@ export const POST = async (req: NextRequest | Request) => {
         const body: AddMaterialStockRequest = await req.json();
 
         const { 
-            sectionId, 
+            projectId, 
             materialName, 
             unit, 
-            specs = {}, 
+            specs = {},
             qnt, 
             cost,
             mergeIfExists = true // Default: merge with existing
         } = body;
 
         // Validation
-        if (!sectionId || !materialName || !unit || typeof qnt !== "number" || typeof cost !== "number") {
+        if (!projectId || !materialName || !unit || typeof qnt !== "number" || typeof cost !== "number") {
             return NextResponse.json(
                 { 
                     success: false,
-                    error: "sectionId, materialName, unit, qnt (number), and cost (number) are required" 
+                    error: "materialName, unit, qnt (number), and cost (number) are required" 
                 }, 
                 { status: 400 }
             );
@@ -59,23 +59,23 @@ export const POST = async (req: NextRequest | Request) => {
         }
 
         // Find section
-        const section = await MiniSection.findById(sectionId);
-        if (!section) {
+        const project = await Projects.findById(projectId);
+        if (!project) {
             return NextResponse.json(
                 { 
                     success: false,
-                    error: "MiniSection not found" 
+                    error: "project not found" 
                 }, 
                 { status: 404 }
             );
         }
 
         // Initialize MaterialAvailable if not exists
-        section.MaterialAvailable = section.MaterialAvailable || [];
+        project.MaterialAvailable = project.MaterialAvailable || [];
 
         if (mergeIfExists) {
             // APPROACH 1: Merge with existing material
-            const existingIndex = section.MaterialAvailable.findIndex((m: any) => {
+            const existingIndex = project.MaterialAvailable.findIndex((m: any) => {
                 try {
                     return (
                         m.name === materialName &&
@@ -89,7 +89,7 @@ export const POST = async (req: NextRequest | Request) => {
 
             if (existingIndex >= 0) {
                 // Material exists - merge quantities and update cost
-                const existing = section.MaterialAvailable[existingIndex];
+                const existing = project.MaterialAvailable[existingIndex];
                 const oldQnt = existing.qnt || 0;
                 const oldCost = existing.cost || 0;
                 const newQnt = oldQnt + qnt;
@@ -104,7 +104,7 @@ export const POST = async (req: NextRequest | Request) => {
                 existing.qnt = newQnt;
                 existing.cost = newCost;
 
-                await section.save();
+                await project.save();
 
                 return NextResponse.json(
                     { 
@@ -112,7 +112,7 @@ export const POST = async (req: NextRequest | Request) => {
                         message: `Successfully added ${qnt} ${unit} of ${materialName}. Total now: ${newQnt} ${unit}`,
                         action: "merged",
                         data: {
-                            sectionId: section._id,
+                            projectId: project._id,
                             material: existing,
                             previousQuantity: oldQnt,
                             addedQuantity: qnt,
@@ -136,8 +136,8 @@ export const POST = async (req: NextRequest | Request) => {
             cost: cost,
         };
 
-        section.MaterialAvailable.push(newMaterial as any);
-        await section.save();
+        project.MaterialAvailable.push(newMaterial as any);
+        await project.save();
 
         return NextResponse.json(
             { 
@@ -145,7 +145,7 @@ export const POST = async (req: NextRequest | Request) => {
                 message: `Successfully added ${qnt} ${unit} of ${materialName} as new batch`,
                 action: "created",
                 data: {
-                    sectionId: section._id,
+                    sectionId: project._id,
                     material: newMaterial,
                     addedQuantity: qnt,
                     addedCost: cost
