@@ -96,22 +96,23 @@ export const POST = async (req: NextRequest | Request) => {
             project.MaterialAvailable = project.MaterialAvailable || [];
 
             if (mergeIfExists) {
-                const existingIndex = project.MaterialAvailable.findIndex((m: any) => {
+                const availableArr = project.MaterialAvailable as MaterialSubdoc[];
+                const existingIndex = availableArr.findIndex((m: MaterialSubdoc) => {
                     try {
                         return (
                             m.name === materialName &&
                             m.unit === unit &&
                             JSON.stringify(m.specs || {}) === JSON.stringify(specs)
                         );
-                    } catch (e) {
+                    } catch (_e) {
                         return false;
                     }
                 });
 
                 if (existingIndex >= 0) {
-                    const existing = project.MaterialAvailable[existingIndex];
-                    const oldQnt = existing.qnt || 0;
-                    const oldCost = existing.cost || 0;
+                    const existing = (project.MaterialAvailable as MaterialSubdoc[])[existingIndex];
+                    const oldQnt = Number(existing.qnt || 0);
+                    const oldCost = Number(existing.cost || 0);
                     const newQnt = oldQnt + qnt;
                     const newCost = oldCost + cost; // keep existing approach (sum of costs)
 
@@ -136,11 +137,11 @@ export const POST = async (req: NextRequest | Request) => {
                 name: materialName,
                 unit,
                 specs: specs || {},
-                qnt,
-                cost,
+                qnt: Number(qnt),
+                cost: Number(cost),
             };
 
-            project.MaterialAvailable.push(newMaterial as any);
+            project.MaterialAvailable.push(newMaterial);
             await project.save();
 
             results.push({
@@ -154,14 +155,26 @@ export const POST = async (req: NextRequest | Request) => {
 
         return NextResponse.json({ success: true, results }, { status: 200 });
 
-    } catch (error: any) {
-        console.error("Error in add-material-stock:", error);
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            console.error("Error in add-material-stock:", error);
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: error?.message || String(error)
+                },
+                { status: 500 }
+            );
+        } else {
+            console.error("Error in add-material-stock:", error);
         return NextResponse.json(
             {
                 success: false,
-                error: error?.message || String(error)
+                error: error || String(error)
             },
             { status: 500 }
         );
+        }
+
     }
 };
