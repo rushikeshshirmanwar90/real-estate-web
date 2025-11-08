@@ -1,166 +1,166 @@
 import connect from "@/lib/db";
 import { Projects } from "@/lib/models/Project";
 import { NextRequest, NextResponse } from "next/server";
+import { Types } from "mongoose";
 
-interface AddMaterialStockRequest {
+type Specs = Record<string, unknown>;
+
+type AddMaterialStockItem = {
     projectId: string;
     materialName: string;
     unit: string;
-    specs?: Record<string, any>;
-    qnt: number;
-    cost: number;
+    specs?: Specs;
+    qnt: number | string;
+    cost: number | string;
     mergeIfExists?: boolean; // Optional: true = merge, false = create new batch
 }
+
+type MaterialSubdoc = {
+    _id?: Types.ObjectId | string;
+    name: string;
+    unit: string;
+    specs?: Specs;
+    qnt: number;
+    cost?: number;
+};
 
 export const POST = async (req: NextRequest | Request) => {
     try {
         await connect();
-        const body: AddMaterialStockRequest = await req.json();
+        const raw = await req.json();
 
-        const { 
-            projectId, 
-            materialName, 
-            unit, 
-            specs = {},
-            qnt, 
-            cost,
-            mergeIfExists = true // Default: merge with existing
-        } = body;
+        const items: AddMaterialStockItem[] = Array.isArray(raw) ? raw : [raw];
 
-        // Validation
-        if (!projectId || !materialName || !unit || typeof qnt !== "number" || typeof cost !== "number") {
-            return NextResponse.json(
-                { 
-                    success: false,
-                    error: "materialName, unit, qnt (number), and cost (number) are required" 
-                }, 
-                { status: 400 }
-            );
+        if (items.length === 0) {
+            return NextResponse.json({ success: false, error: "No materials provided" }, { status: 400 });
         }
 
-        if (qnt <= 0) {
-            return NextResponse.json(
-                { 
-                    success: false,
-                    error: "Quantity must be greater than 0" 
-                }, 
-                { status: 400 }
-            );
-        }
+        const results: Array<{
+            input: Partial<AddMaterialStockItem>;
+            success: boolean;
+            action?: "merged" | "created";
+            message?: string;
+            material?: MaterialSubdoc;
+            error?: string;
+        }> = [];
 
-        if (cost < 0) {
-            return NextResponse.json(
-                { 
-                    success: false,
-                    error: "Cost cannot be negative" 
-                }, 
-                { status: 400 }
-            );
-        }
+        for (const item of items) {
+            const {
+                projectId,
+                materialName,
+                unit,
+                specs = {},
+                qnt: rawQnt,
+                cost: rawCost,
+                mergeIfExists = true,
+            } = item as AddMaterialStockItem;
 
-        // Find section
-        const project = await Projects.findById(projectId);
-        if (!project) {
-            return NextResponse.json(
-                { 
-                    success: false,
-                    error: "project not found" 
-                }, 
-                { status: 404 }
-            );
-        }
+            const resultBase = { input: item, success: false };
 
-        // Initialize MaterialAvailable if not exists
-        project.MaterialAvailable = project.MaterialAvailable || [];
+            // Basic validation and coercion
+            const qnt = typeof rawQnt === "string" ? Number(rawQnt) : rawQnt;
+            const cost = typeof rawCost === "string" ? Number(rawCost) : rawCost;
 
-        if (mergeIfExists) {
-            // APPROACH 1: Merge with existing material
-            const existingIndex = project.MaterialAvailable.findIndex((m: any) => {
-                try {
-                    return (
-                        m.name === materialName &&
-                        m.unit === unit &&
-                        JSON.stringify(m.specs || {}) === JSON.stringify(specs)
-                    );
-                } catch (e) {
-                    return false;
-                }
-            });
-
-            if (existingIndex >= 0) {
-                // Material exists - merge quantities and update cost
-                const existing = project.MaterialAvailable[existingIndex];
-                const oldQnt = existing.qnt || 0;
-                const oldCost = existing.cost || 0;
-                const newQnt = oldQnt + qnt;
-                
-                // Calculate weighted average cost or total cost
-                // Option 1: Total cost (sum of all costs)
-                const newCost = oldCost + cost;
-                
-                // Option 2: Weighted average cost (uncomment if preferred)
-                // const newCost = ((oldCost * oldQnt) + (cost * qnt)) / newQnt;
-
-                existing.qnt = newQnt;
-                existing.cost = newCost;
-
-                await project.save();
-
-                return NextResponse.json(
-                    { 
-                        success: true,
-                        message: `Successfully added ${qnt} ${unit} of ${materialName}. Total now: ${newQnt} ${unit}`,
-                        action: "merged",
-                        data: {
-                            projectId: project._id,
-                            material: existing,
-                            previousQuantity: oldQnt,
-                            addedQuantity: qnt,
-                            newQuantity: newQnt,
-                            previousCost: oldCost,
-                            addedCost: cost,
-                            newCost: newCost
-                        }
-                    }, 
-                    { status: 200 }
-                );
+            if (!projectId || !materialName || !unit) {
+                results.push({ ...resultBase, error: "projectId, materialName and unit are required" });
+                continue;
             }
+
+            if (typeof qnt !== "number" || Number.isNaN(qnt)) {
+                results.push({ ...resultBase, error: "qnt must be a number" });
+                continue;
+            }
+
+            if (typeof cost !== "number" || Number.isNaN(cost)) {
+                results.push({ ...resultBase, error: "cost must be a number" });
+                continue;
+            }
+
+            if (qnt <= 0) {
+                results.push({ ...resultBase, error: "Quantity must be greater than 0" });
+                continue;
+            }
+
+            if (cost < 0) {
+                results.push({ ...resultBase, error: "Cost cannot be negative" });
+                continue;
+            }
+
+            // Find project
+            const project = await Projects.findById(projectId);
+            if (!project) {
+                results.push({ ...resultBase, error: "project not found" });
+                continue;
+            }
+
+            project.MaterialAvailable = project.MaterialAvailable || [];
+
+            if (mergeIfExists) {
+                const existingIndex = project.MaterialAvailable.findIndex((m: any) => {
+                    try {
+                        return (
+                            m.name === materialName &&
+                            m.unit === unit &&
+                            JSON.stringify(m.specs || {}) === JSON.stringify(specs)
+                        );
+                    } catch (e) {
+                        return false;
+                    }
+                });
+
+                if (existingIndex >= 0) {
+                    const existing = project.MaterialAvailable[existingIndex];
+                    const oldQnt = existing.qnt || 0;
+                    const oldCost = existing.cost || 0;
+                    const newQnt = oldQnt + qnt;
+                    const newCost = oldCost + cost; // keep existing approach (sum of costs)
+
+                    existing.qnt = newQnt;
+                    existing.cost = newCost;
+
+                    await project.save();
+
+                    results.push({
+                        ...resultBase,
+                        success: true,
+                        action: "merged",
+                        message: `Merged ${qnt} ${unit} of ${materialName}. Total now: ${newQnt} ${unit}`,
+                        material: existing as MaterialSubdoc,
+                    });
+                    continue;
+                }
+            }
+
+            // Create new batch
+            const newMaterial: MaterialSubdoc = {
+                name: materialName,
+                unit,
+                specs: specs || {},
+                qnt,
+                cost,
+            };
+
+            project.MaterialAvailable.push(newMaterial as any);
+            await project.save();
+
+            results.push({
+                ...resultBase,
+                success: true,
+                action: "created",
+                message: `Created new batch: ${qnt} ${unit} of ${materialName}`,
+                material: newMaterial,
+            });
         }
 
-        // APPROACH 2: Create new batch (or if material doesn't exist)
-        const newMaterial = {
-            name: materialName,
-            unit: unit,
-            specs: specs,
-            qnt: qnt,
-            cost: cost,
-        };
-
-        project.MaterialAvailable.push(newMaterial as any);
-        await project.save();
-
-        return NextResponse.json(
-            { 
-                success: true,
-                message: `Successfully added ${qnt} ${unit} of ${materialName} as new batch`,
-                action: "created",
-                data: {
-                    sectionId: project._id,
-                    material: newMaterial,
-                    addedQuantity: qnt,
-                    addedCost: cost
-                }
-            }, 
-            { status: 200 }
-        );
+        return NextResponse.json({ success: true, results }, { status: 200 });
 
     } catch (error: any) {
         console.error("Error in add-material-stock:", error);
         return NextResponse.json(
-            { 
+            {
                 success: false,
-                error: error?.message || String(error) 
-            }, 
+                error: error?.message || String(error)
+            },
             { status: 500 }
         );
     }
