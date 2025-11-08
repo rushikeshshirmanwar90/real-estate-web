@@ -142,12 +142,13 @@ const projectSchema = new Schema(
 );
 
 // Normalize section.type to match enum values before validation
-projectSchema.pre("validate", function (next) {
+type SectionDoc = { type?: string } & Record<string, unknown>;
+
+projectSchema.pre("validate", function (this: unknown, next) {
   try {
-    // `this` is the document
-    const doc: any = this;
+    const doc = this as { section?: SectionDoc[] };
     if (Array.isArray(doc.section)) {
-      doc.section.forEach((sec: any) => {
+      doc.section.forEach((sec) => {
         if (!sec || !sec.type) return;
         const t = String(sec.type).toLowerCase().trim();
         if (t.includes("build")) {
@@ -159,7 +160,7 @@ projectSchema.pre("validate", function (next) {
         }
       });
     }
-  } catch (e) {
+  } catch {
     // swallow normalization errors - validation will catch invalid values
   }
   next();

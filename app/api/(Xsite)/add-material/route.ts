@@ -104,7 +104,7 @@ export const POST = async (req: NextRequest | Request) => {
                             m.unit === unit &&
                             JSON.stringify(m.specs || {}) === JSON.stringify(specs)
                         );
-                    } catch (_e) {
+                    } catch {
                         return false;
                     }
                 });
