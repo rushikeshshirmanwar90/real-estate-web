@@ -2,6 +2,8 @@ import connect from "@/lib/db";
 import { Projects } from "@/lib/models/Project";
 import { NextRequest, NextResponse } from "next/server";
 import { Types } from "mongoose";
+import { checkValidClient } from "@/lib/auth";
+import { ObjectId } from "mongodb";
 
 type Specs = Record<string, unknown>;
 
@@ -12,7 +14,7 @@ type AddMaterialStockItem = {
     specs?: Specs;
     qnt: number | string;
     cost: number | string;
-    mergeIfExists?: boolean; // Optional: true = merge, false = create new batch
+    mergeIfExists?: boolean;
 }
 
 type MaterialSubdoc = {
@@ -24,7 +26,75 @@ type MaterialSubdoc = {
     cost?: number;
 };
 
+// GET: Fetch MaterialAvailable for a project
+export const GET = async (req: NextRequest | Request) => {
+  try {
+    const { searchParams } = new URL(req.url);
+    const projectId = searchParams.get("projectId");
+    const clientId = searchParams.get("clientId");
+
+    if (!projectId || !clientId) {
+      return NextResponse.json(
+        {
+          message: "Project ID and Client ID are required",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    await connect();
+
+    const project = await Projects.findOne(
+      {
+        _id: new ObjectId(projectId),
+        clientId: new ObjectId(clientId),
+      },
+      { MaterialAvailable: 1 }
+    );
+
+    if (!project) {
+      return NextResponse.json(
+        {
+          message: "Project not found",
+        },
+        {
+          status: 404,
+        }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Material available fetched successfully",
+        MaterialAvailable: project.MaterialAvailable || [],
+      },
+      {
+        status: 200,
+      }
+    );
+  } catch (error: unknown) {
+    console.log(error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Unable to fetch MaterialAvailable",
+        error: error instanceof Error ? error.message : String(error),
+      },
+      {
+        status: 500,
+      }
+    );
+  }
+};
+
+// POST: Add or merge materials
 export const POST = async (req: NextRequest | Request) => {
+    await checkValidClient(req);
+    
     try {
         await connect();
         const raw = await req.json();
@@ -114,7 +184,7 @@ export const POST = async (req: NextRequest | Request) => {
                     const oldQnt = Number(existing.qnt || 0);
                     const oldCost = Number(existing.cost || 0);
                     const newQnt = oldQnt + qnt;
-                    const newCost = oldCost + cost; // keep existing approach (sum of costs)
+                    const newCost = oldCost + cost;
 
                     existing.qnt = newQnt;
                     existing.cost = newCost;
@@ -156,25 +226,175 @@ export const POST = async (req: NextRequest | Request) => {
         return NextResponse.json({ success: true, results }, { status: 200 });
 
     } catch (error: unknown) {
-        if (error instanceof Error) {
-            console.error("Error in add-material-stock:", error);
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: error?.message || String(error)
-                },
-                { status: 500 }
-            );
-        } else {
-            console.error("Error in add-material-stock:", error);
+        console.error("Error in material-available:", error);
         return NextResponse.json(
             {
                 success: false,
-                error: error || String(error)
+                error: error instanceof Error ? error.message : String(error)
             },
             { status: 500 }
         );
-        }
-
     }
+};
+
+// PUT: Update MaterialAvailable
+export const PUT = async (req: NextRequest | Request) => {
+  await checkValidClient(req);
+
+  try {
+    const { searchParams } = new URL(req.url);
+    const projectId = searchParams.get("projectId");
+
+    if (!projectId) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Project ID is required",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    await connect();
+
+    const body = await req.json();
+    const { MaterialAvailable } = body;
+
+    if (!MaterialAvailable || !Array.isArray(MaterialAvailable)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "MaterialAvailable must be an array",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    const updatedProject = await Projects.findByIdAndUpdate(
+      projectId,
+      { MaterialAvailable },
+      { new: true, fields: { MaterialAvailable: 1 } }
+    );
+
+    if (!updatedProject) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Project not found or update failed",
+        },
+        {
+          status: 404,
+        }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "MaterialAvailable updated successfully",
+        MaterialAvailable: updatedProject.MaterialAvailable,
+      },
+      {
+        status: 200,
+      }
+    );
+  } catch (error: unknown) {
+    console.log(error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Unable to update MaterialAvailable",
+        error: error instanceof Error ? error.message : String(error),
+      },
+      {
+        status: 500,
+      }
+    );
+  }
+};
+
+// DELETE: Remove a material from MaterialAvailable
+export const DELETE = async (req: NextRequest | Request) => {
+  await checkValidClient(req);
+
+  try {
+    const { searchParams } = new URL(req.url);
+    const projectId = searchParams.get("projectId");
+    const materialId = searchParams.get("materialId");
+
+    if (!projectId || !materialId) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Project ID and Material ID are required",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    await connect();
+
+    const project = await Projects.findById(projectId);
+    if (!project) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Project not found",
+        },
+        {
+          status: 404,
+        }
+      );
+    }
+
+    const initialLength = project.MaterialAvailable?.length || 0;
+    project.MaterialAvailable = (project.MaterialAvailable || []).filter(
+      (m: MaterialSubdoc) => String(m._id) !== materialId
+    );
+
+    if (project.MaterialAvailable.length === initialLength) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Material not found",
+        },
+        {
+          status: 404,
+        }
+      );
+    }
+
+    await project.save();
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Material deleted successfully",
+        MaterialAvailable: project.MaterialAvailable,
+      },
+      {
+        status: 200,
+      }
+    );
+  } catch (error: unknown) {
+    console.log(error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Unable to delete material",
+        error: error instanceof Error ? error.message : String(error),
+      },
+      {
+        status: 500,
+      }
+    );
+  }
 };
