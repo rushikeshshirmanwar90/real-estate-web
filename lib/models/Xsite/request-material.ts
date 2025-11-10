@@ -13,15 +13,15 @@ export const MaterialSchema = new Schema({
     type: Object,
     default: {},
   },
-  qnt : {
-    type : Number,
-    required : true,
+  qnt: {
+    type: Number,
+    required: true,
   },
   cost: {
     type: Number,
     default: 0,
   },
-});
+}, { timestamps: true });
 
 const RequestedMaterialSchema = new Schema({
   clientId: {

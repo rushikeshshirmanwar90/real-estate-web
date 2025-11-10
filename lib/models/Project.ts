@@ -52,7 +52,7 @@ const MaterilUsedSchema = new Schema(
       type : String,
       required : false,
     },
-  }
+  }, {timestamps : true}
 );
 
 const StaffSchema = new Schema(
