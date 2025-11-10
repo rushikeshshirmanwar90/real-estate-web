@@ -93,18 +93,27 @@ export const PUT = async (req: NextRequest | Request) => {
 
     if (!id) return errorResponse("sectionId is required", 406);
 
-    const { name } = await req.json();
+    // Accept partial updates for name, projectDetails and mainSectionDetails
+    const body = (await req.json()) as Partial<{
+      name: string;
+      projectDetails: { projectName: string; projectId: string };
+      mainSectionDetails: { sectionName?: string; sectionId?: string };
+    }>;
 
-    if (!name) {
-      return errorResponse("only name can update", 406);
+    const updates: any = {};
+    if (body.name) updates.name = body.name;
+    if (body.projectDetails) updates.projectDetails = body.projectDetails;
+    if (body.mainSectionDetails) updates.mainSectionDetails = body.mainSectionDetails;
+
+    if (Object.keys(updates).length === 0) {
+      return errorResponse("no updatable fields provided", 406);
     }
 
-    const updatedData = await Section.findByIdAndUpdate(
-      id,
-      { name },
-      { new: true }
-    );
-    await updatedData.save();
+    const updatedData = await Section.findByIdAndUpdate(id, { $set: updates }, { new: true });
+
+    if (!updatedData) {
+      return errorResponse(`section not found with id: ${id}`, 404);
+    }
 
     return successResponse(updatedData, "data updated successfully", 200);
   } catch (error: unknown) {
@@ -128,11 +137,11 @@ export const DELETE = async (req: NextRequest | Request) => {
 
     const removedData = await Section.findByIdAndDelete(id);
 
-    if (removedData) {
-      return successResponse(removedData, "data deleted successfully", 200);
-    } else {
-      return errorResponse(`data not found with this id : ${id}`, 406);
+    if (!removedData) {
+      return errorResponse(`data not found with this id : ${id}`, 404);
     }
+
+    return successResponse(removedData, "data deleted successfully", 200);
   } catch (error: unknown) {
     if (error instanceof Error) {
       return errorResponse("something went wrong", 500, error.message);

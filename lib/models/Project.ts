@@ -22,6 +22,39 @@ const SectionSchema = new Schema(
   { _id: true }
 );
 
+const MaterilUsedSchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+    },
+    unit: {
+      type: String,
+      required: true,
+    },
+    specs: {
+      type: Object,
+      default: {},
+    },
+    qnt: {
+      type: Number,
+      required: true,
+    },
+    cost: {
+      type: Number,
+      default: 0,
+    },
+    sectionId : {
+      type : String,
+      required : true,
+    },
+    miniSectionId: {
+      type : String,
+      required : false,
+    },
+  }
+);
+
 const StaffSchema = new Schema(
   {
     _id: {
@@ -127,7 +160,7 @@ const projectSchema = new Schema(
     },
 
     MaterialUsed: {
-      type: [MaterialSchema],
+      type: [MaterilUsedSchema],
       required: false,
     },
 
