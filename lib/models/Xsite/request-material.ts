@@ -21,6 +21,11 @@ export const MaterialSchema = new Schema({
     type: Number,
     default: 0,
   },
+  // explicit addedAt field so embedded documents always have a creation timestamp
+  addedAt: {
+    type: Date,
+    default: Date.now,
+  },
 }, { timestamps: true });
 
 const RequestedMaterialSchema = new Schema({

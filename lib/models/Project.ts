@@ -52,6 +52,11 @@ const MaterilUsedSchema = new Schema(
       type : String,
       required : false,
     },
+    // explicit addedAt for material usage entries
+    addedAt: {
+      type: Date,
+      default: Date.now,
+    },
   }, {timestamps : true}
 );
 
