@@ -185,24 +185,57 @@ export const POST = async (req: NextRequest | Request) => {
                     const oldCost = Number(existing.cost || 0);
                     const newQnt = oldQnt + qnt;
                     const newCost = oldCost + cost;
+                    const costDifference = newCost - oldCost; // Only add the new cost amount
 
-                    existing.qnt = newQnt;
-                    existing.cost = newCost;
+                    // Use findByIdAndUpdate to merge and update spent
+                    const updatedProject = await Projects.findByIdAndUpdate(
+                        projectId,
+                        {
+                            $inc: {
+                                "MaterialAvailable.$[elem].qnt": qnt,
+                                "MaterialAvailable.$[elem].cost": cost,
+                                "spent": costDifference
+                            }
+                        },
+                        {
+                            arrayFilters: [
+                                {
+                                    "elem._id": (existing as any)._id,
+                                    "elem.name": materialName,
+                                    "elem.unit": unit
+                                }
+                            ],
+                            new: true
+                        }
+                    );
 
-                    await project.save();
+                    if (updatedProject) {
+                        const updatedMaterial = updatedProject.MaterialAvailable?.find(
+                            (m: MaterialSubdoc) => 
+                                m.name === materialName && 
+                                m.unit === unit && 
+                                JSON.stringify(m.specs || {}) === JSON.stringify(specs)
+                        );
 
-                    results.push({
-                        ...resultBase,
-                        success: true,
-                        action: "merged",
-                        message: `Merged ${qnt} ${unit} of ${materialName}. Total now: ${newQnt} ${unit}`,
-                        material: existing as MaterialSubdoc,
-                    });
+                        results.push({
+                            ...resultBase,
+                            success: true,
+                            action: "merged",
+                            message: `Merged ${qnt} ${unit} of ${materialName}. Total now: ${newQnt} ${unit}`,
+                            material: updatedMaterial as MaterialSubdoc,
+                        });
+                    } else {
+                        results.push({
+                            ...resultBase,
+                            success: false,
+                            error: "Failed to merge material"
+                        });
+                    }
                     continue;
                 }
             }
 
-            // Create new batch
+            // Create new batch using findByIdAndUpdate
             const newMaterial: MaterialSubdoc = {
                 name: materialName,
                 unit,
@@ -211,16 +244,34 @@ export const POST = async (req: NextRequest | Request) => {
                 cost: Number(cost),
             };
 
-            project.MaterialAvailable.push(newMaterial);
-            await project.save();
+            const updatedProject = await Projects.findByIdAndUpdate(
+                projectId,
+                {
+                    $push: {
+                        "MaterialAvailable": newMaterial
+                    },
+                    $inc: {
+                        "spent": cost
+                    }
+                },
+                { new: true }
+            );
 
-            results.push({
-                ...resultBase,
-                success: true,
-                action: "created",
-                message: `Created new batch: ${qnt} ${unit} of ${materialName}`,
-                material: newMaterial,
-            });
+            if (updatedProject) {
+                results.push({
+                    ...resultBase,
+                    success: true,
+                    action: "created",
+                    message: `Created new batch: ${qnt} ${unit} of ${materialName}`,
+                    material: newMaterial,
+                });
+            } else {
+                results.push({
+                    ...resultBase,
+                    success: false,
+                    error: "Failed to create material"
+                });
+            }
         }
 
         return NextResponse.json({ success: true, results }, { status: 200 });

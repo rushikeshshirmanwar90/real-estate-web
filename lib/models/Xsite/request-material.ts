@@ -5,23 +5,27 @@ export const MaterialSchema = new Schema({
     type: String,
     required: true,
   },
+
   unit: {
     type: String,
     required: true,
   },
+
   specs: {
     type: Object,
     default: {},
   },
+
   qnt: {
     type: Number,
     required: true,
   },
+
   cost: {
     type: Number,
     default: 0,
   },
-  // explicit addedAt field so embedded documents always have a creation timestamp
+  
   addedAt: {
     type: Date,
     default: Date.now,
@@ -52,13 +56,6 @@ const RequestedMaterialSchema = new Schema({
   materials: {
     type: [MaterialSchema],
     required: true,
-  },
-
-  status: {
-    type: String,
-    required: false,
-    enum: ["pending", "approved", "rejected", "imported"],
-    default: "pending",
   },
 
   message: {

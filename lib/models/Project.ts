@@ -124,6 +124,8 @@ const projectSchema = new Schema(
       default: "ongoing",
     },
 
+
+
     longitude: {
       type: Number,
       required: false,
@@ -157,6 +159,7 @@ const projectSchema = new Schema(
     spent: {
       type: Number,
       required: false,
+      default : 0
     },
 
     progress: {

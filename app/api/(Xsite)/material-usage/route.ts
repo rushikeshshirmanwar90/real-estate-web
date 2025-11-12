@@ -122,7 +122,7 @@ export const POST = async (req: NextRequest | Request) => {
             );
         }
 
-        // Find project document
+        // Find project document first to get material details
         const project = await Projects.findById(projectId);
         if (!project) {
             console.error("Project not found for ID:", projectId);
@@ -135,17 +135,17 @@ export const POST = async (req: NextRequest | Request) => {
             );
         }
 
-    // Find material in MaterialAvailable by _id and sectionId (scope to provided section)
-    const availIndex = (project.MaterialAvailable || []).findIndex((m: MaterialSubdoc) => {
-      try {
-        const sameId = String((m as any)._id) === String(materialId);
-        // Accept the available entry if it is global (no sectionId) OR it matches the requested sectionId
-        const sameSection = !(m as any).sectionId || String((m as any).sectionId) === String(sectionId || "");
-        return sameId && sameSection;
-      } catch (_e) {
-        return false;
-      }
-    });
+        // Find material in MaterialAvailable by _id and sectionId (scope to provided section)
+        const availIndex = (project.MaterialAvailable || []).findIndex((m: MaterialSubdoc) => {
+            try {
+                const sameId = String((m as any)._id) === String(materialId);
+                // Accept the available entry if it is global (no sectionId) OR it matches the requested sectionId
+                const sameSection = !(m as any).sectionId || String((m as any).sectionId) === String(sectionId || "");
+                return sameId && sameSection;
+            } catch (_e) {
+                return false;
+            }
+        });
 
         if (availIndex == null || availIndex < 0) {
             return NextResponse.json(
@@ -157,21 +157,19 @@ export const POST = async (req: NextRequest | Request) => {
             );
         }
 
-    const available = project.MaterialAvailable![availIndex] as MaterialSubdoc;
+        const available = project.MaterialAvailable![availIndex] as MaterialSubdoc;
+        const costOfUsedMaterial = Number(available.cost || 0);
 
-    // Check sufficient quantity (coerce stored qnt to Number)
-    if (Number(available.qnt || 0) < qnt) {
+        // Check sufficient quantity (coerce stored qnt to Number)
+        if (Number(available.qnt || 0) < qnt) {
             return NextResponse.json(
                 { 
                     success: false,
-          error: `Insufficient quantity available. Available: ${Number(available.qnt || 0)}, Requested: ${qnt}` 
+                    error: `Insufficient quantity available. Available: ${Number(available.qnt || 0)}, Requested: ${qnt}` 
                 }, 
                 { status: 400 }
             );
         }
-
-        // Reduce available quantity
-    available.qnt = Number(available.qnt || 0) - qnt;
 
         // Prepare used material clone (include section/miniSection IDs)
         const usedClone: MaterialSubdoc = {
@@ -184,38 +182,51 @@ export const POST = async (req: NextRequest | Request) => {
             miniSectionId: miniSectionId || (available as any).miniSectionId || undefined,
         };
 
-        // If same material (matching name+unit+specs+cost) exists in MaterialUsed, add qnt there
-        const usedIndex = (project.MaterialUsed || []).findIndex((m: MaterialSubdoc) => {
-            try {
-                const sameNameUnit = m.name === usedClone.name && m.unit === usedClone.unit;
-                const sameSpecs = JSON.stringify(m.specs || {}) === JSON.stringify(usedClone.specs || {});
-                const sameCost = Number(m.cost || 0) === Number(usedClone.cost || 0);
-                const sameSection = String((m as any).sectionId || "") === String(usedClone.sectionId || "");
-                const sameMini = String((m as any).miniSectionId || "") === String(usedClone.miniSectionId || "");
-                return sameNameUnit && sameSpecs && sameCost && sameSection && sameMini;
-            } catch (_e) {
-                console.error("Error comparing material specs:", _e);
-                return false;
+        // Use findByIdAndUpdate with $inc and array operations
+        const updatedProject = await Projects.findByIdAndUpdate(
+            projectId,
+            {
+                $inc: {
+                    "MaterialAvailable.$[elem].qnt": -qnt,
+                    "spent": costOfUsedMaterial
+                },
+                $push: {
+                    "MaterialUsed": usedClone
+                }
+            },
+            {
+                arrayFilters: [
+                    { "elem._id": new ObjectId(materialId) }
+                ],
+                new: true,
+                fields: {
+                    MaterialAvailable: 1,
+                    MaterialUsed: 1,
+                    spent: 1
+                }
             }
-        });
+        );
 
-        if (usedIndex != null && usedIndex >= 0) {
-            project.MaterialUsed![usedIndex].qnt =
-                Number(project.MaterialUsed![usedIndex].qnt || 0) + qnt;
-        } else {
-            // Push new entry into MaterialUsed (include project ids)
-            project.MaterialUsed = project.MaterialUsed || [];
-            // ensure we store required projectId on used entry
-            project.MaterialUsed.push(usedClone as any);
+        if (!updatedProject) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: "Failed to update project"
+                },
+                { status: 500 }
+            );
         }
 
-    // If available quantity becomes zero or less, remove it from array
-    if (Number(available.qnt || 0) <= 0) {
-      project.MaterialAvailable.splice(availIndex, 1);
-    }
-
-        // Save changes
-        await project.save();
+        // Clean up: remove materials with 0 or negative quantity
+        const cleanedProject = await Projects.findByIdAndUpdate(
+            projectId,
+            {
+                $pull: {
+                    "MaterialAvailable": { qnt: { $lte: 0 } }
+                }
+            },
+            { new: true }
+        );
 
         // Return success with updated data
         return NextResponse.json(
@@ -223,12 +234,13 @@ export const POST = async (req: NextRequest | Request) => {
                 success: true,
                 message: `Successfully added ${qnt} ${available.unit} of ${available.name} to used materials`,
                 data: {
-                    projectId: project._id,
-                    sectionId : sectionId,
-                    miniSectionId : miniSectionId,
-                    materialAvailable: project.MaterialAvailable,
-                    materialUsed: project.MaterialUsed,
-                    usedMaterial: usedClone
+                    projectId: cleanedProject?._id,
+                    sectionId: sectionId,
+                    miniSectionId: miniSectionId,
+                    materialAvailable: cleanedProject?.MaterialAvailable,
+                    materialUsed: cleanedProject?.MaterialUsed,
+                    usedMaterial: usedClone,
+                    spent: cleanedProject?.spent
                 }
             }, 
             { status: 200 }
