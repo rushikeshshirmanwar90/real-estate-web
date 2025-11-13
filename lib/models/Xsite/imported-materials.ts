@@ -1,36 +1,39 @@
 import { model, models, Schema } from "mongoose";
 
-export const MaterialSchema = new Schema({
-  name: {
-    type: String,
-    required: true,
-  },
+export const MaterialSchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+    },
 
-  unit: {
-    type: String,
-    required: true,
-  },
+    unit: {
+      type: String,
+      required: true,
+    },
 
-  specs: {
-    type: Object,
-    default: {},
-  },
+    specs: {
+      type: Object,
+      default: {},
+    },
 
-  qnt: {
-    type: Number,
-    required: true,
-  },
+    qnt: {
+      type: Number,
+      required: true,
+    },
 
-  cost: {
-    type: Number,
-    default: 0,
+    cost: {
+      type: Number,
+      default: 0,
+    },
+
+    addedAt: {
+      type: Date,
+      default: Date.now,
+    },
   },
-  
-  addedAt: {
-    type: Date,
-    default: Date.now,
-  },
-}, { timestamps: true });
+  { timestamps: true }
+);
 
 const ImportedMaterialsSchema = new Schema({
   clientId: {
@@ -39,16 +42,6 @@ const ImportedMaterialsSchema = new Schema({
   },
 
   projectId: {
-    type: String,
-    required: true,
-  },
-
-  mainSectionId: {
-    type: String,
-    required: true,
-  },
-
-  sectionId: {
     type: String,
     required: true,
   },

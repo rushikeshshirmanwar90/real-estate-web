@@ -1,8 +1,8 @@
 import connect from "@/lib/db";
-import { NextRequest, NextResponse } from "next/server";
-import { Types } from "mongoose";
 import { Projects } from "@/lib/models/Project";
 import { ObjectId } from "mongodb";
+import { Types } from "mongoose";
+import { NextRequest, NextResponse } from "next/server";
 
 // Local types matching MaterialSchema
 type Specs = Record<string, unknown>;
@@ -18,7 +18,7 @@ type MaterialSubdoc = {
   miniSectionId?: string;
 };
 
-// GET: Fetch MaterialAvailable for a project
+// GET: Fetch MaterialUsed for a project
 export const GET = async (req: NextRequest | Request) => {
   try {
     const { searchParams } = new URL(req.url);
@@ -58,21 +58,22 @@ export const GET = async (req: NextRequest | Request) => {
       );
     }
 
-    // If sectionId is provided, filter MaterialAvailable to that section
-    const allAvailable = project.MaterialAvailable || [];
-    // If sectionId provided, include entries that either belong to that section OR are global (no sectionId)
-    const filteredAvailable = sectionId
-      ? allAvailable.filter(
-          (m: MaterialSubdoc) =>
-            !m.sectionId || String(m.sectionId) === String(sectionId)
-        )
-      : allAvailable;
+    // Get MaterialUsed array
+    const allUsed = project.MaterialUsed || [];
 
+    // If sectionId is provided, filter MaterialUsed to that section
+    const filteredUsed = sectionId
+      ? allUsed.filter(
+          (m: MaterialSubdoc) => String(m.sectionId) === String(sectionId)
+        )
+      : allUsed;
+
+    // FIXED: Return MaterialUsed instead of MaterialAvailable
     return NextResponse.json(
       {
         success: true,
-        message: "Material available fetched successfully",
-        MaterialAvailable: filteredAvailable,
+        message: "Material used fetched successfully",
+        MaterialUsed: filteredUsed, // ✅ Return MaterialUsed!
       },
       {
         status: 200,
@@ -80,11 +81,10 @@ export const GET = async (req: NextRequest | Request) => {
     );
   } catch (error: unknown) {
     console.log(error);
-
     return NextResponse.json(
       {
         success: false,
-        message: "Unable to fetch MaterialAvailable",
+        message: "Unable to fetch MaterialUsed",
         error: error instanceof Error ? error.message : String(error),
       },
       {
@@ -98,7 +98,6 @@ export const POST = async (req: NextRequest | Request) => {
   try {
     await connect();
     const body = await req.json();
-
     const { projectId, materialId, qnt, miniSectionId, sectionId } = body;
 
     // Validation
@@ -173,7 +172,9 @@ export const POST = async (req: NextRequest | Request) => {
       return NextResponse.json(
         {
           success: false,
-          error: `Insufficient quantity available. Available: ${Number(available.qnt || 0)}, Requested: ${qnt}`,
+          error: `Insufficient quantity available. Available: ${Number(
+            available.qnt || 0
+          )}, Requested: ${qnt}`,
         },
         { status: 400 }
       );
@@ -237,7 +238,7 @@ export const POST = async (req: NextRequest | Request) => {
       { new: true }
     );
 
-    // Return success with updated data
+    // FIXED: Return both MaterialAvailable AND MaterialUsed
     return NextResponse.json(
       {
         success: true,
@@ -247,7 +248,7 @@ export const POST = async (req: NextRequest | Request) => {
           sectionId: sectionId,
           miniSectionId: miniSectionId,
           materialAvailable: cleanedProject?.MaterialAvailable,
-          materialUsed: cleanedProject?.MaterialUsed,
+          materialUsed: cleanedProject?.MaterialUsed, // ✅ Include this
           usedMaterial: usedClone,
           spent: cleanedProject?.spent,
         },

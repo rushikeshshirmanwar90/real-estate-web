@@ -1,59 +1,48 @@
 import connect from "@/lib/db";
-import { MiniSection as Section } from "@/lib/models/Xsite/mini-section";
 import { ImportedMaterials } from "@/lib/models/Xsite/imported-materials";
 import { errorResponse, successResponse } from "@/lib/models/utils/API";
 import { NextRequest } from "next/server";
 
+interface MaterialItem {
+  name: string;
+  unit: string;
+  specs?: Record<string, unknown>;
+  qnt: number;
+  cost?: number;
+  addedAt?: Date;
+}
+
+interface ImportedMaterialPayload {
+  clientId: string;
+  projectId: string;
+  materials: MaterialItem[];
+  message?: string;
+}
+
+// GET: Fetch imported materials by projectId or clientId
 export const GET = async (req: NextRequest | Request) => {
   const { searchParams } = new URL(req.url);
   const projectId = searchParams.get("projectId");
-  const mainSectionId = searchParams.get("mainSectionId");
-  const sectionId = searchParams.get("sectionId");
   const clientId = searchParams.get("clientId");
 
   try {
     await connect();
-    if (projectId) {
-      const getMaterials = await ImportedMaterials.find({ projectId });
-      if (!getMaterials) {
-        return errorResponse(
-          `can't able to get Requested Material with mentioned projectId : ${projectId}`,
-          404
-        );
-      }
-      return successResponse(getMaterials, "Data fetched successfully", 200);
-    } else if (mainSectionId) {
-      const getMaterials = await ImportedMaterials.find({ mainSectionId });
-      if (!getMaterials) {
-        return errorResponse(
-          `can't able to get Requested Material with mentioned MainSectionId : ${mainSectionId}`,
-          404
-        );
-      }
-      return successResponse(getMaterials, "Data fetched successfully", 200);
-    } else if (sectionId) {
-      const getMaterials = await ImportedMaterials.find({ sectionId });
-      if (!getMaterials) {
-        return errorResponse(
-          `can't able to get Requested Material with mentioned sectionId : ${sectionId}`,
-          404
-        );
-      }
-      
-      return successResponse(getMaterials, "Data fetched successfully", 200);
 
-    } else if( clientId ){
-      const getMaterials = await ImportedMaterials.find({ clientId });
-      if (!getMaterials) {
-        return errorResponse(
-          `can't able to get Requested Material with mentioned clientId : ${clientId}`,
-          404
-        );
-      }
-      return successResponse(getMaterials, "Data fetched successfully", 200);
-    } else {
-      return errorResponse("invalid params", 406);
+    if (!projectId && !clientId) {
+      return errorResponse("projectId or clientId is required", 406);
     }
+
+    const query: Record<string, string> = {};
+    if (projectId) query.projectId = projectId;
+    if (clientId) query.clientId = clientId;
+
+    const getMaterials = await ImportedMaterials.find(query);
+
+    if (!getMaterials || getMaterials.length === 0) {
+      return successResponse([], "No imported materials found", 200);
+    }
+
+    return successResponse(getMaterials, "Data fetched successfully", 200);
   } catch (error: unknown) {
     if (error instanceof Error) {
       return errorResponse("Something went wrong", 500, error.message);
@@ -62,52 +51,85 @@ export const GET = async (req: NextRequest | Request) => {
   }
 };
 
+// POST: Create imported material request
 export const POST = async (req: NextRequest | Request) => {
   try {
     await connect();
-    const { materials, message, clientId, sectionId, qnt } = await req.json();
+
+    const {
+      materials,
+      message,
+      clientId,
+      projectId: reqProjectId,
+    } = (await req.json()) as {
+      clientId: string;
+      projectId: string;
+      materials: MaterialItem[];
+      message?: string;
+    };
+
+    // Validation
     if (!clientId) {
-      return errorResponse("clientId is required", 406)
+      return errorResponse("clientId is required", 406);
     }
 
-    const sectionData = await Section.findById(sectionId);
-    if (!sectionData) {
-      return errorResponse("section data not found", 404)
+    if (!reqProjectId) {
+      return errorResponse("projectId is required", 406);
     }
-
-    const projectId = sectionData.projectDetails.projectId;
-    const mainSectionId = sectionData.mainSectionDetails.sectionId;
 
     if (!Array.isArray(materials) || materials.length === 0) {
       return errorResponse("Materials array cannot be empty", 406);
     }
 
-    const payload = {
+    // Validate each material item
+    for (const material of materials) {
+      if (
+        !material.name ||
+        !material.unit ||
+        typeof material.qnt !== "number"
+      ) {
+        return errorResponse(
+          "Each material must have name, unit, and qnt (number)",
+          406
+        );
+      }
+
+      if (material.qnt <= 0) {
+        return errorResponse("Material quantity must be greater than 0", 406);
+      }
+
+      if (material.cost && material.cost < 0) {
+        return errorResponse("Material cost cannot be negative", 406);
+      }
+    }
+
+    const payload: ImportedMaterialPayload = {
       clientId,
-      projectId,
-      mainSectionId,
-      sectionId,
-      materials,
-      message,
-      qnt
+      projectId: reqProjectId,
+      materials: materials.map((material) => ({
+        ...material,
+        specs: material.specs || {},
+        cost: material.cost || 0,
+        addedAt: new Date(),
+      })),
+      message: message || "",
     };
 
-    const newRequestMaterial = new ImportedMaterials(payload);
-    await newRequestMaterial.save();
+    const newImportedMaterial = new ImportedMaterials(payload);
+    await newImportedMaterial.save();
 
     return successResponse(
-      newRequestMaterial,
-      "Material request created successfully",
+      newImportedMaterial,
+      "Material imported successfully",
       201
     );
-
   } catch (error: unknown) {
     if (error instanceof Error) {
       return errorResponse("Something went wrong", 500, error.message);
     }
     return errorResponse("Unknown error occurred", 500);
   }
-}
+};
 
 export const DELETE = async (req: NextRequest | Request) => {
   try {
