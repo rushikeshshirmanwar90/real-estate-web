@@ -1,6 +1,6 @@
 import { errorResponse, successResponse } from "@/lib/models/utils/API";
-import { RequestedMaterial } from "@/lib/models/Xsite/imported-materials";
-import {MiniSection as Section } from "@/lib/models/Xsite/mini-section";
+import { ImportedMaterials } from "@/lib/models/Xsite/imported-materials";
+import { MiniSection as Section } from "@/lib/models/Xsite/mini-section";
 import { NextRequest } from "next/server";
 import connect from "@/lib/db";
 
@@ -15,7 +15,7 @@ export const POST = async (req: NextRequest | Request) => {
     }
 
     // Fetch the existing request to validate state
-    const existing = await RequestedMaterial.findById(id);
+    const existing = await ImportedMaterials.findById(id);
     if (!existing) {
       return errorResponse("Material request not found", 404);
     }
@@ -33,28 +33,38 @@ export const POST = async (req: NextRequest | Request) => {
       }
 
       // After materials successfully pushed, mark the request as approved
-      const updated = await RequestedMaterial.findByIdAndUpdate(
+      const updated = await ImportedMaterials.findByIdAndUpdate(
         id,
         { status: "approved" },
         { new: true }
       );
 
       if (!updated) {
-        return errorResponse("unable to approve the request please try again", 500);
+        return errorResponse(
+          "unable to approve the request please try again",
+          500
+        );
       }
 
-      return successResponse({ request: updated,  }, "request approved and materials added to section", 200);
+      return successResponse(
+        { request: updated },
+        "request approved and materials added to section",
+        200
+      );
     }
 
     // If not approved, mark as rejected
-    const rejected = await RequestedMaterial.findByIdAndUpdate(
+    const rejected = await ImportedMaterials.findByIdAndUpdate(
       id,
       { status: "rejected" },
       { new: true }
     );
 
     if (!rejected) {
-      return errorResponse("unable to reject the request please try again", 500);
+      return errorResponse(
+        "unable to reject the request please try again",
+        500
+      );
     }
 
     return successResponse(rejected, "request rejected successfully", 200);

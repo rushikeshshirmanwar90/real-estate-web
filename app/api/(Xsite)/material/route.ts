@@ -8,22 +8,22 @@ import { ObjectId } from "mongodb";
 type Specs = Record<string, unknown>;
 
 type AddMaterialStockItem = {
-    projectId: string;
-    materialName: string;
-    unit: string;
-    specs?: Specs;
-    qnt: number | string;
-    cost: number | string;
-    mergeIfExists?: boolean;
-}
+  projectId: string;
+  materialName: string;
+  unit: string;
+  specs?: Specs;
+  qnt: number | string;
+  cost: number | string;
+  mergeIfExists?: boolean;
+};
 
 type MaterialSubdoc = {
-    _id?: Types.ObjectId | string;
-    name: string;
-    unit: string;
-    specs?: Specs;
-    qnt: number;
-    cost?: number;
+  _id?: Types.ObjectId | string;
+  name: string;
+  unit: string;
+  specs?: Specs;
+  qnt: number;
+  cost?: number;
 };
 
 // GET: Fetch MaterialAvailable for a project
@@ -93,199 +93,211 @@ export const GET = async (req: NextRequest | Request) => {
 
 // POST: Add or merge materials
 export const POST = async (req: NextRequest | Request) => {
-    await checkValidClient(req);
-    
-    try {
-        await connect();
-        const raw = await req.json();
+  await checkValidClient(req);
 
-        const items: AddMaterialStockItem[] = Array.isArray(raw) ? raw : [raw];
+  try {
+    await connect();
+    const raw = await req.json();
 
-        if (items.length === 0) {
-            return NextResponse.json({ success: false, error: "No materials provided" }, { status: 400 });
-        }
+    const items: AddMaterialStockItem[] = Array.isArray(raw) ? raw : [raw];
 
-        const results: Array<{
-            input: Partial<AddMaterialStockItem>;
-            success: boolean;
-            action?: "merged" | "created";
-            message?: string;
-            material?: MaterialSubdoc;
-            error?: string;
-        }> = [];
+    if (items.length === 0) {
+      return NextResponse.json(
+        { success: false, error: "No materials provided" },
+        { status: 400 }
+      );
+    }
 
-        for (const item of items) {
-            const {
-                projectId,
-                materialName,
-                unit,
-                specs = {},
-                qnt: rawQnt,
-                cost: rawCost,
-                mergeIfExists = true,
-            } = item as AddMaterialStockItem;
+    const results: Array<{
+      input: Partial<AddMaterialStockItem>;
+      success: boolean;
+      action?: "merged" | "created";
+      message?: string;
+      material?: MaterialSubdoc;
+      error?: string;
+    }> = [];
 
-            const resultBase = { input: item, success: false };
+    for (const item of items) {
+      const {
+        projectId,
+        materialName,
+        unit,
+        specs = {},
+        qnt: rawQnt,
+        cost: rawCost,
+        mergeIfExists = true,
+      } = item as AddMaterialStockItem;
 
-            // Basic validation and coercion
-            const qnt = typeof rawQnt === "string" ? Number(rawQnt) : rawQnt;
-            const cost = typeof rawCost === "string" ? Number(rawCost) : rawCost;
+      const resultBase = { input: item, success: false };
 
-            if (!projectId || !materialName || !unit) {
-                results.push({ ...resultBase, error: "projectId, materialName and unit are required" });
-                continue;
-            }
+      // Basic validation and coercion
+      const qnt = typeof rawQnt === "string" ? Number(rawQnt) : rawQnt;
+      const cost = typeof rawCost === "string" ? Number(rawCost) : rawCost;
 
-            if (typeof qnt !== "number" || Number.isNaN(qnt)) {
-                results.push({ ...resultBase, error: "qnt must be a number" });
-                continue;
-            }
+      if (!projectId || !materialName || !unit) {
+        results.push({
+          ...resultBase,
+          error: "projectId, materialName and unit are required",
+        });
+        continue;
+      }
 
-            if (typeof cost !== "number" || Number.isNaN(cost)) {
-                results.push({ ...resultBase, error: "cost must be a number" });
-                continue;
-            }
+      if (typeof qnt !== "number" || Number.isNaN(qnt)) {
+        results.push({ ...resultBase, error: "qnt must be a number" });
+        continue;
+      }
 
-            if (qnt <= 0) {
-                results.push({ ...resultBase, error: "Quantity must be greater than 0" });
-                continue;
-            }
+      if (typeof cost !== "number" || Number.isNaN(cost)) {
+        results.push({ ...resultBase, error: "cost must be a number" });
+        continue;
+      }
 
-            if (cost < 0) {
-                results.push({ ...resultBase, error: "Cost cannot be negative" });
-                continue;
-            }
+      if (qnt <= 0) {
+        results.push({
+          ...resultBase,
+          error: "Quantity must be greater than 0",
+        });
+        continue;
+      }
 
-            // Find project
-            const project = await Projects.findById(projectId);
-            if (!project) {
-                results.push({ ...resultBase, error: "project not found" });
-                continue;
-            }
+      if (cost < 0) {
+        results.push({ ...resultBase, error: "Cost cannot be negative" });
+        continue;
+      }
 
-            project.MaterialAvailable = project.MaterialAvailable || [];
+      // Find project
+      const project = await Projects.findById(projectId);
+      if (!project) {
+        results.push({ ...resultBase, error: "project not found" });
+        continue;
+      }
 
-            if (mergeIfExists) {
-                const availableArr = project.MaterialAvailable as MaterialSubdoc[];
-                const existingIndex = availableArr.findIndex((m: MaterialSubdoc) => {
-                    try {
-                        return (
-                            m.name === materialName &&
-                            m.unit === unit &&
-                            JSON.stringify(m.specs || {}) === JSON.stringify(specs)
-                        );
-                    } catch {
-                        return false;
-                    }
-                });
+      project.MaterialAvailable = project.MaterialAvailable || [];
 
-                if (existingIndex >= 0) {
-                    const existing = (project.MaterialAvailable as MaterialSubdoc[])[existingIndex];
-                    const oldQnt = Number(existing.qnt || 0);
-                    const oldCost = Number(existing.cost || 0);
-                    const newQnt = oldQnt + qnt;
-                    const newCost = oldCost + cost;
-                    const costDifference = newCost - oldCost; // Only add the new cost amount
+      if (mergeIfExists) {
+        const availableArr = project.MaterialAvailable as MaterialSubdoc[];
+        const existingIndex = availableArr.findIndex((m: MaterialSubdoc) => {
+          try {
+            return (
+              m.name === materialName &&
+              m.unit === unit &&
+              JSON.stringify(m.specs || {}) === JSON.stringify(specs)
+            );
+          } catch {
+            return false;
+          }
+        });
 
-                    // Use findByIdAndUpdate to merge and update spent
-                    const updatedProject = await Projects.findByIdAndUpdate(
-                        projectId,
-                        {
-                            $inc: {
-                                "MaterialAvailable.$[elem].qnt": qnt,
-                                "MaterialAvailable.$[elem].cost": cost,
-                                "spent": costDifference
-                            }
-                        },
-                        {
-                            arrayFilters: [
-                                {
-                                    "elem._id": (existing as any)._id,
-                                    "elem.name": materialName,
-                                    "elem.unit": unit
-                                }
-                            ],
-                            new: true
-                        }
-                    );
+        if (existingIndex >= 0) {
+          const existing = (project.MaterialAvailable as MaterialSubdoc[])[
+            existingIndex
+          ];
+          const oldQnt = Number(existing.qnt || 0);
+          const oldCost = Number(existing.cost || 0);
+          const newQnt = oldQnt + qnt;
+          const newCost = oldCost + cost;
+          const costDifference = newCost - oldCost; // Only add the new cost amount
 
-                    if (updatedProject) {
-                        const updatedMaterial = updatedProject.MaterialAvailable?.find(
-                            (m: MaterialSubdoc) => 
-                                m.name === materialName && 
-                                m.unit === unit && 
-                                JSON.stringify(m.specs || {}) === JSON.stringify(specs)
-                        );
-
-                        results.push({
-                            ...resultBase,
-                            success: true,
-                            action: "merged",
-                            message: `Merged ${qnt} ${unit} of ${materialName}. Total now: ${newQnt} ${unit}`,
-                            material: updatedMaterial as MaterialSubdoc,
-                        });
-                    } else {
-                        results.push({
-                            ...resultBase,
-                            success: false,
-                            error: "Failed to merge material"
-                        });
-                    }
-                    continue;
-                }
-            }
-
-            // Create new batch using findByIdAndUpdate
-            const newMaterial: MaterialSubdoc = {
-                name: materialName,
-                unit,
-                specs: specs || {},
-                qnt: Number(qnt),
-                cost: Number(cost),
-            };
-
-            const updatedProject = await Projects.findByIdAndUpdate(
-                projectId,
+          // Use findByIdAndUpdate to merge and update spent
+          const updatedProject = await Projects.findByIdAndUpdate(
+            projectId,
+            {
+              $inc: {
+                "MaterialAvailable.$[elem].qnt": qnt,
+                "MaterialAvailable.$[elem].cost": cost,
+                spent: costDifference,
+              },
+            },
+            {
+              arrayFilters: [
                 {
-                    $push: {
-                        "MaterialAvailable": newMaterial
-                    },
-                    $inc: {
-                        "spent": cost
-                    }
+                  "elem._id": (
+                    existing as unknown as { _id: Types.ObjectId | string }
+                  )._id,
+                  "elem.name": materialName,
+                  "elem.unit": unit,
                 },
-                { new: true }
+              ],
+              new: true,
+            }
+          );
+
+          if (updatedProject) {
+            const updatedMaterial = updatedProject.MaterialAvailable?.find(
+              (m: MaterialSubdoc) =>
+                m.name === materialName &&
+                m.unit === unit &&
+                JSON.stringify(m.specs || {}) === JSON.stringify(specs)
             );
 
-            if (updatedProject) {
-                results.push({
-                    ...resultBase,
-                    success: true,
-                    action: "created",
-                    message: `Created new batch: ${qnt} ${unit} of ${materialName}`,
-                    material: newMaterial,
-                });
-            } else {
-                results.push({
-                    ...resultBase,
-                    success: false,
-                    error: "Failed to create material"
-                });
-            }
+            results.push({
+              ...resultBase,
+              success: true,
+              action: "merged",
+              message: `Merged ${qnt} ${unit} of ${materialName}. Total now: ${newQnt} ${unit}`,
+              material: updatedMaterial as MaterialSubdoc,
+            });
+          } else {
+            results.push({
+              ...resultBase,
+              success: false,
+              error: "Failed to merge material",
+            });
+          }
+          continue;
         }
+      }
 
-        return NextResponse.json({ success: true, results }, { status: 200 });
+      // Create new batch using findByIdAndUpdate
+      const newMaterial: MaterialSubdoc = {
+        name: materialName,
+        unit,
+        specs: specs || {},
+        qnt: Number(qnt),
+        cost: Number(cost),
+      };
 
-    } catch (error: unknown) {
-        console.error("Error in material-available:", error);
-        return NextResponse.json(
-            {
-                success: false,
-                error: error instanceof Error ? error.message : String(error)
-            },
-            { status: 500 }
-        );
+      const updatedProject = await Projects.findByIdAndUpdate(
+        projectId,
+        {
+          $push: {
+            MaterialAvailable: newMaterial,
+          },
+          $inc: {
+            spent: cost,
+          },
+        },
+        { new: true }
+      );
+
+      if (updatedProject) {
+        results.push({
+          ...resultBase,
+          success: true,
+          action: "created",
+          message: `Created new batch: ${qnt} ${unit} of ${materialName}`,
+          material: newMaterial,
+        });
+      } else {
+        results.push({
+          ...resultBase,
+          success: false,
+          error: "Failed to create material",
+        });
+      }
     }
+
+    return NextResponse.json({ success: true, results }, { status: 200 });
+  } catch (error: unknown) {
+    console.error("Error in material-available:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
+  }
 };
 
 // PUT: Update MaterialAvailable

@@ -43,11 +43,11 @@ export const GET = async (req: NextRequest | Request) => {
       );
     } else if (id) {
       const sectionDataById = await Section.findById(id);
-      
+
       if (!sectionDataById) {
         return errorResponse("data not found", 204);
       }
-      
+
       return successResponse(
         sectionDataById,
         "Section data fetched successfully",
@@ -100,16 +100,26 @@ export const PUT = async (req: NextRequest | Request) => {
       mainSectionDetails: { sectionName?: string; sectionId?: string };
     }>;
 
-    const updates: any = {};
+    const updates: Record<
+      string,
+      | string
+      | { projectName: string; projectId: string }
+      | { sectionName?: string; sectionId?: string }
+    > = {};
     if (body.name) updates.name = body.name;
     if (body.projectDetails) updates.projectDetails = body.projectDetails;
-    if (body.mainSectionDetails) updates.mainSectionDetails = body.mainSectionDetails;
+    if (body.mainSectionDetails)
+      updates.mainSectionDetails = body.mainSectionDetails;
 
     if (Object.keys(updates).length === 0) {
       return errorResponse("no updatable fields provided", 406);
     }
 
-    const updatedData = await Section.findByIdAndUpdate(id, { $set: updates }, { new: true });
+    const updatedData = await Section.findByIdAndUpdate(
+      id,
+      { $set: updates },
+      { new: true }
+    );
 
     if (!updatedData) {
       return errorResponse(`section not found with id: ${id}`, 404);
