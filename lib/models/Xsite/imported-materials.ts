@@ -32,7 +32,7 @@ export const MaterialSchema = new Schema({
   },
 }, { timestamps: true });
 
-const RequestedMaterialSchema = new Schema({
+const ImportedMaterialsSchema = new Schema({
   clientId: {
     type: String,
     required: true,
@@ -64,6 +64,6 @@ const RequestedMaterialSchema = new Schema({
   },
 });
 
-export const RequestedMaterial =
-  models.RequestedMaterial ||
-  model("RequestedMaterial", RequestedMaterialSchema);
+export const ImportedMaterials =
+  models.ImportedMaterials ||
+  model("ImportedMaterials", ImportedMaterialsSchema);

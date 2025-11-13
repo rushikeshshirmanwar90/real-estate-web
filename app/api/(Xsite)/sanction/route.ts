@@ -1,5 +1,5 @@
 import { errorResponse, successResponse } from "@/lib/models/utils/API";
-import { RequestedMaterial } from "@/lib/models/Xsite/request-material";
+import { RequestedMaterial } from "@/lib/models/Xsite/imported-materials";
 import {MiniSection as Section } from "@/lib/models/Xsite/mini-section";
 import { NextRequest } from "next/server";
 import connect from "@/lib/db";

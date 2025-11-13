@@ -1,5 +1,5 @@
 import { model, models, Schema } from "mongoose";
-import { MaterialSchema } from "./request-material";
+import { MaterialSchema } from "./imported-materials";
 
 const SectionSchema = new Schema(
   {

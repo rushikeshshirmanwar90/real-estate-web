@@ -1,6 +1,6 @@
 import connect from "@/lib/db";
 import { MiniSection as Section } from "@/lib/models/Xsite/mini-section";
-import { RequestedMaterial } from "@/lib/models/Xsite/request-material";
+import { ImportedMaterials } from "@/lib/models/Xsite/imported-materials";
 import { errorResponse, successResponse } from "@/lib/models/utils/API";
 import { NextRequest } from "next/server";
 
@@ -14,7 +14,7 @@ export const GET = async (req: NextRequest | Request) => {
   try {
     await connect();
     if (projectId) {
-      const getMaterials = await RequestedMaterial.find({ projectId });
+      const getMaterials = await ImportedMaterials.find({ projectId });
       if (!getMaterials) {
         return errorResponse(
           `can't able to get Requested Material with mentioned projectId : ${projectId}`,
@@ -23,7 +23,7 @@ export const GET = async (req: NextRequest | Request) => {
       }
       return successResponse(getMaterials, "Data fetched successfully", 200);
     } else if (mainSectionId) {
-      const getMaterials = await RequestedMaterial.find({ mainSectionId });
+      const getMaterials = await ImportedMaterials.find({ mainSectionId });
       if (!getMaterials) {
         return errorResponse(
           `can't able to get Requested Material with mentioned MainSectionId : ${mainSectionId}`,
@@ -32,7 +32,7 @@ export const GET = async (req: NextRequest | Request) => {
       }
       return successResponse(getMaterials, "Data fetched successfully", 200);
     } else if (sectionId) {
-      const getMaterials = await RequestedMaterial.find({ sectionId });
+      const getMaterials = await ImportedMaterials.find({ sectionId });
       if (!getMaterials) {
         return errorResponse(
           `can't able to get Requested Material with mentioned sectionId : ${sectionId}`,
@@ -43,7 +43,7 @@ export const GET = async (req: NextRequest | Request) => {
       return successResponse(getMaterials, "Data fetched successfully", 200);
 
     } else if( clientId ){
-      const getMaterials = await RequestedMaterial.find({ clientId });
+      const getMaterials = await ImportedMaterials.find({ clientId });
       if (!getMaterials) {
         return errorResponse(
           `can't able to get Requested Material with mentioned clientId : ${clientId}`,
@@ -92,7 +92,7 @@ export const POST = async (req: NextRequest | Request) => {
       qnt
     };
 
-    const newRequestMaterial = new RequestedMaterial(payload);
+    const newRequestMaterial = new ImportedMaterials(payload);
     await newRequestMaterial.save();
 
     return successResponse(
@@ -123,7 +123,7 @@ export const DELETE = async (req: NextRequest | Request) => {
       );
     }
 
-    const deletedRequest = await RequestedMaterial.findByIdAndDelete(id);
+    const deletedRequest = await ImportedMaterials.findByIdAndDelete(id);
 
     if (!deletedRequest) {
       return errorResponse("Requested material not found", 404);

@@ -1,7 +1,7 @@
 import connect from "@/lib/db";
 import { errorResponse, successResponse } from "@/lib/models/utils/API";
 import { NextRequest } from "next/server";
-import { RequestedMaterial } from "@/lib/models/Xsite/request-material";
+import { ImportedMaterials } from "@/lib/models/Xsite/imported-materials";
 import { MiniSection as Section } from "@/lib/models/Xsite/mini-section";
 
 export const POST = async (req: NextRequest | Request) => {
@@ -16,7 +16,7 @@ export const POST = async (req: NextRequest | Request) => {
     await connect();
 
     // Find the requested material
-    const findRequestMaterial = await RequestedMaterial.findById(requestId);
+    const findRequestMaterial = await ImportedMaterials.findById(requestId);
 
     const sectionId = findRequestMaterial?.sectionId;
 
@@ -50,7 +50,7 @@ export const POST = async (req: NextRequest | Request) => {
     }
 
     // Update material request status
-    const updateMaterialRequest = await RequestedMaterial.findByIdAndUpdate(
+    const updateMaterialRequest = await ImportedMaterials.findByIdAndUpdate(
       requestId,
       {
         status: "imported",
