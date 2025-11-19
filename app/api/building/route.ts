@@ -106,7 +106,6 @@ export const POST = async (req: NextRequest | Request) => {
 };
 
 export const DELETE = async (req: NextRequest | Request) => {
-  await checkValidClient(req);
   try {
     await connect();
 
@@ -155,7 +154,6 @@ export const DELETE = async (req: NextRequest | Request) => {
 };
 
 export const PUT = async (req: NextRequest | Request) => {
-  await checkValidClient(req);
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");

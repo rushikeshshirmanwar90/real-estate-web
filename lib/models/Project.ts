@@ -1,6 +1,6 @@
 import { model, models, Schema } from "mongoose";
 import { AmenitiesSchema } from "./utils/Amenities";
-import { MaterialSchema } from "./Xsite/imported-materials";
+import { MaterialSchema } from "./Xsite/materials-activity";
 
 const SectionSchema = new Schema(
   {
@@ -22,7 +22,7 @@ const SectionSchema = new Schema(
   { _id: true }
 );
 
-const MaterilUsedSchema = new Schema(
+const MaterialUsedSchema = new Schema(
   {
     name: {
       type: String,
@@ -44,20 +44,21 @@ const MaterilUsedSchema = new Schema(
       type: Number,
       default: 0,
     },
-    sectionId : {
-      type : String,
-      required : true,
+    sectionId: {
+      type: String,
+      required: true,
     },
     miniSectionId: {
-      type : String,
-      required : false,
+      type: String,
+      required: false,
     },
     // explicit addedAt for material usage entries
     addedAt: {
       type: Date,
       default: Date.now,
     },
-  }, {timestamps : true}
+  },
+  { timestamps: true }
 );
 
 const StaffSchema = new Schema(
@@ -124,8 +125,6 @@ const projectSchema = new Schema(
       default: "ongoing",
     },
 
-
-
     longitude: {
       type: Number,
       required: false,
@@ -159,7 +158,7 @@ const projectSchema = new Schema(
     spent: {
       type: Number,
       required: false,
-      default : 0
+      default: 0,
     },
 
     progress: {
@@ -168,7 +167,7 @@ const projectSchema = new Schema(
     },
 
     MaterialUsed: {
-      type: [MaterilUsedSchema],
+      type: [MaterialUsedSchema],
       required: false,
     },
 
@@ -194,7 +193,11 @@ projectSchema.pre("validate", function (this: unknown, next) {
         const t = String(sec.type).toLowerCase().trim();
         if (t.includes("build")) {
           sec.type = "building";
-        } else if (t.includes("row") || t.includes("row house") || t.includes("row-house")) {
+        } else if (
+          t.includes("row") ||
+          t.includes("row house") ||
+          t.includes("row-house")
+        ) {
           sec.type = "row house";
         } else {
           sec.type = "other";

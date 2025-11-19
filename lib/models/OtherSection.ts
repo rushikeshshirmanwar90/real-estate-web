@@ -1,5 +1,5 @@
 import { model, models, Schema } from "mongoose";
-import { MaterialSchema } from "./Xsite/imported-materials";
+import { MaterialSchema } from "./Xsite/materials-activity";
 
 const OtherSectionSchema = new Schema({
   name: {
@@ -31,7 +31,6 @@ const OtherSectionSchema = new Schema({
     type: [MaterialSchema],
     required: false,
   },
-
 });
 
 export const OtherSection =

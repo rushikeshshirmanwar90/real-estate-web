@@ -1,7 +1,7 @@
 import connect from "@/lib/db";
 import { errorResponse, successResponse } from "@/lib/models/utils/API";
 import { NextRequest } from "next/server";
-import { ImportedMaterials } from "@/lib/models/Xsite/imported-materials";
+import { MaterialActivity as ImportedMaterials } from "@/lib/models/Xsite/materials-activity";
 import { MiniSection as Section } from "@/lib/models/Xsite/mini-section";
 
 export const POST = async (req: NextRequest | Request) => {
@@ -35,14 +35,14 @@ export const POST = async (req: NextRequest | Request) => {
     }
 
     const updatedSection = await Section.findByIdAndUpdate(
-        sectionId,
-        {
-          $push: {
-            MaterialAvailable: { $each: materials },
-          },
+      sectionId,
+      {
+        $push: {
+          MaterialAvailable: { $each: materials },
         },
-        { new: true, runValidators: true }
-      );
+      },
+      { new: true, runValidators: true }
+    );
 
     // Check if any update failed
     if (!updatedSection) {

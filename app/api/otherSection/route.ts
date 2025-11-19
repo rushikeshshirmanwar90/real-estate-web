@@ -48,27 +48,28 @@ export const GET = async (req: NextRequest | Request) => {
 
 export const POST = async (req: NextRequest | Request) => {
   try {
-    const data = await req.json();
     await connect();
+    const data = await req.json();
 
-    const newData = await new OtherSection(data);
-    const savedData = await newData.save();
+    const newSection = new OtherSection(data);
+    const savedData = await newSection.save();
 
-    if (!newData) {
+    if (!savedData) {
       return NextResponse.json(
         {
           message: "can't able to add new OtherSection",
         },
-        { status: 404 }
+        { status: 500 }
       );
     }
 
+    // Push a string version of the sectionId to ensure consistent matching later
     const updatedProject = await Projects.findByIdAndUpdate(
-      savedData.projectId,
+      String(savedData.projectId),
       {
         $push: {
           section: {
-            sectionId: savedData._id,
+            sectionId: String(savedData._id),
             name: savedData.name,
             type: "other",
           },
@@ -77,14 +78,19 @@ export const POST = async (req: NextRequest | Request) => {
       { new: true }
     );
 
+    // If project update fails, remove the created section to avoid orphaned documents
     if (!updatedProject) {
+      await OtherSection.findByIdAndDelete(savedData._id);
       return NextResponse.json(
         { message: `Project not found :  ${savedData.name}` },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ newData }, { status: 200 });
+    return NextResponse.json(
+      { section: savedData, project: updatedProject },
+      { status: 201 }
+    );
   } catch (error: unknown) {
     console.log("something went wrong : ", error);
     return NextResponse.json(
@@ -114,30 +120,72 @@ export const DELETE = async (req: NextRequest | Request) => {
       );
     }
 
-    const updatedProject = await Projects.findByIdAndUpdate(
-      projectId,
-      {
-        $pull: { section: { sectionId: sectionId } },
-      },
-      { new: true }
-    );
-
-    if (!updatedProject) {
+    // Load project and remove matching sections by string comparison to be robust
+    const project = await Projects.findById(projectId);
+    if (!project) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
+    const originalLen = Array.isArray(project.section)
+      ? project.section.length
+      : 0;
 
-    const deletedOtherSection = OtherSection.findByIdAndDelete(sectionId);
-    if (!deletedOtherSection) {
+    // Remove entries where either the stored sectionId matches OR the embedded subdoc _id matches
+    project.section = (project.section || []).filter(
+      (s: { sectionId?: unknown; _id?: unknown }) =>
+        String(s.sectionId) !== String(sectionId) &&
+        String(s._id) !== String(sectionId)
+    );
+
+    // If nothing was removed, try a looser comparison just in case
+    if (project.section.length === originalLen) {
+      project.section = (project.section || []).filter(
+        (s: { sectionId?: unknown; _id?: unknown }) =>
+          !(
+            String(s.sectionId).includes(String(sectionId)) ||
+            String(s._id).includes(String(sectionId))
+          )
+      );
+    }
+
+    await project.save();
+
+    // Load OtherSection and ensure it belongs to the same project (compare stringified ids)
+    const other = await OtherSection.findById(sectionId);
+
+    if (!other) {
+      // OtherSection document already missing, but project ref removed — return success
       return NextResponse.json(
-        { message: "can't able to delete the row house" },
-        { status: 404 }
+        {
+          message: "OtherSection document not found; project reference removed",
+          project,
+        },
+        { status: 200 }
+      );
+    }
+
+    if (String(other.projectId) !== String(projectId)) {
+      // The section exists but isn't linked to the provided projectId — don't delete
+      return NextResponse.json(
+        {
+          message: "OtherSection does not belong to the specified project",
+          otherProjectId: other.projectId,
+        },
+        { status: 403 }
+      );
+    }
+
+    // Safe delete: it belongs to the project so delete by id
+    const deleted = await OtherSection.findByIdAndDelete(sectionId);
+
+    if (!deleted) {
+      return NextResponse.json(
+        { message: "Failed to delete OtherSection" },
+        { status: 500 }
       );
     }
 
     return NextResponse.json(
-      {
-        deletedOtherSection,
-      },
+      { deletedOtherSection: deleted, project },
       { status: 200 }
     );
   } catch (error: unknown) {
@@ -156,16 +204,27 @@ export const DELETE = async (req: NextRequest | Request) => {
 
 export const PUT = async (req: NextRequest | Request) => {
   const { searchParams } = new URL(req.url);
-  const OtherSectionId = searchParams.get("rh");
+  // accept ?id or fallback to ?rh for backward compatibility
+  const OtherSectionId = searchParams.get("id") || searchParams.get("rh");
   const newData = await req.json();
 
   try {
     await connect();
 
+    if (!OtherSectionId) {
+      return NextResponse.json(
+        { message: "section id is required" },
+        { status: 400 }
+      );
+    }
+
     const newHouse = await OtherSection.findByIdAndUpdate(
       OtherSectionId,
-      { newData },
-      { new: true }
+      newData,
+      {
+        new: true,
+        runValidators: true,
+      }
     );
 
     if (!newHouse) {

@@ -1,5 +1,5 @@
 import connect from "@/lib/db";
-import { ImportedMaterials } from "@/lib/models/Xsite/imported-materials";
+import { MaterialActivity } from "@/lib/models/Xsite/materials-activity";
 import { errorResponse, successResponse } from "@/lib/models/utils/API";
 import { NextRequest } from "next/server";
 
@@ -10,6 +10,11 @@ interface MaterialItem {
   qnt: number;
   cost?: number;
   addedAt?: Date;
+}
+
+interface UserPayload {
+  userId: string;
+  fullName: string;
 }
 
 interface ImportedMaterialPayload {
@@ -24,6 +29,8 @@ export const GET = async (req: NextRequest | Request) => {
   const { searchParams } = new URL(req.url);
   const projectId = searchParams.get("projectId");
   const clientId = searchParams.get("clientId");
+  const userId = searchParams.get("userId");
+  const activity = searchParams.get("activity");
 
   try {
     await connect();
@@ -35,8 +42,12 @@ export const GET = async (req: NextRequest | Request) => {
     const query: Record<string, string> = {};
     if (projectId) query.projectId = projectId;
     if (clientId) query.clientId = clientId;
+    if (activity) query.activity = activity;
+    if (userId) query["user.userId"] = userId;
 
-    const getMaterials = await ImportedMaterials.find(query);
+    const getMaterials = await MaterialActivity.find(query).sort({
+      createdAt: -1,
+    });
 
     if (!getMaterials || getMaterials.length === 0) {
       return successResponse([], "No imported materials found", 200);
@@ -61,11 +72,15 @@ export const POST = async (req: NextRequest | Request) => {
       message,
       clientId,
       projectId: reqProjectId,
+      activity,
+      user,
     } = (await req.json()) as {
       clientId: string;
       projectId: string;
       materials: MaterialItem[];
       message?: string;
+      activity: "imported" | "used";
+      user: UserPayload;
     };
 
     // Validation
@@ -75,6 +90,13 @@ export const POST = async (req: NextRequest | Request) => {
 
     if (!reqProjectId) {
       return errorResponse("projectId is required", 406);
+    }
+
+    if (!activity || (activity !== "imported" && activity !== "used")) {
+      return errorResponse(
+        "activity is required and must be 'imported' or 'used'",
+        406
+      );
     }
 
     if (!Array.isArray(materials) || materials.length === 0) {
@@ -103,19 +125,32 @@ export const POST = async (req: NextRequest | Request) => {
       }
     }
 
-    const payload: ImportedMaterialPayload = {
+    // validate user
+    if (!user || typeof user !== "object") {
+      return errorResponse("user is required", 406);
+    }
+    if (!user.userId || !user.fullName) {
+      return errorResponse("user.userId and user.fullName are required", 406);
+    }
+
+    const payload: ImportedMaterialPayload & {
+      activity: "imported" | "used";
+      user: UserPayload;
+    } = {
       clientId,
       projectId: reqProjectId,
       materials: materials.map((material) => ({
         ...material,
         specs: material.specs || {},
         cost: material.cost || 0,
-        addedAt: new Date(),
+        addedAt: material.addedAt ? new Date(material.addedAt) : new Date(),
       })),
       message: message || "",
+      activity,
+      user,
     };
 
-    const newImportedMaterial = new ImportedMaterials(payload);
+    const newImportedMaterial = new MaterialActivity(payload);
     await newImportedMaterial.save();
 
     return successResponse(
@@ -145,7 +180,7 @@ export const DELETE = async (req: NextRequest | Request) => {
       );
     }
 
-    const deletedRequest = await ImportedMaterials.findByIdAndDelete(id);
+    const deletedRequest = await MaterialActivity.findByIdAndDelete(id);
 
     if (!deletedRequest) {
       return errorResponse("Requested material not found", 404);

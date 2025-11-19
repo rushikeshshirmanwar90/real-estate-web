@@ -32,10 +32,30 @@ export const MaterialSchema = new Schema(
       default: Date.now,
     },
   },
-  { timestamps: true }
+  { _id: false, timestamps: true }
 );
 
-const ImportedMaterialsSchema = new Schema({
+const UserSchema = new Schema(
+  {
+    userId: {
+      type: String,
+      required: true,
+    },
+
+    fullName: {
+      type: String,
+      required: true,
+    },
+  },
+  { _id: false, timestamps: false }
+);
+
+const MaterialActivitySchema = new Schema({
+  user: {
+    type: UserSchema,
+    required: true,
+  },
+
   clientId: {
     type: String,
     required: true,
@@ -55,8 +75,13 @@ const ImportedMaterialsSchema = new Schema({
     type: String,
     required: false,
   },
+
+  activity: {
+    type: String,
+    required: true,
+    enum: ["imported", "used"],
+  },
 });
 
-export const ImportedMaterials =
-  models.ImportedMaterials ||
-  model("ImportedMaterials", ImportedMaterialsSchema);
+export const MaterialActivity =
+  models.MaterialActivity || model("MaterialActivity", MaterialActivitySchema);

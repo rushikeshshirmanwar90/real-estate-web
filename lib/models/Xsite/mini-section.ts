@@ -1,5 +1,5 @@
 import { model, models, Schema } from "mongoose";
-import { MaterialSchema } from "./imported-materials";
+import { MaterialSchema } from "./materials-activity";
 
 const SectionSchema = new Schema(
   {
@@ -38,9 +38,9 @@ const SectionSchema = new Schema(
       type: [MaterialSchema],
       required: false,
     },
-
   },
   { timestamps: true }
 );
 
-export const MiniSection = models.MiniSection || model("MiniSection", SectionSchema);
+export const MiniSection =
+  models.MiniSection || model("MiniSection", SectionSchema);

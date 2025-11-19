@@ -1,6 +1,6 @@
 import { model, models, Schema } from "mongoose";
 import { AmenitiesSchema } from "./utils/Amenities";
-import { MaterialSchema } from "./Xsite/imported-materials";
+import { MaterialSchema } from "./Xsite/materials-activity";
 
 const RowHouseSchema = new Schema(
   {
@@ -49,7 +49,6 @@ const RowHouseSchema = new Schema(
       type: [MaterialSchema],
       required: false,
     },
-
   },
   {
     timestamps: true,
