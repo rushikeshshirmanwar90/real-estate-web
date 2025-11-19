@@ -32,7 +32,7 @@ export const MaterialSchema = new Schema(
       default: Date.now,
     },
   },
-  { _id: false, timestamps: true }
+  { timestamps: true }
 );
 
 const UserSchema = new Schema(
