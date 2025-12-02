@@ -1,5 +1,8 @@
 import React from "react";
 
+// Save this file as `pages/privacy.tsx` (Next.js pages router)
+// or adapt to `app/privacy/page.tsx` for the app router.
+
 const CONTACT_EMAIL = "growwithexponentor@gmail.com";
 
 export default function PrivacyPolicy(): JSX.Element {
@@ -67,7 +70,7 @@ export default function PrivacyPolicy(): JSX.Element {
 
           <h2 className="text-xl font-semibold">8. Changes to This Privacy Policy</h2>
           <p>
-            We may update this Privacy Policy from time to time. When we do, we will update the "Last Updated" date and notify users within the app if changes are significant.
+            We may update this Privacy Policy from time to time. When we do, we will update the &quot;Last Updated&quot; date and notify users within the app if changes are significant.
           </p>
 
           <h2 className="text-xl font-semibold">9. Contact Us</h2>
