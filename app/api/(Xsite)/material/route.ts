@@ -189,6 +189,7 @@ export const POST = async (req: NextRequest | Request) => {
         });
 
         if (existingIndex >= 0) {
+          // Mutate the mongoose document directly to avoid arrayFilters and undefined _id issues
           const existing = (project.MaterialAvailable as MaterialSubdoc[])[
             existingIndex
           ];
@@ -198,36 +199,18 @@ export const POST = async (req: NextRequest | Request) => {
           const newCost = oldCost + cost;
           const costDifference = newCost - oldCost; // Only add the new cost amount
 
-          // Use findByIdAndUpdate to merge and update spent
-          const updatedProject = await Projects.findByIdAndUpdate(
-            projectId,
-            {
-              $inc: {
-                "MaterialAvailable.$[elem].qnt": qnt,
-                "MaterialAvailable.$[elem].cost": cost,
-                spent: costDifference,
-              },
-            },
-            {
-              arrayFilters: [
-                {
-                  "elem._id": (
-                    existing as unknown as { _id: Types.ObjectId | string }
-                  )._id,
-                  "elem.name": materialName,
-                  "elem.unit": unit,
-                },
-              ],
-              new: true,
-            }
-          );
+          // update fields on the document and save
+          existing.qnt = newQnt;
+          existing.cost = newCost;
+          project.spent = (project.spent || 0) + costDifference;
 
-          if (updatedProject) {
-            const updatedMaterial = updatedProject.MaterialAvailable?.find(
-              (m: MaterialSubdoc) =>
-                m.name === materialName &&
-                m.unit === unit &&
-                JSON.stringify(m.specs || {}) === JSON.stringify(specs)
+          const saved = await project.save();
+
+          if (saved) {
+            const updatedMaterial = (saved.MaterialAvailable || []).find((m: MaterialSubdoc) =>
+              m.name === materialName &&
+              m.unit === unit &&
+              JSON.stringify(m.specs || {}) === JSON.stringify(specs)
             );
 
             results.push({
@@ -238,18 +221,16 @@ export const POST = async (req: NextRequest | Request) => {
               material: updatedMaterial as MaterialSubdoc,
             });
           } else {
-            results.push({
-              ...resultBase,
-              success: false,
-              error: "Failed to merge material",
-            });
+            results.push({ ...resultBase, success: false, error: "Failed to merge material" });
           }
           continue;
         }
       }
 
       // Create new batch using findByIdAndUpdate
+      // Assign an explicit _id to material subdocuments so other APIs can reference them reliably
       const newMaterial: MaterialSubdoc = {
+        _id: new ObjectId(),
         name: materialName,
         unit,
         specs: specs || {},
