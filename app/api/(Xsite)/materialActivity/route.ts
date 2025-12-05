@@ -172,6 +172,8 @@ export const DELETE = async (req: NextRequest | Request) => {
 
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
+    const projectId = searchParams.get("projectId");
+    const clientId = searchParams.get("clientId");
 
     if (!id) {
       return errorResponse(
@@ -180,6 +182,39 @@ export const DELETE = async (req: NextRequest | Request) => {
       );
     }
 
+    // Handle delete all entries
+    if (id === "all") {
+      // Build query based on provided parameters
+      const query: Record<string, string> = {};
+
+      if (projectId) {
+        query.projectId = projectId;
+      }
+
+      if (clientId) {
+        query.clientId = clientId;
+      }
+
+      // If neither projectId nor clientId is provided, delete ALL entries
+      // (use with caution!)
+      const deletedCount = await MaterialActivity.deleteMany(query);
+
+      if (deletedCount.deletedCount === 0) {
+        return successResponse(
+          { deletedCount: 0 },
+          "No material activities found to delete",
+          200
+        );
+      }
+
+      return successResponse(
+        { deletedCount: deletedCount.deletedCount, query },
+        `Successfully deleted ${deletedCount.deletedCount} material activities`,
+        200
+      );
+    }
+
+    // Delete single MaterialActivity by id
     const deletedRequest = await MaterialActivity.findByIdAndDelete(id);
 
     if (!deletedRequest) {
