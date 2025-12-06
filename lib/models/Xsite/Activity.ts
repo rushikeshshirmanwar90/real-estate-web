@@ -103,15 +103,10 @@ const ActivitySchema = new Schema(
         "mini_section_updated",
         "mini_section_deleted",
 
-        // Material activities
-        "material_imported",
-        "material_used",
-        "material_updated",
-        "material_deleted",
-
         // Staff activities
         "staff_assigned",
         "staff_removed",
+        "staff_added",
 
         // Other activities
         "other",
