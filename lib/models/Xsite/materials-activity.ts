@@ -1,5 +1,4 @@
 import { model, models, Schema } from "mongoose";
-import { isReactCompilerRequired } from "next/dist/build/swc/generated-native";
 
 export const MaterialSchema = new Schema(
   {

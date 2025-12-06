@@ -74,6 +74,7 @@ export const POST = async (req: NextRequest | Request) => {
       projectId: reqProjectId,
       activity,
       user,
+      date,
     } = (await req.json()) as {
       clientId: string;
       projectId: string;
@@ -81,6 +82,7 @@ export const POST = async (req: NextRequest | Request) => {
       message?: string;
       activity: "imported" | "used";
       user: UserPayload;
+      date?: string;
     };
 
     // Validation
@@ -133,9 +135,16 @@ export const POST = async (req: NextRequest | Request) => {
       return errorResponse("user.userId and user.fullName are required", 406);
     }
 
+    // validate date - accept ISO strings; default to now if not provided
+    const dateStr = date ? String(date) : new Date().toISOString();
+    if (Number.isNaN(Date.parse(dateStr))) {
+      return errorResponse("date must be a valid ISO date string", 406);
+    }
+
     const payload: ImportedMaterialPayload & {
       activity: "imported" | "used";
       user: UserPayload;
+      date: string;
     } = {
       clientId,
       projectId: reqProjectId,
@@ -147,6 +156,7 @@ export const POST = async (req: NextRequest | Request) => {
       })),
       message: message || "",
       activity,
+      date: dateStr,
       user,
     };
 
