@@ -1,4 +1,5 @@
 import { model, models, Schema } from "mongoose";
+import { isReactCompilerRequired } from "next/dist/build/swc/generated-native";
 
 export const MaterialSchema = new Schema(
   {
@@ -80,6 +81,10 @@ const MaterialActivitySchema = new Schema({
     type: String,
     required: true,
     enum: ["imported", "used"],
+  },
+  date: {
+    type: String,
+    required: true,
   },
 });
 
