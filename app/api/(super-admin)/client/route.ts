@@ -8,42 +8,33 @@ export const GET = async (req: NextRequest | Request) => {
 
   try {
     await connect();
+
     if (!id) {
       const clientData = await Client.find();
-
       if (clientData.length < 0 || !clientData) {
         return NextResponse.json(
-          {
-            message: "client data not found",
-          },
+          { message: "client data not found" },
           { status: 400 }
         );
       }
-
       return NextResponse.json({ clientData }, { status: 200 });
     }
 
     const clientData = await Client.findById(id);
-
     if (!clientData) {
-      return NextResponse.json({ message: `client not found with ${id}` });
+      return NextResponse.json(
+        { message: `client not found with ${id}` },
+        { status: 404 }
+      );
     }
 
-    // Add the missing return statement here
     return NextResponse.json({ clientData }, { status: 200 });
   } catch (error: unknown) {
     if (error instanceof Error) {
-      return NextResponse.json(
-        {
-          message: error.message,
-        },
-        { status: 500 }
-      );
+      return NextResponse.json({ message: error.message }, { status: 500 });
     }
     return NextResponse.json(
-      {
-        message: "Internal Server Error",
-      },
+      { message: "Internal Server Error" },
       { status: 500 }
     );
   }
@@ -52,53 +43,70 @@ export const GET = async (req: NextRequest | Request) => {
 export const POST = async (req: NextRequest) => {
   try {
     await connect();
-
     const data = await req.json();
 
     const addClient = new Client(data);
     await addClient.save();
 
-    return NextResponse.json({ message: "Client added successfully" });
-  } catch (error: unknown) {
-    console.error("Error: " + error);
     return NextResponse.json(
-      { message: "An error occurred", error: error },
+      {
+        message: "Client added successfully",
+        client: addClient,
+      },
+      { status: 201 }
+    );
+  } catch (error: unknown) {
+    console.error("Error adding client:", error);
+
+    if (error instanceof Error) {
+      return NextResponse.json({ message: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(
+      { message: "An error occurred while adding client" },
       { status: 500 }
     );
   }
 };
+
 export const DELETE = async (req: NextRequest) => {
   try {
     const { searchParams } = new URL(req.url);
-
     const email = searchParams.get("email");
 
     if (!email) {
       return NextResponse.json(
-        { message: "Client not found" },
-        { status: 402 }
+        { message: "Email parameter is required" },
+        { status: 400 }
       );
     }
 
     await connect();
-
     const deletedClient = await Client.findOneAndDelete({ email });
 
     if (!deletedClient) {
       return NextResponse.json(
-        { message: "Something went wrong can't Delete Client" },
-        { status: 500 }
+        { message: "Client not found" },
+        { status: 404 }
       );
     }
 
-    return NextResponse.json({
-      message: "Client Deleted Successfully",
-      data: deletedClient,
-    });
+    return NextResponse.json(
+      {
+        message: "Client Deleted Successfully",
+        data: deletedClient,
+      },
+      { status: 200 }
+    );
   } catch (error: unknown) {
     console.error("Internal Server Error:", error);
+
+    if (error instanceof Error) {
+      return NextResponse.json({ message: error.message }, { status: 500 });
+    }
+
     return NextResponse.json(
-      { message: "Internal Server Error", error: error },
+      { message: "Internal Server Error" },
       { status: 500 }
     );
   }
@@ -107,37 +115,46 @@ export const DELETE = async (req: NextRequest) => {
 export const PUT = async (req: NextRequest | Request) => {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
-  const data = await req.json();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { password, ...allowedData } = data;
 
   try {
-    await connect();
-    const clientData = await Client.findByIdAndUpdate(id, allowedData);
-
-    if (!clientData) {
+    if (!id) {
       return NextResponse.json(
-        {
-          message: "client not found",
-        },
+        { message: "ID parameter is required" },
         { status: 400 }
       );
     }
 
-    return NextResponse.json({ clientData }, { status: 200 });
-  } catch (error: unknown) {
-    if (error instanceof Error) {
+    await connect();
+    const data = await req.json();
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...allowedData } = data;
+
+    const clientData = await Client.findByIdAndUpdate(id, allowedData, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!clientData) {
       return NextResponse.json(
-        {
-          message: error.message,
-        },
-        { status: 500 }
+        { message: "Client not found" },
+        { status: 404 }
       );
     }
+
     return NextResponse.json(
       {
-        message: "Internal Server Error",
+        message: "Client updated successfully",
+        clientData,
       },
+      { status: 200 }
+    );
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json({ message: error.message }, { status: 500 });
+    }
+    return NextResponse.json(
+      { message: "Internal Server Error" },
       { status: 500 }
     );
   }
