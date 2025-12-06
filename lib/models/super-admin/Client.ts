@@ -6,42 +6,35 @@ const clientSchema = new Schema(
       type: String,
       required: true,
     },
-
     phoneNumber: {
       type: Number,
-      require: true,
+      required: true,
       unique: true,
     },
-
     email: {
       type: String,
       required: true,
       unique: true,
     },
-
     password: {
       type: String,
       required: false,
     },
-
     city: {
       type: String,
       required: true,
     },
-
     state: {
       type: String,
       required: true,
     },
-
     address: {
       type: String,
       required: true,
     },
-
     logo: {
       type: String,
-      required: true,
+      required: false, // Changed to false since it's optional in the form
     },
   },
   {

@@ -45,7 +45,11 @@ export const POST = async (req: NextRequest) => {
     await connect();
     const data = await req.json();
 
-    const addClient = new Client(data);
+    // Remove userType from the data entirely
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { userType, ...cleanData } = data;
+
+    const addClient = new Client(cleanData);
     await addClient.save();
 
     return NextResponse.json(
