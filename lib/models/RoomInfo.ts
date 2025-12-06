@@ -97,6 +97,9 @@ const RoomInfoSchema = new Schema({
 });
 
 // Make `changes` optional
-RoomInfoSchema.path("rooms").schema.path("changes").options.default = [];
+const changesPath = RoomInfoSchema.path("rooms").schema?.path("changes");
+if (changesPath) {
+  changesPath.options.default = [];
+}
 
 export const RoomInfo = models.RoomInfo || model("RoomInfo", RoomInfoSchema);
