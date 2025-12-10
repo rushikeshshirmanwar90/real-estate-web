@@ -1,48 +1,21 @@
 import bcrypt from "bcrypt";
-import connect from "@/lib/db";
+import { connectDB } from "@/lib/utils/db-connection";
 import { Client } from "@/lib/models/super-admin/Client";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { LoginUser } from "@/lib/models/Xsite/LoginUsers";
-import { Types } from "mongoose";
+import { errorResponse, successResponse } from "@/lib/utils/api-response";
+import { isValidObjectId, isValidEmail } from "@/lib/utils/validation";
+import {
+  getPaginationParams,
+  createPaginationMeta,
+} from "@/lib/utils/pagination";
+import { logger } from "@/lib/utils/logger";
 
-// Helper function to validate MongoDB ObjectId
-const isValidObjectId = (id: string): boolean => {
-  return Types.ObjectId.isValid(id);
-};
-
-// Helper function for error responses
-const errorResponse = (message: string, status: number, error?: unknown) => {
-  return NextResponse.json(
-    {
-      success: false,
-      message,
-      ...(error && typeof error === "object"
-        ? { error: error instanceof Error ? error.message : error }
-        : {}),
-    },
-    { status }
-  );
-};
-
-// Helper function for success responses
-const successResponse = (
-  data: unknown,
-  message?: string,
-  status: number = 200
-) => {
-  return NextResponse.json(
-    {
-      success: true,
-      ...(message && { message }),
-      data,
-    },
-    { status }
-  );
-};
+const SALT_ROUNDS = 10;
 
 export const GET = async (req: NextRequest) => {
   try {
-    await connect();
+    await connectDB();
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     const email = searchParams.get("email");
@@ -50,10 +23,10 @@ export const GET = async (req: NextRequest) => {
     // Get specific Client by ID
     if (id) {
       if (!isValidObjectId(id)) {
-        return errorResponse("Invalid staff ID format", 400);
+        return errorResponse("Invalid client ID format", 400);
       }
 
-      const clientData = await Client.findById(id);
+      const clientData = await Client.findById(id).select("-password").lean();
       if (!clientData) {
         return errorResponse("Client not found", 404);
       }
@@ -63,12 +36,13 @@ export const GET = async (req: NextRequest) => {
 
     // Get specific client by email
     if (email) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
+      if (!isValidEmail(email)) {
         return errorResponse("Invalid email format", 400);
       }
 
-      const clientData = await Client.findOne({ email });
+      const clientData = await Client.findOne({ email })
+        .select("-password")
+        .lean();
       if (!clientData) {
         return errorResponse("Client not found with this email", 404);
       }
@@ -76,84 +50,154 @@ export const GET = async (req: NextRequest) => {
       return successResponse(clientData, "Client retrieved successfully");
     }
 
-    // Get all client members
-    const clientData = await Client.find().sort({ createdAt: -1 });
+    // Get all clients with pagination
+    const { page, limit, skip } = getPaginationParams(req);
+
+    const [clients, total] = await Promise.all([
+      Client.find()
+        .select("-password")
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 })
+        .lean(),
+      Client.countDocuments(),
+    ]);
+
+    const meta = createPaginationMeta(page, limit, total);
 
     return successResponse(
-      clientData,
-      `Retrieved ${clientData.length} clients(s) successfully`
+      { clients, meta },
+      `Retrieved ${clients.length} client(s) successfully`
     );
   } catch (error: unknown) {
-    console.error("GET /client error:", error);
-    return errorResponse("Failed to fetch client data", 500, error);
+    logger.error("GET /clients error", error);
+    return errorResponse("Failed to fetch client data", 500);
   }
 };
 
 export const POST = async (req: NextRequest) => {
   try {
-    await connect();
+    await connectDB();
 
     const data = await req.json();
-    const saltRounds = parseInt(process.env.SALT_ID!, 10);
-    if (data.password) {
-      data.password = await bcrypt.hash(data.password, saltRounds);
+
+    // Validate required fields
+    if (!data.email) {
+      return errorResponse("Email is required", 400);
     }
 
-    const addClient = new Client(data);
-    await addClient.save();
+    if (!isValidEmail(data.email)) {
+      return errorResponse("Invalid email format", 400);
+    }
 
-    const { email, ...otherData } = data;
+    // Check if client already exists
+    const existingClient = await Client.findOne({ email: data.email }).lean();
+    if (existingClient) {
+      return errorResponse("Client already exists with this email", 409);
+    }
 
-    console.log(otherData);
-    const payload = { email, userType: "clients" };
-    const newEntry = new LoginUser(payload);
-    await newEntry.save();
+    const existingLoginUser = await LoginUser.findOne({
+      email: data.email,
+    }).lean();
+    if (existingLoginUser) {
+      return errorResponse("User already exists with this email", 409);
+    }
 
-    return NextResponse.json({ message: "Client added successfully" });
+    // Hash password if provided
+    if (data.password) {
+      data.password = await bcrypt.hash(data.password, SALT_ROUNDS);
+    }
+
+    // Use transaction for atomicity
+    const session = await connectDB().then((m) => m.startSession());
+    session.startTransaction();
+
+    try {
+      const addClient = new Client(data);
+      await addClient.save({ session });
+
+      const loginPayload = { email: data.email, userType: "clients" };
+      const newEntry = new LoginUser(loginPayload);
+      await newEntry.save({ session });
+
+      await session.commitTransaction();
+
+      // Return client without password
+      const { password: _, ...clientWithoutPassword } = addClient.toObject();
+
+      return successResponse(
+        clientWithoutPassword,
+        "Client created successfully",
+        201
+      );
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
   } catch (error: unknown) {
-    console.error("Error: " + error);
-    return NextResponse.json(
-      { message: "An error occurred", error: error },
-      { status: 500 }
-    );
+    logger.error("Error creating client", error);
+
+    if (
+      error &&
+      typeof error === "object" &&
+      "name" in error &&
+      error.name === "ValidationError"
+    ) {
+      return errorResponse("Validation failed", 400, error);
+    }
+
+    return errorResponse("Failed to create client", 500);
   }
 };
 
 export const DELETE = async (req: NextRequest) => {
   try {
     const { searchParams } = new URL(req.url);
-
     const email = searchParams.get("email");
 
     if (!email) {
-      return NextResponse.json(
-        { message: "email must required" },
-        { status: 402 }
-      );
+      return errorResponse("Email is required", 400);
     }
 
-    await connect();
-
-    const deletedClient = await Client.findOneAndDelete({ email });
-    const deletedLoginUser = await LoginUser.findOneAndDelete({ email });
-
-    if (!deletedClient || !deletedLoginUser) {
-      return NextResponse.json(
-        { message: "Something went wrong can't Delete Client" },
-        { status: 500 }
-      );
+    if (!isValidEmail(email)) {
+      return errorResponse("Invalid email format", 400);
     }
 
-    return NextResponse.json({
-      message: "Client Deleted Successfully",
-      data: deletedClient,
-    });
+    await connectDB();
+
+    // Use transaction for atomicity
+    const session = await connectDB().then((m) => m.startSession());
+    session.startTransaction();
+
+    try {
+      const deletedClient = await Client.findOneAndDelete(
+        { email },
+        { session }
+      ).lean();
+      const deletedLoginUser = await LoginUser.findOneAndDelete(
+        { email },
+        { session }
+      ).lean();
+
+      if (!deletedClient) {
+        await session.abortTransaction();
+        return errorResponse("Client not found", 404);
+      }
+
+      await session.commitTransaction();
+
+      return successResponse(deletedClient, "Client deleted successfully");
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
   } catch (error: unknown) {
-    console.error("Internal Server Error:", error);
-    return NextResponse.json(
-      { message: "Internal Server Error", error: error },
-      { status: 500 }
-    );
+    logger.error("Error deleting client", error);
+    return errorResponse("Failed to delete client", 500);
   }
 };
 
@@ -163,47 +207,77 @@ export const PUT = async (req: NextRequest) => {
     const id = searchParams.get("id");
 
     if (!id) {
-      return NextResponse.json(
-        { message: "Id Not Found" },
-        {
-          status: 404,
-        }
-      );
+      return errorResponse("Client ID is required", 400);
     }
 
-    const { name, city, address, area } = await req.json();
+    if (!isValidObjectId(id)) {
+      return errorResponse("Invalid client ID format", 400);
+    }
 
-    const updatedUser = await Client.findByIdAndUpdate(
+    const updateData = await req.json();
+
+    // Don't allow password updates through this endpoint
+    delete updateData.password;
+
+    // Validate email if being updated
+    if (updateData.email) {
+      if (!isValidEmail(updateData.email)) {
+        return errorResponse("Invalid email format", 400);
+      }
+
+      // Check if email already exists for another client
+      const existingClient = await Client.findOne({
+        email: updateData.email,
+        _id: { $ne: id },
+      }).lean();
+
+      if (existingClient) {
+        return errorResponse("Email already exists for another client", 409);
+      }
+    }
+
+    await connectDB();
+
+    // Get old email before update if email is being changed
+    let oldEmail: string | undefined;
+    if (updateData.email) {
+      const oldClient = await Client.findById(id).select("email").lean();
+      oldEmail = oldClient?.email;
+    }
+
+    const updatedClient = await Client.findByIdAndUpdate(
       id,
-      {
-        name,
-        city,
-        address,
-        area,
-      },
-      { new: true }
-    );
+      { $set: updateData },
+      { new: true, runValidators: true }
+    )
+      .select("-password")
+      .lean();
 
-    if (!updatedUser) {
-      return NextResponse.json(
-        {
-          message: "Something went wrong can't update user",
-        },
-        {
-          status: 500,
-        }
+    if (!updatedClient) {
+      return errorResponse("Client not found", 404);
+    }
+
+    // Update email in LoginUser if changed
+    if (updateData.email && oldEmail) {
+      await LoginUser.findOneAndUpdate(
+        { email: oldEmail },
+        { email: updateData.email }
       );
     }
 
-    return NextResponse.json({
-      message: "User Updated Successfully",
-      data: updatedUser,
-    });
+    return successResponse(updatedClient, "Client updated successfully");
   } catch (error: unknown) {
-    console.error("Internal Server Error:", error);
-    return NextResponse.json(
-      { message: "Internal Server Error", error: error },
-      { status: 500 }
-    );
+    logger.error("Error updating client", error);
+
+    if (
+      error &&
+      typeof error === "object" &&
+      "name" in error &&
+      error.name === "ValidationError"
+    ) {
+      return errorResponse("Validation failed", 400, error);
+    }
+
+    return errorResponse("Failed to update client", 500);
   }
 };

@@ -1,235 +1,200 @@
-import connect from "@/lib/db";
+import { connectDB } from "@/lib/utils/db-connection";
 import { CustomerDetails } from "@/lib/models/CustomerDetails";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import mongoose from "mongoose";
+import { errorResponse, successResponse } from "@/lib/utils/api-response";
+import { isValidObjectId } from "@/lib/utils/validation";
+import { logger } from "@/lib/utils/logger";
 
-export const GET = async (req: NextRequest | Request) => {
+export const GET = async (req: NextRequest) => {
   try {
-    await connect();
+    await connectDB();
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get("userId");
 
     if (!userId) {
-      return NextResponse.json(
-        { message: "userId not found" },
-        { status: 404 }
-      );
+      return errorResponse("userId is required", 400);
     }
 
-    let objectId;
-    try {
-      objectId = new mongoose.Types.ObjectId(userId);
-    } catch (error) {
-      return NextResponse.json(
-        { message: "Invalid userId format", error },
-        { status: 400 }
-      );
+    if (!isValidObjectId(userId)) {
+      return errorResponse("Invalid userId format", 400);
     }
 
-    const property = await CustomerDetails.findOne({ userId: objectId });
+    const objectId = new mongoose.Types.ObjectId(userId);
+    const property = await CustomerDetails.findOne({ userId: objectId }).lean();
 
     if (!property) {
-      return NextResponse.json(
-        { message: "Can't find properties for this user" },
-        { status: 404 }
-      );
+      return errorResponse("No properties found for this user", 404);
     }
 
-    return NextResponse.json(property, { status: 200 });
+    return successResponse(property, "Properties retrieved successfully");
   } catch (error: unknown) {
-    console.error(error);
-    return NextResponse.json(
-      { message: "Can't fetch the data", error: (error as Error).message },
-      { status: 500 }
-    );
+    logger.error("Error fetching properties", error);
+    return errorResponse("Failed to fetch properties", 500);
   }
 };
 
-export const POST = async (req: NextRequest | Request) => {
+export const POST = async (req: NextRequest) => {
   try {
-    await connect();
+    await connectDB();
     const body = await req.json();
     const { userId, ...propertyData } = body;
 
     if (!userId) {
-      return NextResponse.json(
-        { message: "userId is required" },
-        { status: 400 }
+      return errorResponse("userId is required", 400);
+    }
+
+    if (!isValidObjectId(userId)) {
+      return errorResponse("Invalid userId format", 400);
+    }
+
+    // Validate required property fields
+    const requiredFields = [
+      "projectId",
+      "projectName",
+      "sectionId",
+      "sectionName",
+      "sectionType",
+    ];
+    const missingFields = requiredFields.filter(
+      (field) => !propertyData[field]
+    );
+
+    if (missingFields.length > 0) {
+      return errorResponse(
+        `Missing required fields: ${missingFields.join(", ")}`,
+        400
       );
     }
 
-    // Convert userId string to ObjectId
-    let objectId;
-    try {
-      objectId = new mongoose.Types.ObjectId(userId);
-    } catch (error) {
-      return NextResponse.json(
-        { message: "Invalid userId format", error },
-        { status: 400 }
-      );
-    }
+    const objectId = new mongoose.Types.ObjectId(userId);
 
-    // Check if a CustomerDetails document exists for this user
+    // Check if customer details exist
     const existingCustomer = await CustomerDetails.findOne({
       userId: objectId,
     });
+
     let result;
-
     if (existingCustomer) {
-      // Validate property data against schema requirements
-      if (
-        !propertyData.projectId ||
-        !propertyData.projectName ||
-        !propertyData.sectionId ||
-        !propertyData.sectionName ||
-        !propertyData.sectionType
-      ) {
-        return NextResponse.json(
-          { message: "Missing required property fields" },
-          { status: 400 }
-        );
-      }
-
-      // If customer details exists, update the property array
+      // Update existing customer
       result = await CustomerDetails.findOneAndUpdate(
         { userId: objectId },
-        {
-          $push: {
-            property: propertyData,
-          },
-        },
-        { new: true }
-      );
+        { $push: { property: propertyData } },
+        { new: true, runValidators: true }
+      ).lean();
     } else {
-      // Validate property data for new document
-      if (
-        !propertyData.projectId ||
-        !propertyData.projectName ||
-        !propertyData.sectionId ||
-        !propertyData.sectionName ||
-        !propertyData.sectionType
-      ) {
-        return NextResponse.json(
-          { message: "Missing required property fields" },
-          { status: 400 }
-        );
-      }
-
-      // If customer details doesn't exist, create a new document
-      result = await CustomerDetails.create({
+      // Create new customer details
+      const newCustomerDetails = new CustomerDetails({
         userId: objectId,
         property: [propertyData],
       });
+      result = await newCustomerDetails.save();
     }
 
     if (!result) {
-      return NextResponse.json(
-        { message: "Failed to update or create customer data" },
-        { status: 500 }
-      );
+      return errorResponse("Failed to add property", 500);
     }
 
-    return NextResponse.json(result, { status: 200 });
+    return successResponse(result, "Property added successfully", 201);
   } catch (error: unknown) {
-    console.error(error);
-    return NextResponse.json(
-      {
-        message: "Can't add the property data",
-        error: (error as Error).message,
-      },
-      { status: 500 }
-    );
+    logger.error("Error adding property", error);
+
+    if (
+      error &&
+      typeof error === "object" &&
+      "name" in error &&
+      error.name === "ValidationError"
+    ) {
+      return errorResponse("Validation failed", 400, error);
+    }
+
+    return errorResponse("Failed to add property", 500);
   }
 };
 
-export const DELETE = async (req: NextRequest | Request) => {
+export const DELETE = async (req: NextRequest) => {
   try {
-    await connect();
+    await connectDB();
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get("userId");
+    const propertyId = searchParams.get("propertyId");
 
-    // If userId is provided, delete only that user's data
-    if (userId) {
-      // Convert userId string to ObjectId
-      let objectId;
-      try {
-        objectId = new mongoose.Types.ObjectId(userId);
-      } catch (error) {
-        return NextResponse.json(
-          { message: "Invalid userId format", error },
-          { status: 400 }
-        );
+    // Delete specific property
+    if (userId && propertyId) {
+      if (!isValidObjectId(userId) || !isValidObjectId(propertyId)) {
+        return errorResponse("Invalid ID format", 400);
       }
 
+      const objectId = new mongoose.Types.ObjectId(userId);
+
+      const result = await CustomerDetails.findOneAndUpdate(
+        { userId: objectId },
+        { $pull: { property: { _id: propertyId } } },
+        { new: true }
+      ).lean();
+
+      if (!result) {
+        return errorResponse("User or property not found", 404);
+      }
+
+      return successResponse(result, "Property deleted successfully");
+    }
+
+    // Delete all properties for a user
+    if (userId) {
+      if (!isValidObjectId(userId)) {
+        return errorResponse("Invalid userId format", 400);
+      }
+
+      const objectId = new mongoose.Types.ObjectId(userId);
       const deletedData = await CustomerDetails.findOneAndDelete({
         userId: objectId,
-      });
+      }).lean();
 
       if (!deletedData) {
-        return NextResponse.json(
-          { message: "User not found or already deleted" },
-          { status: 404 }
-        );
+        return errorResponse("User not found", 404);
       }
 
-      return NextResponse.json(
-        { message: "User data deleted successfully", deletedData },
-        { status: 200 }
+      return successResponse(
+        deletedData,
+        "User properties deleted successfully"
       );
     }
-    // Otherwise delete all data (admin functionality)
-    else {
-      const deletedData = await CustomerDetails.deleteMany({});
 
-      if (!deletedData || deletedData.deletedCount === 0) {
-        return NextResponse.json(
-          { message: "No data found to delete" },
-          { status: 404 }
-        );
-      }
+    // Delete all customer details (admin only - should be protected)
+    const deleteResult = await CustomerDetails.deleteMany({});
 
-      return NextResponse.json(
-        { message: "All customer data deleted successfully", deletedData },
-        { status: 200 }
-      );
+    if (deleteResult.deletedCount === 0) {
+      return errorResponse("No data found to delete", 404);
     }
-  } catch (error: unknown) {
-    console.error(error);
-    return NextResponse.json(
-      {
-        message: "Failed to delete data",
-        error: (error as Error).message,
-      },
-      { status: 500 }
+
+    return successResponse(
+      { deletedCount: deleteResult.deletedCount },
+      "All customer data deleted successfully"
     );
+  } catch (error: unknown) {
+    logger.error("Error deleting properties", error);
+    return errorResponse("Failed to delete properties", 500);
   }
 };
 
-export const PUT = async (req: NextRequest | Request) => {
+export const PUT = async (req: NextRequest) => {
   try {
-    await connect();
+    await connectDB();
     const body = await req.json();
     const { userId, propertyId, ...updateData } = body;
 
     if (!userId || !propertyId) {
-      return NextResponse.json(
-        { message: "userId and propertyId are required" },
-        { status: 400 }
-      );
+      return errorResponse("userId and propertyId are required", 400);
     }
 
-    // Convert userId string to ObjectId
-    let objectId;
-    try {
-      objectId = new mongoose.Types.ObjectId(userId);
-    } catch (error) {
-      return NextResponse.json(
-        { message: "Invalid userId format", error },
-        { status: 400 }
-      );
+    if (!isValidObjectId(userId) || !isValidObjectId(propertyId)) {
+      return errorResponse("Invalid ID format", 400);
     }
 
-    // Update a specific property in the array
+    const objectId = new mongoose.Types.ObjectId(userId);
+
+    // Update specific property in the array
     const result = await CustomerDetails.findOneAndUpdate(
       {
         userId: objectId,
@@ -240,92 +205,26 @@ export const PUT = async (req: NextRequest | Request) => {
           "property.$": { _id: propertyId, ...updateData },
         },
       },
-      { new: true }
-    );
+      { new: true, runValidators: true }
+    ).lean();
 
     if (!result) {
-      return NextResponse.json(
-        { message: "User or property not found" },
-        { status: 404 }
-      );
+      return errorResponse("User or property not found", 404);
     }
 
-    return NextResponse.json(result, { status: 200 });
+    return successResponse(result, "Property updated successfully");
   } catch (error: unknown) {
-    console.error(error);
-    return NextResponse.json(
-      {
-        message: "Can't update the property data",
-        error: (error as Error).message,
-      },
-      { status: 500 }
-    );
-  }
-};
+    logger.error("Error updating property", error);
 
-// Add a new endpoint to add a payment to a specific property
-export const PATCH = async (req: NextRequest | Request) => {
-  try {
-    await connect();
-    const body = await req.json();
-    const { userId, propertyId, payment } = body;
-
-    if (!userId || !propertyId || !payment) {
-      return NextResponse.json(
-        { message: "userId, propertyId and payment details are required" },
-        { status: 400 }
-      );
+    if (
+      error &&
+      typeof error === "object" &&
+      "name" in error &&
+      error.name === "ValidationError"
+    ) {
+      return errorResponse("Validation failed", 400, error);
     }
 
-    // Validate payment object
-    if (!payment.title || !payment.percentage || !payment.date) {
-      return NextResponse.json(
-        { message: "Payment must include title, percentage, and date" },
-        { status: 400 }
-      );
-    }
-
-    // Convert userId string to ObjectId
-    let objectId;
-    try {
-      objectId = new mongoose.Types.ObjectId(userId);
-    } catch (error) {
-      return NextResponse.json(
-        { message: "Invalid userId format", error },
-        { status: 400 }
-      );
-    }
-
-    // Add payment to specific property
-    const result = await CustomerDetails.findOneAndUpdate(
-      {
-        userId: objectId,
-        "property._id": propertyId,
-      },
-      {
-        $push: {
-          "property.$.payments": payment,
-        },
-      },
-      { new: true }
-    );
-
-    if (!result) {
-      return NextResponse.json(
-        { message: "User or property not found" },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json(result, { status: 200 });
-  } catch (error: unknown) {
-    console.error(error);
-    return NextResponse.json(
-      {
-        message: "Can't add payment data",
-        error: (error as Error).message,
-      },
-      { status: 500 }
-    );
+    return errorResponse("Failed to update property", 500);
   }
 };

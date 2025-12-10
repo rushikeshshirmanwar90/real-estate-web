@@ -1,167 +1,148 @@
-import connect from "@/lib/db";
+import { connectDB } from "@/lib/utils/db-connection";
 import { Event } from "@/lib/models/Events";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import { errorResponse, successResponse } from "@/lib/utils/api-response";
+import { isValidObjectId } from "@/lib/utils/validation";
+import {
+  getPaginationParams,
+  createPaginationMeta,
+} from "@/lib/utils/pagination";
+import { logger } from "@/lib/utils/logger";
 
 // GET all events or a specific one by ID
-export const GET = async (req: NextRequest | Request) => {
+export const GET = async (req: NextRequest) => {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
-    await connect();
+    await connectDB();
 
     if (id) {
-      const event = await Event.findById(id);
-      if (!event) {
-        return NextResponse.json(
-          {
-            message: "Event not found",
-          },
-          { status: 404 }
-        );
+      if (!isValidObjectId(id)) {
+        return errorResponse("Invalid event ID format", 400);
       }
-      return NextResponse.json(event);
+
+      const event = await Event.findById(id).lean();
+      if (!event) {
+        return errorResponse("Event not found", 404);
+      }
+      return successResponse(event, "Event retrieved successfully");
     }
 
-    const allEvents = await Event.find();
-    if (!allEvents || allEvents.length === 0) {
-      return NextResponse.json(
-        {
-          message: "No events found",
-        },
-        { status: 404 }
-      );
-    }
-    return NextResponse.json(allEvents);
-  } catch (error: unknown) {
-    console.error(error);
-    return NextResponse.json(
-      {
-        message: "Error fetching events",
-        error: error,
-      },
-      { status: 500 }
+    // Pagination
+    const { page, limit, skip } = getPaginationParams(req);
+
+    const [events, total] = await Promise.all([
+      Event.find().skip(skip).limit(limit).sort({ createdAt: -1 }).lean(),
+      Event.countDocuments(),
+    ]);
+
+    const meta = createPaginationMeta(page, limit, total);
+
+    return successResponse(
+      { events, meta },
+      `Retrieved ${events.length} event(s) successfully`
     );
+  } catch (error: unknown) {
+    logger.error("Error fetching events", error);
+    return errorResponse("Error fetching events", 500);
   }
 };
 
 // POST a new event
-export const POST = async (req: NextRequest | Request) => {
+export const POST = async (req: NextRequest) => {
   try {
     const body = await req.json();
-    await connect();
+    await connectDB();
+
     const event = new Event(body);
     await event.save();
 
-    if (!event) {
-      return NextResponse.json(
-        {
-          message: "Event not created",
-        },
-        { status: 400 }
-      );
+    return successResponse(event, "Event created successfully", 201);
+  } catch (error: unknown) {
+    logger.error("Error creating event", error);
+
+    if (
+      error &&
+      typeof error === "object" &&
+      "name" in error &&
+      error.name === "ValidationError"
+    ) {
+      return errorResponse("Validation failed", 400, error);
     }
 
-    return NextResponse.json(
-      { message: "Event created successfully", event },
-      { status: 201 }
-    );
-  } catch (error: unknown) {
-    console.error(error);
-    return NextResponse.json(
-      {
-        message: "Can't add the event",
-        error: error,
-      },
-      { status: 500 }
-    );
+    return errorResponse("Failed to create event", 500);
   }
 };
 
 // PUT (update) an existing event
-export const PUT = async (req: NextRequest | Request) => {
+export const PUT = async (req: NextRequest) => {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     const body = await req.json();
 
-    await connect();
-
     if (!id) {
-      return NextResponse.json(
-        {
-          message: "Event ID is required",
-        },
-        { status: 400 }
-      );
+      return errorResponse("Event ID is required", 400);
     }
 
-    const updatedEvent = await Event.findByIdAndUpdate(id, body, { new: true });
+    if (!isValidObjectId(id)) {
+      return errorResponse("Invalid event ID format", 400);
+    }
+
+    await connectDB();
+
+    const updatedEvent = await Event.findByIdAndUpdate(
+      id,
+      { $set: body },
+      { new: true, runValidators: true }
+    ).lean();
 
     if (!updatedEvent) {
-      return NextResponse.json(
-        {
-          message: "Event not found",
-        },
-        { status: 404 }
-      );
+      return errorResponse("Event not found", 404);
     }
 
-    return NextResponse.json(
-      { message: "Event updated successfully", event: updatedEvent },
-      { status: 200 }
-    );
+    return successResponse(updatedEvent, "Event updated successfully");
   } catch (error: unknown) {
-    console.error(error);
-    return NextResponse.json(
-      {
-        message: "Error updating event",
-        error: error,
-      },
-      { status: 500 }
-    );
+    logger.error("Error updating event", error);
+
+    if (
+      error &&
+      typeof error === "object" &&
+      "name" in error &&
+      error.name === "ValidationError"
+    ) {
+      return errorResponse("Validation failed", 400, error);
+    }
+
+    return errorResponse("Failed to update event", 500);
   }
 };
 
 // DELETE an event
-export const DELETE = async (req: NextRequest | Request) => {
+export const DELETE = async (req: NextRequest) => {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
 
-    await connect();
-
     if (!id) {
-      return NextResponse.json(
-        {
-          message: "Event ID is required",
-        },
-        { status: 400 }
-      );
+      return errorResponse("Event ID is required", 400);
     }
 
-    const deletedEvent = await Event.findByIdAndDelete(id);
+    if (!isValidObjectId(id)) {
+      return errorResponse("Invalid event ID format", 400);
+    }
+
+    await connectDB();
+
+    const deletedEvent = await Event.findByIdAndDelete(id).lean();
 
     if (!deletedEvent) {
-      return NextResponse.json(
-        {
-          message: "Event not found",
-        },
-        { status: 404 }
-      );
+      return errorResponse("Event not found", 404);
     }
 
-    return NextResponse.json(
-      { message: "Event deleted successfully" },
-      { status: 200 }
-    );
+    return successResponse(deletedEvent, "Event deleted successfully");
   } catch (error: unknown) {
-    console.error(error);
-    return NextResponse.json(
-      {
-        message: "Error deleting event",
-        error: error,
-      },
-      { status: 500 }
-    );
+    logger.error("Error deleting event", error);
+    return errorResponse("Failed to delete event", 500);
   }
 };

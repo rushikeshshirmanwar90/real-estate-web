@@ -1,202 +1,180 @@
 import { Projects } from "@/lib/models/Project";
-import connect from "@/lib/db";
-import { NextRequest, NextResponse } from "next/server";
+import { connectDB } from "@/lib/utils/db-connection";
+import { NextRequest } from "next/server";
 import { ObjectId } from "mongodb";
-import { checkValidClient } from "@/lib/auth";
+import { errorResponse, successResponse } from "@/lib/utils/api-response";
+import { isValidObjectId } from "@/lib/utils/validation";
+import {
+  getPaginationParams,
+  createPaginationMeta,
+} from "@/lib/utils/pagination";
+import { logger } from "@/lib/utils/logger";
 
-export const GET = async (req: NextRequest | Request) => {
+export const GET = async (req: NextRequest) => {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     const clientId = searchParams.get("clientId");
 
     if (!clientId) {
-      return NextResponse.json(
-        {
-          message: "Client ID is required",
-        },
-        {
-          status: 400,
-        }
-      );
+      return errorResponse("Client ID is required", 400);
     }
 
-    await connect();
+    if (!isValidObjectId(clientId)) {
+      return errorResponse("Invalid client ID format", 400);
+    }
+
+    await connectDB();
+
     if (id) {
-      // Find project by both _id and clientId
+      if (!isValidObjectId(id)) {
+        return errorResponse("Invalid project ID format", 400);
+      }
+
       const project = await Projects.findOne({
         _id: new ObjectId(id),
         clientId: new ObjectId(clientId),
-      });
+      }).lean();
+
       if (!project) {
-        return new Response("Project not found", { status: 404 });
+        return errorResponse("Project not found", 404);
       }
-      return NextResponse.json(project);
+
+      return successResponse(project, "Project retrieved successfully");
     }
 
-    const projects = await Projects.find({ clientId });
+    // Pagination
+    const { page, limit, skip } = getPaginationParams(req);
 
-    if (!projects) {
-      return NextResponse.json(
-        {
-          message: "can't able to fetch the data",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
+    const [projects, total] = await Promise.all([
+      Projects.find({ clientId })
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 })
+        .lean(),
+      Projects.countDocuments({ clientId }),
+    ]);
 
-    return NextResponse.json(projects, {
-      status: 200,
-    });
-  } catch (error: unknown) {
-    console.log(error);
+    const meta = createPaginationMeta(page, limit, total);
 
-    return NextResponse.json(
-      {
-        message: "can't able to get the Projects",
-        error: error,
-      },
-      {
-        status: 500,
-      }
+    return successResponse(
+      { projects, meta },
+      `Retrieved ${projects.length} project(s) successfully`
     );
+  } catch (error: unknown) {
+    logger.error("Error fetching projects", error);
+    return errorResponse("Failed to fetch projects", 500);
   }
 };
 
-export const POST = async (req: NextRequest | Request) => {
-  await checkValidClient(req);
-
+export const POST = async (req: NextRequest) => {
   try {
-    await connect();
+    await connectDB();
 
     const body = await req.json();
+
+    // Validate required fields
+    if (!body.clientId) {
+      return errorResponse("Client ID is required", 400);
+    }
+
+    if (!isValidObjectId(body.clientId)) {
+      return errorResponse("Invalid client ID format", 400);
+    }
 
     const formattedBody = {
       ...body,
       clientId: new ObjectId(body.clientId),
     };
 
-    const newProject = await new Projects(formattedBody);
+    const newProject = new Projects(formattedBody);
     await newProject.save();
 
-    if (!newProject) {
-      return NextResponse.json(
-        {
-          message: "Unable to add the project",
-        },
-        { status: 400 }
-      );
-    }
-    return NextResponse.json(
-      {
-        message: "Project created successfully",
-        project: newProject,
-      },
-      { status: 201 }
-    );
+    return successResponse(newProject, "Project created successfully", 201);
   } catch (error: unknown) {
-    console.log(error);
-    return NextResponse.json(
-      {
-        message: "Unable to create the Project",
-        error: error,
-      },
-      { status: 500 }
-    );
+    logger.error("Error creating project", error);
+
+    if (
+      error &&
+      typeof error === "object" &&
+      "name" in error &&
+      error.name === "ValidationError"
+    ) {
+      return errorResponse("Validation failed", 400, error);
+    }
+
+    return errorResponse("Failed to create project", 500);
   }
 };
 
-export const DELETE = async (req: NextRequest | Request) => {
-  await checkValidClient(req);
-
+export const DELETE = async (req: NextRequest) => {
   try {
-    await connect();
+    await connectDB();
 
     const { searchParams } = new URL(req.url);
-
     const projectId = searchParams.get("id");
 
-    const deletedProject = await Projects.findByIdAndDelete(projectId);
-    // const deletedProject = await Projects.deleteMany();
-
-    if (!deletedProject) {
-      return NextResponse.json(
-        {
-          message: "can't able to delete the project",
-        },
-        {
-          status: 400,
-        }
-      );
+    if (!projectId) {
+      return errorResponse("Project ID is required", 400);
     }
 
-    return NextResponse.json({
-      message: "project deleted successfully",
-      project: deletedProject,
-    });
-  } catch (error: unknown) {
-    console.log(error);
+    if (!isValidObjectId(projectId)) {
+      return errorResponse("Invalid project ID format", 400);
+    }
 
-    return NextResponse.json(
-      {
-        message: "can't able to delete the project",
-        error: error,
-      },
-      {
-        status: 500,
-      }
-    );
+    const deletedProject = await Projects.findByIdAndDelete(projectId).lean();
+
+    if (!deletedProject) {
+      return errorResponse("Project not found", 404);
+    }
+
+    return successResponse(deletedProject, "Project deleted successfully");
+  } catch (error: unknown) {
+    logger.error("Error deleting project", error);
+    return errorResponse("Failed to delete project", 500);
   }
 };
 
-export const PUT = async (req: NextRequest | Request) => {
-  await checkValidClient(req);
-
+export const PUT = async (req: NextRequest) => {
   try {
-    await connect();
+    await connectDB();
 
     const { searchParams } = new URL(req.url);
-
     const id = searchParams.get("id");
+
+    if (!id) {
+      return errorResponse("Project ID is required", 400);
+    }
+
+    if (!isValidObjectId(id)) {
+      return errorResponse("Invalid project ID format", 400);
+    }
 
     const body = await req.json();
 
-    const updatedProject = await Projects.findByIdAndUpdate(id, body, {
-      new: true,
-    });
+    const updatedProject = await Projects.findByIdAndUpdate(
+      id,
+      { $set: body },
+      { new: true, runValidators: true }
+    ).lean();
 
     if (!updatedProject) {
-      return NextResponse.json(
-        {
-          message: "can't able to update the project something went wrong",
-        },
-        {
-          status: 400,
-        }
-      );
+      return errorResponse("Project not found", 404);
     }
 
-    return NextResponse.json(
-      {
-        message: "Project updated successfully",
-        data: updatedProject,
-      },
-      {
-        status: 200,
-      }
-    );
+    return successResponse(updatedProject, "Project updated successfully");
   } catch (error: unknown) {
-    console.log(error);
-    return NextResponse.json(
-      {
-        message: "can't able to update the project",
-        error: error,
-      },
-      {
-        status: 500,
-      }
-    );
+    logger.error("Error updating project", error);
+
+    if (
+      error &&
+      typeof error === "object" &&
+      "name" in error &&
+      error.name === "ValidationError"
+    ) {
+      return errorResponse("Validation failed", 400, error);
+    }
+
+    return errorResponse("Failed to update project", 500);
   }
 };
