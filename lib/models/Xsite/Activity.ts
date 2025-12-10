@@ -171,6 +171,10 @@ const ActivitySchema = new Schema(
       type: String,
       required: false,
     },
+    date: {
+      type: String,
+      required: true,
+    },
   },
   {
     timestamps: true, // Adds createdAt and updatedAt

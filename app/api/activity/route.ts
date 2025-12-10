@@ -12,6 +12,8 @@ export const GET = async (req: NextRequest | Request) => {
   const activityType = searchParams.get("activityType");
   const category = searchParams.get("category");
   const action = searchParams.get("action");
+  const dateFrom = searchParams.get("dateFrom");
+  const dateTo = searchParams.get("dateTo");
   const limit = Math.max(
     1,
     Math.min(1000, parseInt(searchParams.get("limit") || "50"))
@@ -25,19 +27,7 @@ export const GET = async (req: NextRequest | Request) => {
       return errorResponse("clientId or projectId is required", 400);
     }
 
-    type ActivityQuery = Partial<
-      Record<
-        | "clientId"
-        | "projectId"
-        | "activityType"
-        | "category"
-        | "action"
-        | "user.userId",
-        string
-      >
-    >;
-
-    const query: ActivityQuery = {};
+    const query: Record<string, string | Record<string, string>> = {};
 
     if (clientId) query.clientId = clientId;
     if (projectId) query.projectId = projectId;
@@ -45,6 +35,12 @@ export const GET = async (req: NextRequest | Request) => {
     if (activityType) query.activityType = activityType;
     if (category) query.category = category;
     if (action) query.action = action;
+    // date range filtering (ISO date strings). model stores `date` as string.
+    if (dateFrom || dateTo) {
+      query.date = {} as Record<string, string>;
+      if (dateFrom) query.date.$gte = dateFrom;
+      if (dateTo) query.date.$lte = dateTo;
+    }
 
     const activities = await Activity.find(query)
       .sort({ createdAt: -1 })
@@ -104,7 +100,15 @@ export const POST = async (req: NextRequest | Request) => {
       return errorResponse("description is required", 400);
     }
 
-    const newActivity = new Activity(body);
+    // Ensure `date` exists and is a valid ISO string (model requires it)
+    const dateStr = body.date ? String(body.date) : new Date().toISOString();
+    if (Number.isNaN(Date.parse(dateStr))) {
+      return errorResponse("date must be a valid ISO date string", 400);
+    }
+
+    const doc = { ...body, date: dateStr };
+
+    const newActivity = new Activity(doc);
     await newActivity.save();
 
     return successResponse(newActivity, "Activity logged successfully", 201);
