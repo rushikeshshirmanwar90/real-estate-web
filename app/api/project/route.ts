@@ -133,6 +133,8 @@ export const POST = async (req: NextRequest) => {
           }
         }
       });
+    } else {
+      console.log('⚠️ No user info available for activity logging - skipping activity log');
     }
 
     return successResponse(newProject, "Project created successfully", 201);
@@ -152,125 +154,4 @@ export const POST = async (req: NextRequest) => {
   }
 };
 
-export const DELETE = async (req: NextRequest) => {
-  try {
-    await connect();
-
-    const { searchParams } = new URL(req.url);
-    const projectId = searchParams.get("id");
-
-    if (!projectId) {
-      return errorResponse("Project ID is required", 400);
-    }
-
-    if (!isValidObjectId(projectId)) {
-      return errorResponse("Invalid project ID format", 400);
-    }
-
-    const deletedProject = await Projects.findByIdAndDelete(projectId).lean();
-
-    if (!deletedProject) {
-      return errorResponse("Project not found", 404);
-    }
-
-    // ✅ Log activity for project deletion
-    const userInfo = extractUserInfo(req);
-    if (userInfo && deletedProject) {
-      await logActivity({
-        user: userInfo,
-        clientId: deletedProject.clientId?.toString() || 'unknown',
-        projectId: deletedProject._id.toString(),
-        projectName: deletedProject.projectName || deletedProject.name || 'Deleted Project',
-        activityType: "project_deleted",
-        category: "project",
-        action: "delete",
-        description: `Deleted project: ${deletedProject.projectName || deletedProject.name || 'Unnamed Project'}`,
-        message: `Project deleted successfully`,
-        metadata: {
-          deletedProjectData: {
-            name: deletedProject.projectName || deletedProject.name,
-            location: deletedProject.location,
-            type: deletedProject.type
-          }
-        }
-      });
-    }
-
-    return successResponse(deletedProject, "Project deleted successfully");
-  } catch (error: unknown) {
-    logger.error("Error deleting project", error);
-    return errorResponse("Failed to delete project", 500);
-  }
-};
-
-export const PUT = async (req: NextRequest) => {
-  try {
-    await connect();
-
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
-
-    if (!id) {
-      return errorResponse("Project ID is required", 400);
-    }
-
-    if (!isValidObjectId(id)) {
-      return errorResponse("Invalid project ID format", 400);
-    }
-
-    const body = await req.json();
-
-    const updatedProject = await Projects.findByIdAndUpdate(
-      id,
-      { $set: body },
-      { new: true, runValidators: true }
-    ).lean();
-
-    if (!updatedProject) {
-      return errorResponse("Project not found", 404);
-    }
-
-    // ✅ Log activity for project update
-    const userInfo = extractUserInfo(req, body);
-    if (userInfo) {
-      await logActivity({
-        user: userInfo,
-        clientId: updatedProject.clientId?.toString() || 'unknown',
-        projectId: updatedProject._id.toString(),
-        projectName: updatedProject.projectName || updatedProject.name || 'Updated Project',
-        activityType: "project_updated",
-        category: "project",
-        action: "update",
-        description: `Updated project: ${updatedProject.projectName || updatedProject.name || 'Unnamed Project'}`,
-        message: `Project updated successfully`,
-        changedData: Object.keys(body).map(field => ({
-          field,
-          newValue: body[field]
-        })),
-        metadata: {
-          updatedFields: Object.keys(body),
-          projectData: {
-            name: updatedProject.projectName || updatedProject.name,
-            location: updatedProject.location,
-            type: updatedProject.type
-          }
-        }
-      });
-    }
-
-    return successResponse(updatedProject, "Project updated successfully");
-  } catch (error: unknown) {
-    logger.error("Error updating project", error);
-
-    if (
-      error &&
-      typeof error === "object" &&
-      "name" in error &&
-      error.name === "ValidationError"
-    ) {
-      return errorResponse("Validation failed", 400, error);
-    }
-
-    return errorResponse("Failed to update project", 500);
-  }
-};
+// DELETE and PUT methods moved to /api/project/[id]/route.ts for proper dynamic routing

@@ -203,12 +203,13 @@ export const POST = async (req: NextRequest | Request) => {
     };
 
     // Use findByIdAndUpdate with $inc and array operations
+    // ✅ FIXED: Do NOT increase spent when using materials - it's just a transfer
     const updatedProject = await Projects.findByIdAndUpdate(
       projectId,
       {
         $inc: {
           "MaterialAvailable.$[elem].qnt": -qnt,
-          spent: costOfUsedMaterial,
+          // ✅ REMOVED: spent: costOfUsedMaterial - Using materials doesn't increase spending
         },
         $push: {
           MaterialUsed: usedClone,

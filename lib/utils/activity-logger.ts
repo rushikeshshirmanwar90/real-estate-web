@@ -79,10 +79,6 @@ export const extractUserInfo = (req: any, body?: any): { userId: string; fullNam
     };
   }
 
-  // Fallback - return a default user (you might want to handle this differently)
-  return {
-    userId: 'system',
-    fullName: 'System User',
-    email: 'system@example.com'
-  };
+  // Fallback - return null instead of System User to avoid confusion
+  return null;
 };

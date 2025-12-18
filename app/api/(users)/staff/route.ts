@@ -1,6 +1,7 @@
 import connect from "@/lib/db";
 import { LoginUser } from "@/lib/models/Xsite/LoginUsers";
 import { Staff } from "@/lib/models/users/Staff";
+import { Projects } from "@/lib/models/Project";
 import { NextRequest } from "next/server";
 import { Types } from "mongoose";
 import { errorResponse, successResponse } from "@/lib/models/utils/API";
@@ -28,7 +29,27 @@ export const GET = async (req: NextRequest) => {
         return errorResponse("Staff member not found", 404);
       }
 
-      return successResponse(staffData, "Staff member retrieved successfully");
+      // Populate assignedProjects for this staff member
+      try {
+        const assignedProjects = await Projects.find(
+          {
+            "assignedStaff._id": staffData._id.toString(),
+          },
+          { name: 1 } // Only get project names
+        );
+
+        const projectNames = assignedProjects.map(project => project.name);
+        const staffObj = staffData.toObject();
+        staffObj.assignedProjects = projectNames;
+
+        return successResponse(staffObj, "Staff member retrieved successfully");
+      } catch (error) {
+        console.error(`Error fetching projects for staff ${id}:`, error);
+        // Return staff with empty assignedProjects on error
+        const staffObj = staffData.toObject();
+        staffObj.assignedProjects = [];
+        return successResponse(staffObj, "Staff member retrieved successfully");
+      }
     }
 
     // Get specific staff by email
@@ -43,15 +64,65 @@ export const GET = async (req: NextRequest) => {
         return errorResponse("Staff member not found with this email", 404);
       }
 
-      return successResponse(staffData, "Staff member retrieved successfully");
+      // Populate assignedProjects for this staff member
+      try {
+        const assignedProjects = await Projects.find(
+          {
+            "assignedStaff._id": staffData._id.toString(),
+          },
+          { name: 1 } // Only get project names
+        );
+
+        const projectNames = assignedProjects.map(project => project.name);
+        const staffObj = staffData.toObject();
+        staffObj.assignedProjects = projectNames;
+
+        return successResponse(staffObj, "Staff member retrieved successfully");
+      } catch (error) {
+        console.error(`Error fetching projects for staff ${email}:`, error);
+        // Return staff with empty assignedProjects on error
+        const staffObj = staffData.toObject();
+        staffObj.assignedProjects = [];
+        return successResponse(staffObj, "Staff member retrieved successfully");
+      }
     }
 
     // Get all staff members
     const staffData = await Staff.find().sort({ createdAt: -1 });
 
+    // Populate assignedProjects for each staff member by querying Projects collection
+    const staffWithProjects = await Promise.all(
+      staffData.map(async (staff) => {
+        try {
+          // Find projects where this staff member is assigned
+          const assignedProjects = await Projects.find(
+            {
+              "assignedStaff._id": staff._id.toString(),
+            },
+            { name: 1 } // Only get project names
+          );
+
+          // Extract project names
+          const projectNames = assignedProjects.map(project => project.name);
+
+          // Convert to plain object and add assignedProjects
+          const staffObj = staff.toObject();
+          staffObj.assignedProjects = projectNames;
+
+          return staffObj;
+        } catch (error) {
+          console.error(`Error fetching projects for staff ${staff._id}:`, error);
+          // Return staff with empty assignedProjects on error
+          const staffObj = staff.toObject();
+          staffObj.assignedProjects = [];
+          return staffObj;
+        }
+      })
+    );
+
     return successResponse(
-      staffData,
-      `Retrieved ${staffData.length} staff member(s) successfully`
+      staffWithProjects,
+      `Retrieved ${staffWithProjects.length} staff member(s) successfully`
     );
   } catch (error: unknown) {
     console.error("GET /staff error:", error);
