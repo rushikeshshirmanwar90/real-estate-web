@@ -3,6 +3,21 @@ import { errorResponse } from "../utils/api-response";
 import { connectDB } from "../utils/db-connection";
 import { LoginUser } from "../models/Xsite/LoginUsers";
 import { logger } from "../utils/logger";
+import mongoose from "mongoose";
+
+// Type for user document from database
+interface UserDocument {
+  _id: mongoose.Types.ObjectId;
+  email: string;
+  userType: string;
+  clientId?: mongoose.Types.ObjectId;
+  [key: string]: any;
+}
+
+// Type guard to ensure we have a single user document, not an array
+function isSingleUserDocument(doc: any): doc is UserDocument {
+  return doc && !Array.isArray(doc) && typeof doc === 'object' && doc._id && doc.email;
+}
 
 export interface AuthenticatedRequest extends NextRequest {
   user?: {
@@ -37,12 +52,31 @@ export const authenticate = async (
     // This is a placeholder - implement proper JWT verification
     await connectDB();
 
-    const user = await LoginUser.findOne({ email: token }).lean();
+    const userResult = await LoginUser.findOne({ email: token }).lean();
 
-    if (!user) {
+    if (!userResult) {
       return {
         authorized: false,
         response: errorResponse("Invalid authentication token", 401),
+      };
+    }
+
+    // Ensure we have a single document, not an array
+    if (Array.isArray(userResult)) {
+      return {
+        authorized: false,
+        response: errorResponse("Invalid authentication token", 401),
+      };
+    }
+
+    // Type assertion after validation - convert through unknown first for strict TypeScript
+    const user = userResult as unknown as UserDocument;
+
+    // Additional validation to ensure required fields exist
+    if (!user._id || !user.email || !user.userType) {
+      return {
+        authorized: false,
+        response: errorResponse("Invalid user data", 401),
       };
     }
 
@@ -52,6 +86,7 @@ export const authenticate = async (
         id: user._id.toString(),
         email: user.email,
         userType: user.userType,
+        clientId: user.clientId?.toString(),
       },
     };
   } catch (error) {

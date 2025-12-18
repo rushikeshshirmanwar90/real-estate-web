@@ -245,7 +245,9 @@ export const PUT = async (req: NextRequest) => {
     let oldEmail: string | undefined;
     if (updateData.email) {
       const oldClient = await Client.findById(id).select("email").lean();
-      oldEmail = oldClient?.email;
+      if (oldClient && !Array.isArray(oldClient)) {
+        oldEmail = (oldClient as any).email;
+      }
     }
 
     const updatedClient = await Client.findByIdAndUpdate(

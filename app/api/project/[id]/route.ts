@@ -1,12 +1,30 @@
 import { Projects } from "@/lib/models/Project";
 import connect from "@/lib/db";
 import { NextRequest } from "next/server";
-import { ObjectId } from "mongodb";
+import mongoose from "mongoose";
 import { errorResponse, successResponse } from "@/lib/utils/api-response";
 import { isValidObjectId } from "@/lib/utils/validation";
 import { logger } from "@/lib/utils/logger";
 import { requireValidClient } from "@/lib/utils/client-validation";
 import { logActivity, extractUserInfo } from "@/lib/utils/activity-logger";
+
+// Type for project document
+interface ProjectDocument {
+  _id: mongoose.Types.ObjectId;
+  clientId: mongoose.Types.ObjectId;
+  projectName?: string;
+  name?: string;
+  location?: string;
+  type?: string;
+  spent?: number;
+  materials?: any[];
+  [key: string]: any;
+}
+
+// Type guard to ensure we have a single document, not an array
+function isSingleDocument(doc: any): doc is ProjectDocument {
+  return doc && !Array.isArray(doc) && typeof doc === 'object' && doc._id;
+}
 
 // GET single project by ID
 export const GET = async (
@@ -36,20 +54,23 @@ export const GET = async (
     try {
       await requireValidClient(clientId);
     } catch (clientError) {
+      logger.error("Client validation failed", { clientId, error: clientError });
       if (clientError instanceof Error) {
         return errorResponse(clientError.message, 404);
       }
       return errorResponse("Client validation failed", 404);
     }
 
-    const project = await Projects.findOne({
-      _id: new ObjectId(id),
-      clientId: new ObjectId(clientId),
+    const projectResult = await Projects.findOne({
+      _id: id,
+      clientId: clientId,
     }).lean();
 
-    if (!project) {
+    if (!projectResult || !isSingleDocument(projectResult)) {
       return errorResponse("Project not found", 404);
     }
+
+    const project = projectResult as ProjectDocument;
 
     return successResponse(project, "Project retrieved successfully");
   } catch (error: unknown) {
@@ -72,18 +93,13 @@ export const DELETE = async (
 
     await connect();
 
-    // Find the project first to get client info for logging
-    const existingProject = await Projects.findById(id).lean();
-    if (!existingProject) {
-      return errorResponse("Project not found", 404);
-    }
-
     // Delete the project
-    const deletedProject = await Projects.findByIdAndDelete(id).lean();
+    const deletedProjectResult = await Projects.findByIdAndDelete(id).lean();
 
-    if (!deletedProject) {
+    if (!deletedProjectResult || !isSingleDocument(deletedProjectResult)) {
       return errorResponse("Project not found", 404);
     }
+    const deletedProject = deletedProjectResult as ProjectDocument;
 
     // Log activity for project deletion
     const userInfo = extractUserInfo(req);
@@ -92,7 +108,7 @@ export const DELETE = async (
         await logActivity({
           user: userInfo,
           clientId: deletedProject.clientId?.toString() || 'unknown',
-          projectId: deletedProject._id.toString(),
+          projectId: deletedProject._id?.toString() || id,
           projectName: deletedProject.projectName || deletedProject.name || 'Deleted Project',
           activityType: "project_deleted",
           category: "project",
@@ -112,7 +128,7 @@ export const DELETE = async (
         // Don't fail the delete operation if activity logging fails
       }
     } else {
-      console.log('⚠️ No user info available for delete activity logging - skipping activity log');
+      logger.warn('No user info available for delete activity logging - skipping activity log');
     }
 
     return successResponse(deletedProject, "Project deleted successfully");
@@ -136,35 +152,38 @@ export const PUT = async (
 
     await connect();
 
-    const body = await req.json();
+    let body: any;
+    try {
+      body = await req.json();
+    } catch (parseError) {
+      return errorResponse("Invalid JSON in request body", 400);
+    }
 
     // Validate required fields for update
     if (body.clientId && !isValidObjectId(body.clientId)) {
       return errorResponse("Invalid client ID format", 400);
     }
 
-    // Find existing project first
-    const existingProject = await Projects.findById(id).lean();
-    if (!existingProject) {
-      return errorResponse("Project not found", 404);
+    // Ensure we have something to update
+    if (!body || Object.keys(body).length === 0) {
+      return errorResponse("No update data provided", 400);
     }
 
     // Prepare update data
     const updateData = { ...body };
-    if (updateData.clientId) {
-      updateData.clientId = new ObjectId(updateData.clientId);
-    }
+    // MongoDB will automatically convert string IDs to ObjectIds
 
     // Update the project
-    const updatedProject = await Projects.findByIdAndUpdate(
+    const updatedProjectResult = await Projects.findByIdAndUpdate(
       id,
       { $set: updateData },
       { new: true, runValidators: true }
     ).lean();
 
-    if (!updatedProject) {
+    if (!updatedProjectResult || !isSingleDocument(updatedProjectResult)) {
       return errorResponse("Project not found", 404);
     }
+    const updatedProject = updatedProjectResult as ProjectDocument;
 
     // Log activity for project update
     const userInfo = extractUserInfo(req, body);
@@ -173,7 +192,7 @@ export const PUT = async (
         await logActivity({
           user: userInfo,
           clientId: updatedProject.clientId?.toString() || 'unknown',
-          projectId: updatedProject._id.toString(),
+          projectId: updatedProject._id?.toString() || id,
           projectName: updatedProject.projectName || updatedProject.name || 'Updated Project',
           activityType: "project_updated",
           category: "project",
@@ -198,7 +217,7 @@ export const PUT = async (
         // Don't fail the update operation if activity logging fails
       }
     } else {
-      console.log('⚠️ No user info available for update activity logging - skipping activity log');
+      logger.warn('No user info available for update activity logging - skipping activity log');
     }
 
     return successResponse(updatedProject, "Project updated successfully");
