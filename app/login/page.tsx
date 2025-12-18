@@ -15,6 +15,7 @@ const Page: React.FC = () => {
 
     return (
         <div>
+            tmp
             <Login />
         </div>
     )
