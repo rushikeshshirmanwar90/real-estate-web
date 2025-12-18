@@ -1,28 +1,33 @@
+import { EmailTemplate } from "@/components/mail/EmailTemplate";
+import connect from "@/lib/db";
 import { NextRequest } from "next/server";
 import { render } from "@react-email/components";
 import { transporter } from "@/lib/transporter";
-import { EmailTemplate } from "@/components/mail/EmailTemplate";
 import { errorResponse, successResponse } from "@/lib/utils/api-response";
 import { isValidEmail } from "@/lib/utils/validation";
 import { rateLimit } from "@/lib/utils/rate-limiter";
 import { logger } from "@/lib/utils/logger";
 
 /**
- * Send OTP Email Endpoint
- * Accepts custom OTP from client and sends it via email
- * Does NOT store OTP in database - verification happens on client side
+ * Send Custom OTP Endpoint
+ * Used by mobile app to send a pre-generated OTP via email
  */
 export const POST = async (req: NextRequest) => {
   try {
     // Rate limiting: 5 OTP requests per 5 minutes
     const rateLimitResult = rateLimit(req, {
       maxRequests: 5,
-      windowMs: 5 * 60 * 1000
+      windowMs: 5 * 60 * 1000,
     });
 
     if (!rateLimitResult.allowed) {
-      return errorResponse("Too many OTP requests. Please try again later.", 429);
+      return errorResponse(
+        "Too many OTP requests. Please try again later.",
+        429
+      );
     }
+
+    await connect();
 
     const body = await req.json();
     const { email, OTP } = body;
@@ -45,14 +50,8 @@ export const POST = async (req: NextRequest) => {
       return errorResponse("OTP must be a 6-digit number", 400);
     }
 
-    console.log("📧 Sending OTP email...");
-    console.log("   Email:", email);
-    console.log("   OTP:", OTP);
-
     // Render email template
-    const emailHtml = await render(
-      EmailTemplate({ verificationCode: OTP })
-    );
+    const emailHtml = await render(EmailTemplate({ verificationCode: OTP }));
 
     // Send email
     try {
@@ -63,15 +62,11 @@ export const POST = async (req: NextRequest) => {
         html: emailHtml,
       });
 
-      console.log("✅ OTP email sent successfully");
-      console.log("   Message ID:", info.messageId);
-
       logger.info("OTP email sent successfully", {
         email,
         messageId: info.messageId,
       });
 
-      // ✅ Just return success - no database storage
       return successResponse(
         {
           messageId: info.messageId,
@@ -80,7 +75,6 @@ export const POST = async (req: NextRequest) => {
         "OTP sent successfully"
       );
     } catch (emailError) {
-      console.error("❌ Error sending OTP email:", emailError);
       logger.error("Error sending OTP email", emailError);
       return errorResponse(
         "Failed to send OTP email. Please check your email address.",
@@ -88,8 +82,7 @@ export const POST = async (req: NextRequest) => {
       );
     }
   } catch (error: unknown) {
-    console.error("❌ Error in OTP endpoint:", error);
-    logger.error("Error in OTP endpoint", error);
+    logger.error("Error in send-custom-otp endpoint", error);
     return errorResponse("Failed to send OTP", 500);
   }
 };

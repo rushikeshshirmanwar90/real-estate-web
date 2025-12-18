@@ -1,6 +1,7 @@
-import { connectDB } from "@/lib/utils/db-connection";
+import connect from "@/lib/db";
 import { NextRequest } from "next/server";
 import bcrypt from "bcrypt";
+import mongoose from "mongoose";
 import { Customer } from "@/lib/models/users/Customer";
 import { LoginUser } from "@/lib/models/Xsite/LoginUsers";
 import { Staff } from "@/lib/models/users/Staff";
@@ -13,7 +14,7 @@ const SALT_ROUNDS = 10;
 
 export const POST = async (req: NextRequest) => {
   try {
-    await connectDB();
+    await connect();
 
     const { email, password, userType } = await req.json();
 
@@ -41,7 +42,8 @@ export const POST = async (req: NextRequest) => {
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
     // Use transaction for atomicity
-    const session = await connectDB().then((m) => m.startSession());
+    await connect();
+    const session = await mongoose.startSession();
     session.startTransaction();
 
     try {

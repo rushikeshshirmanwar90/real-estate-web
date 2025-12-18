@@ -1,4 +1,4 @@
-import { connectDB } from "@/lib/utils/db-connection";
+import connect from "@/lib/db";
 import { Event } from "@/lib/models/Events";
 import { NextRequest } from "next/server";
 import { errorResponse, successResponse } from "@/lib/utils/api-response";
@@ -14,7 +14,7 @@ export const GET = async (req: NextRequest) => {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
-    await connectDB();
+    await connect();
 
     if (id) {
       if (!isValidObjectId(id)) {
@@ -52,7 +52,7 @@ export const GET = async (req: NextRequest) => {
 export const POST = async (req: NextRequest) => {
   try {
     const body = await req.json();
-    await connectDB();
+    await connect();
 
     const event = new Event(body);
     await event.save();
@@ -89,7 +89,7 @@ export const PUT = async (req: NextRequest) => {
       return errorResponse("Invalid event ID format", 400);
     }
 
-    await connectDB();
+    await connect();
 
     const updatedEvent = await Event.findByIdAndUpdate(
       id,
@@ -132,7 +132,7 @@ export const DELETE = async (req: NextRequest) => {
       return errorResponse("Invalid event ID format", 400);
     }
 
-    await connectDB();
+    await connect();
 
     const deletedEvent = await Event.findByIdAndDelete(id).lean();
 

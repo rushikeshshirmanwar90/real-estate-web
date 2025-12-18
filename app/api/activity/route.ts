@@ -1,7 +1,8 @@
 import connect from "@/lib/db";
 import { Activity } from "@/lib/models/Xsite/Activity";
-import { errorResponse, successResponse } from "@/lib/models/utils/API";
+import { errorResponse, successResponse } from "@/lib/utils/api-response";
 import { NextRequest } from "next/server";
+import { requireValidClient } from "@/lib/utils/client-validation";
 
 // GET: Fetch activities with filters
 export const GET = async (req: NextRequest | Request) => {
@@ -14,11 +15,18 @@ export const GET = async (req: NextRequest | Request) => {
   const action = searchParams.get("action");
   const dateFrom = searchParams.get("dateFrom");
   const dateTo = searchParams.get("dateTo");
-  const limit = Math.max(
-    1,
-    Math.min(1000, parseInt(searchParams.get("limit") || "50"))
-  );
+  
+  // Date-based pagination parameters
+  const beforeDate = searchParams.get("beforeDate"); // Get activities before this date
+  const afterDate = searchParams.get("afterDate");   // Get activities after this date
+  const dateLimit = Math.max(1, Math.min(50, parseInt(searchParams.get("dateLimit") || "10"))); // Number of dates to return
+  
+  // Traditional pagination (fallback)
+  const limit = Math.max(1, Math.min(1000, parseInt(searchParams.get("limit") || "50")));
   const skip = Math.max(0, parseInt(searchParams.get("skip") || "0"));
+  
+  // Pagination mode
+  const paginationMode = searchParams.get("paginationMode") || "traditional"; // "traditional" or "date"
 
   try {
     await connect();
@@ -27,7 +35,19 @@ export const GET = async (req: NextRequest | Request) => {
       return errorResponse("clientId or projectId is required", 400);
     }
 
-    const query: Record<string, string | Record<string, string>> = {};
+    // ✅ Validate client exists if clientId is provided
+    if (clientId) {
+      try {
+        await requireValidClient(clientId);
+      } catch (clientError) {
+        if (clientError instanceof Error) {
+          return errorResponse(clientError.message, 404);
+        }
+        return errorResponse("Client validation failed", 404);
+      }
+    }
+
+    const query: Record<string, any> = {};
 
     if (clientId) query.clientId = clientId;
     if (projectId) query.projectId = projectId;
@@ -35,31 +55,86 @@ export const GET = async (req: NextRequest | Request) => {
     if (activityType) query.activityType = activityType;
     if (category) query.category = category;
     if (action) query.action = action;
-    // date range filtering (ISO date strings). model stores `date` as string.
-    if (dateFrom || dateTo) {
-      query.date = {} as Record<string, string>;
+
+    // Handle date filtering
+    if (dateFrom || dateTo || beforeDate || afterDate) {
+      query.date = {};
       if (dateFrom) query.date.$gte = dateFrom;
       if (dateTo) query.date.$lte = dateTo;
+      if (beforeDate) query.date.$lt = beforeDate;
+      if (afterDate) query.date.$gt = afterDate;
     }
 
-    const activities = await Activity.find(query)
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .skip(skip);
+    if (paginationMode === "date") {
+      // Date-based pagination
+      const activities = await Activity.find(query)
+        .sort({ date: -1, createdAt: -1 })
+        .limit(1000); // Get more activities to group by date
 
-    const total = await Activity.countDocuments(query);
+      // Group activities by date
+      const groupedByDate: { [date: string]: any[] } = {};
+      activities.forEach(activity => {
+        const dateKey = activity.date ? activity.date.split('T')[0] : new Date(activity.createdAt).toISOString().split('T')[0];
+        if (!groupedByDate[dateKey]) {
+          groupedByDate[dateKey] = [];
+        }
+        groupedByDate[dateKey].push(activity);
+      });
 
-    return successResponse(
-      {
-        activities,
-        total,
-        limit,
-        skip,
-        hasMore: total > skip + limit,
-      },
-      "Activities fetched successfully",
-      200
-    );
+      // Get sorted date keys (newest first)
+      const sortedDates = Object.keys(groupedByDate).sort((a, b) => b.localeCompare(a));
+      
+      // Apply date limit
+      const limitedDates = sortedDates.slice(0, dateLimit);
+      
+      // Build response with date groups
+      const dateGroups = limitedDates.map(date => ({
+        date,
+        activities: groupedByDate[date].sort((a, b) => 
+          new Date(b.date || b.createdAt).getTime() - new Date(a.date || a.createdAt).getTime()
+        ),
+        count: groupedByDate[date].length
+      }));
+
+      const totalActivities = limitedDates.reduce((sum, date) => sum + groupedByDate[date].length, 0);
+      const hasMoreDates = sortedDates.length > dateLimit;
+      const nextDate = hasMoreDates ? sortedDates[dateLimit] : null;
+
+      return successResponse(
+        {
+          dateGroups,
+          totalActivities,
+          totalDates: sortedDates.length,
+          dateLimit,
+          hasMoreDates,
+          nextDate,
+          paginationMode: "date"
+        },
+        "Activities fetched successfully with date-based pagination",
+        200
+      );
+    } else {
+      // Traditional pagination
+      const activities = await Activity.find(query)
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .skip(skip);
+
+      const total = await Activity.countDocuments(query);
+
+      return successResponse(
+        {
+          activities,
+          total,
+          limit,
+          skip,
+          hasMore: total > skip + limit,
+          paginationMode: "traditional"
+        },
+        "Activities fetched successfully",
+        200
+      );
+    }
   } catch (error: unknown) {
     if (error instanceof Error) {
       return errorResponse("Something went wrong", 500, error.message);
@@ -82,6 +157,16 @@ export const POST = async (req: NextRequest | Request) => {
 
     if (!body.clientId) {
       return errorResponse("clientId is required", 400);
+    }
+
+    // ✅ Validate client exists before creating activity
+    try {
+      await requireValidClient(body.clientId);
+    } catch (clientError) {
+      if (clientError instanceof Error) {
+        return errorResponse(clientError.message, 404);
+      }
+      return errorResponse("Client validation failed", 404);
     }
 
     if (!body.activityType) {

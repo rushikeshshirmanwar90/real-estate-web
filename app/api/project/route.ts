@@ -1,5 +1,5 @@
 import { Projects } from "@/lib/models/Project";
-import { connectDB } from "@/lib/utils/db-connection";
+import connect from "@/lib/db";
 import { NextRequest } from "next/server";
 import { ObjectId } from "mongodb";
 import { errorResponse, successResponse } from "@/lib/utils/api-response";
@@ -9,6 +9,8 @@ import {
   createPaginationMeta,
 } from "@/lib/utils/pagination";
 import { logger } from "@/lib/utils/logger";
+import { requireValidClient } from "@/lib/utils/client-validation";
+import { logActivity, extractUserInfo } from "@/lib/utils/activity-logger";
 
 export const GET = async (req: NextRequest) => {
   try {
@@ -24,7 +26,17 @@ export const GET = async (req: NextRequest) => {
       return errorResponse("Invalid client ID format", 400);
     }
 
-    await connectDB();
+    await connect();
+
+    // ✅ Validate client exists before fetching projects
+    try {
+      await requireValidClient(clientId);
+    } catch (clientError) {
+      if (clientError instanceof Error) {
+        return errorResponse(clientError.message, 404);
+      }
+      return errorResponse("Client validation failed", 404);
+    }
 
     if (id) {
       if (!isValidObjectId(id)) {
@@ -47,12 +59,12 @@ export const GET = async (req: NextRequest) => {
     const { page, limit, skip } = getPaginationParams(req);
 
     const [projects, total] = await Promise.all([
-      Projects.find({ clientId })
+      Projects.find({ clientId: new ObjectId(clientId) })
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 })
         .lean(),
-      Projects.countDocuments({ clientId }),
+      Projects.countDocuments({ clientId: new ObjectId(clientId) }),
     ]);
 
     const meta = createPaginationMeta(page, limit, total);
@@ -69,7 +81,7 @@ export const GET = async (req: NextRequest) => {
 
 export const POST = async (req: NextRequest) => {
   try {
-    await connectDB();
+    await connect();
 
     const body = await req.json();
 
@@ -82,6 +94,16 @@ export const POST = async (req: NextRequest) => {
       return errorResponse("Invalid client ID format", 400);
     }
 
+    // ✅ Validate client exists before creating project
+    try {
+      await requireValidClient(body.clientId);
+    } catch (clientError) {
+      if (clientError instanceof Error) {
+        return errorResponse(clientError.message, 404);
+      }
+      return errorResponse("Client validation failed", 404);
+    }
+
     const formattedBody = {
       ...body,
       clientId: new ObjectId(body.clientId),
@@ -89,6 +111,29 @@ export const POST = async (req: NextRequest) => {
 
     const newProject = new Projects(formattedBody);
     await newProject.save();
+
+    // ✅ Log activity for project creation
+    const userInfo = extractUserInfo(req, body);
+    if (userInfo) {
+      await logActivity({
+        user: userInfo,
+        clientId: body.clientId,
+        projectId: newProject._id.toString(),
+        projectName: newProject.projectName || newProject.name || 'Unnamed Project',
+        activityType: "project_created",
+        category: "project",
+        action: "create",
+        description: `Created new project: ${newProject.projectName || newProject.name || 'Unnamed Project'}`,
+        message: `Project created successfully with ID: ${newProject._id}`,
+        metadata: {
+          projectData: {
+            name: newProject.projectName || newProject.name,
+            location: newProject.location,
+            type: newProject.type
+          }
+        }
+      });
+    }
 
     return successResponse(newProject, "Project created successfully", 201);
   } catch (error: unknown) {
@@ -109,7 +154,7 @@ export const POST = async (req: NextRequest) => {
 
 export const DELETE = async (req: NextRequest) => {
   try {
-    await connectDB();
+    await connect();
 
     const { searchParams } = new URL(req.url);
     const projectId = searchParams.get("id");
@@ -128,6 +173,29 @@ export const DELETE = async (req: NextRequest) => {
       return errorResponse("Project not found", 404);
     }
 
+    // ✅ Log activity for project deletion
+    const userInfo = extractUserInfo(req);
+    if (userInfo && deletedProject) {
+      await logActivity({
+        user: userInfo,
+        clientId: deletedProject.clientId?.toString() || 'unknown',
+        projectId: deletedProject._id.toString(),
+        projectName: deletedProject.projectName || deletedProject.name || 'Deleted Project',
+        activityType: "project_deleted",
+        category: "project",
+        action: "delete",
+        description: `Deleted project: ${deletedProject.projectName || deletedProject.name || 'Unnamed Project'}`,
+        message: `Project deleted successfully`,
+        metadata: {
+          deletedProjectData: {
+            name: deletedProject.projectName || deletedProject.name,
+            location: deletedProject.location,
+            type: deletedProject.type
+          }
+        }
+      });
+    }
+
     return successResponse(deletedProject, "Project deleted successfully");
   } catch (error: unknown) {
     logger.error("Error deleting project", error);
@@ -137,7 +205,7 @@ export const DELETE = async (req: NextRequest) => {
 
 export const PUT = async (req: NextRequest) => {
   try {
-    await connectDB();
+    await connect();
 
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
@@ -160,6 +228,34 @@ export const PUT = async (req: NextRequest) => {
 
     if (!updatedProject) {
       return errorResponse("Project not found", 404);
+    }
+
+    // ✅ Log activity for project update
+    const userInfo = extractUserInfo(req, body);
+    if (userInfo) {
+      await logActivity({
+        user: userInfo,
+        clientId: updatedProject.clientId?.toString() || 'unknown',
+        projectId: updatedProject._id.toString(),
+        projectName: updatedProject.projectName || updatedProject.name || 'Updated Project',
+        activityType: "project_updated",
+        category: "project",
+        action: "update",
+        description: `Updated project: ${updatedProject.projectName || updatedProject.name || 'Unnamed Project'}`,
+        message: `Project updated successfully`,
+        changedData: Object.keys(body).map(field => ({
+          field,
+          newValue: body[field]
+        })),
+        metadata: {
+          updatedFields: Object.keys(body),
+          projectData: {
+            name: updatedProject.projectName || updatedProject.name,
+            location: updatedProject.location,
+            type: updatedProject.type
+          }
+        }
+      });
     }
 
     return successResponse(updatedProject, "Project updated successfully");

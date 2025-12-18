@@ -1,4 +1,4 @@
-import { connectDB } from "@/lib/utils/db-connection";
+import connect from "@/lib/db";
 import { CustomerDetails } from "@/lib/models/CustomerDetails";
 import { NextRequest } from "next/server";
 import mongoose from "mongoose";
@@ -8,7 +8,7 @@ import { logger } from "@/lib/utils/logger";
 
 export const GET = async (req: NextRequest) => {
   try {
-    await connectDB();
+    await connect();
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get("userId");
 
@@ -36,7 +36,7 @@ export const GET = async (req: NextRequest) => {
 
 export const POST = async (req: NextRequest) => {
   try {
-    await connectDB();
+    await connect();
     const body = await req.json();
     const { userId, ...propertyData } = body;
 
@@ -114,7 +114,7 @@ export const POST = async (req: NextRequest) => {
 
 export const DELETE = async (req: NextRequest) => {
   try {
-    await connectDB();
+    await connect();
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get("userId");
     const propertyId = searchParams.get("propertyId");
@@ -180,7 +180,7 @@ export const DELETE = async (req: NextRequest) => {
 
 export const PUT = async (req: NextRequest) => {
   try {
-    await connectDB();
+    await connect();
     const body = await req.json();
     const { userId, propertyId, ...updateData } = body;
 

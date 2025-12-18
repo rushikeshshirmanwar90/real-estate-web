@@ -1,4 +1,5 @@
-import { connectDB } from "@/lib/utils/db-connection";
+import connect from "@/lib/db";
+import mongoose from "mongoose";
 import { Contacts } from "@/lib/models/Contacts";
 import { Customer } from "@/lib/models/users/Customer";
 import { NextRequest } from "next/server";
@@ -12,7 +13,7 @@ import { logger } from "@/lib/utils/logger";
 
 export const GET = async (req: NextRequest) => {
   try {
-    await connectDB();
+    await connect();
 
     const { searchParams } = new URL(req.url);
     const clientId = searchParams.get("clientId");
@@ -64,7 +65,7 @@ export const GET = async (req: NextRequest) => {
 
 export const POST = async (req: NextRequest) => {
   try {
-    await connectDB();
+    await connect();
 
     const body = await req.json();
 
@@ -105,7 +106,8 @@ export const POST = async (req: NextRequest) => {
     }
 
     // Use transaction for atomicity
-    const session = await connectDB().then((m) => m.startSession());
+    await connect();
+    const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
@@ -175,7 +177,7 @@ export const POST = async (req: NextRequest) => {
 
 export const DELETE = async (req: NextRequest) => {
   try {
-    await connectDB();
+    await connect();
 
     const { searchParams } = new URL(req.url);
     const clientId = searchParams.get("clientId");

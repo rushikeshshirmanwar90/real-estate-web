@@ -1,6 +1,6 @@
 import { Lead } from "@/lib/models/Leads";
 import { NextRequest } from "next/server";
-import { connectDB } from "@/lib/utils/db-connection";
+import connect from "@/lib/db";
 import { errorResponse, successResponse } from "@/lib/utils/api-response";
 import { isValidObjectId } from "@/lib/utils/validation";
 import {
@@ -8,6 +8,7 @@ import {
   createPaginationMeta,
 } from "@/lib/utils/pagination";
 import { logger } from "@/lib/utils/logger";
+import { requireValidClient } from "@/lib/utils/client-validation";
 
 // GET all Leads records or a specific one by ID
 export const GET = async (req: NextRequest) => {
@@ -24,7 +25,17 @@ export const GET = async (req: NextRequest) => {
       return errorResponse("Invalid client ID format", 400);
     }
 
-    await connectDB();
+    await connect();
+
+    // ✅ Validate client exists
+    try {
+      await requireValidClient(clientId);
+    } catch (clientError) {
+      if (clientError instanceof Error) {
+        return errorResponse(clientError.message, 404);
+      }
+      return errorResponse("Client validation failed", 404);
+    }
 
     if (id) {
       if (!isValidObjectId(id)) {
@@ -76,7 +87,17 @@ export const POST = async (req: NextRequest) => {
       return errorResponse("Invalid client ID format", 400);
     }
 
-    await connectDB();
+    await connect();
+
+    // ✅ Validate client exists before creating lead
+    try {
+      await requireValidClient(body.clientId);
+    } catch (clientError) {
+      if (clientError instanceof Error) {
+        return errorResponse(clientError.message, 404);
+      }
+      return errorResponse("Client validation failed", 404);
+    }
 
     const newLead = new Lead(body);
     await newLead.save();
@@ -114,7 +135,7 @@ export const PUT = async (req: NextRequest) => {
       return errorResponse("Invalid lead ID format", 400);
     }
 
-    await connectDB();
+    await connect();
 
     const updatedLead = await Lead.findByIdAndUpdate(
       id,
@@ -157,7 +178,7 @@ export const DELETE = async (req: NextRequest) => {
       return errorResponse("Invalid lead ID format", 400);
     }
 
-    await connectDB();
+    await connect();
 
     const deletedLead = await Lead.findByIdAndDelete(id).lean();
 

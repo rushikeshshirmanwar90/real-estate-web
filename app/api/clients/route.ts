@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
-import { connectDB } from "@/lib/utils/db-connection";
+import connect from "@/lib/db";
+import mongoose from "mongoose";
 import { Client } from "@/lib/models/super-admin/Client";
 import { NextRequest } from "next/server";
 import { LoginUser } from "@/lib/models/Xsite/LoginUsers";
@@ -15,7 +16,7 @@ const SALT_ROUNDS = 10;
 
 export const GET = async (req: NextRequest) => {
   try {
-    await connectDB();
+    await connect();
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     const email = searchParams.get("email");
@@ -77,7 +78,7 @@ export const GET = async (req: NextRequest) => {
 
 export const POST = async (req: NextRequest) => {
   try {
-    await connectDB();
+    await connect();
 
     const data = await req.json();
 
@@ -109,7 +110,8 @@ export const POST = async (req: NextRequest) => {
     }
 
     // Use transaction for atomicity
-    const session = await connectDB().then((m) => m.startSession());
+    await connect();
+    const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
@@ -165,10 +167,11 @@ export const DELETE = async (req: NextRequest) => {
       return errorResponse("Invalid email format", 400);
     }
 
-    await connectDB();
+    await connect();
 
     // Use transaction for atomicity
-    const session = await connectDB().then((m) => m.startSession());
+    await connect();
+    const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
@@ -236,7 +239,7 @@ export const PUT = async (req: NextRequest) => {
       }
     }
 
-    await connectDB();
+    await connect();
 
     // Get old email before update if email is being changed
     let oldEmail: string | undefined;

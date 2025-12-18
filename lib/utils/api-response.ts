@@ -30,15 +30,15 @@ export const errorResponse = (
   // Don't expose internal error details in production
   const isDevelopment = process.env.NODE_ENV === "development";
 
+  const errorDetails = isDevelopment && error && typeof error === "object" 
+    ? { error: error instanceof Error ? error.message : String(error) }
+    : {};
+
   return NextResponse.json(
     {
       success: false,
       message,
-      ...(isDevelopment &&
-        error &&
-        typeof error === "object" && {
-          error: error instanceof Error ? error.message : String(error),
-        }),
+      ...errorDetails,
     },
     { status }
   );

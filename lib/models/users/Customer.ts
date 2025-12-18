@@ -39,8 +39,6 @@ const CustomerSchema = new Schema(
       type: Boolean,
       default: false,
     },
-
-    otp: { type: Number, required: false },
   },
   {
     timestamps: true,

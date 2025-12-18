@@ -1,4 +1,4 @@
-import { connectDB } from "@/lib/utils/db-connection";
+import connect from "@/lib/db";
 import { LoginUser } from "@/lib/models/Xsite/LoginUsers";
 import bcrypt from "bcrypt";
 import { NextRequest } from "next/server";
@@ -27,7 +27,7 @@ export const POST = async (req: NextRequest) => {
       );
     }
 
-    await connectDB();
+    await connect();
     const { email, password } = await req.json();
 
     // Validate input

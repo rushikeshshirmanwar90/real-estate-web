@@ -2,6 +2,7 @@ import connect from "@/lib/db";
 import { errorResponse, successResponse } from "@/lib/models/utils/API";
 import { MiniSection as Section } from "@/lib/models/Xsite/mini-section";
 import { NextRequest } from "next/server";
+import { logActivity, extractUserInfo } from "@/lib/utils/activity-logger";
 
 interface projectDetailProps {
   projectName: string;
@@ -74,6 +75,33 @@ export const POST = async (req: NextRequest | Request) => {
     await newSection.save();
 
     if (newSection) {
+      // ✅ Log activity for mini-section creation (consistent format)
+      const userInfo = extractUserInfo(req, data);
+      if (userInfo && data.projectDetails?.projectId) {
+        await logActivity({
+          user: userInfo,
+          clientId: 'unknown', // You might need to add clientId to the payload
+          projectId: data.projectDetails.projectId,
+          projectName: data.projectDetails.projectName,
+          sectionId: data.mainSectionDetails?.sectionId,
+          sectionName: data.mainSectionDetails?.sectionName,
+          miniSectionId: newSection._id.toString(),
+          miniSectionName: data.name || 'Unnamed Mini Section',
+          activityType: "mini_section_created",
+          category: "mini_section",
+          action: "create",
+          description: `Created mini-section "${data.name || 'Unnamed Mini Section'}" in project "${data.projectDetails.projectName || 'Unknown Project'}"`,
+          message: `Mini-section created successfully in project`,
+          metadata: {
+            miniSectionData: {
+              name: data.name,
+              projectId: data.projectDetails.projectId,
+              sectionId: data.mainSectionDetails?.sectionId
+            }
+          }
+        });
+      }
+
       return successResponse(newSection, "section created successfully", 201);
     }
   } catch (error: unknown) {

@@ -1,4 +1,4 @@
-import { connectDB } from "@/lib/utils/db-connection";
+import connect from "@/lib/db";
 import { Customer } from "@/lib/models/users/Customer";
 import { NextRequest } from "next/server";
 import { errorResponse, successResponse } from "@/lib/utils/api-response";
@@ -8,7 +8,7 @@ import { logger } from "@/lib/utils/logger";
 
 export const POST = async (req: NextRequest) => {
   try {
-    await connectDB();
+    await connect();
     const { email, otp } = await req.json();
 
     if (!email || !otp) {

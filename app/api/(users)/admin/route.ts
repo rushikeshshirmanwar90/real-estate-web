@@ -3,6 +3,7 @@ import { LoginUser } from "@/lib/models/Xsite/LoginUsers";
 import { Admin } from "@/lib/models/users/Admin";
 import { NextRequest, NextResponse } from "next/server";
 import { Types } from "mongoose";
+import { requireValidClient } from "@/lib/utils/client-validation";
 
 // Helper function to validate MongoDB ObjectId
 const isValidObjectId = (id: string): boolean => {
@@ -81,6 +82,16 @@ export const GET = async (req: NextRequest) => {
         return errorResponse("Invalid Id format", 400);
       }
 
+      // ✅ Validate client exists
+      try {
+        await requireValidClient(clientId);
+      } catch (clientError) {
+        if (clientError instanceof Error) {
+          return errorResponse(clientError.message, 404);
+        }
+        return errorResponse("Client validation failed", 404);
+      }
+
       const adminData = await Admin.findOne({ clientId });
       if (!adminData) {
         return errorResponse("Admin not found with this clientId", 404);
@@ -113,6 +124,16 @@ export const POST = async (req: NextRequest) => {
     }
     if (!data.clientId) {
       return errorResponse("ClientId is required", 400);
+    }
+
+    // ✅ Validate client exists before creating admin
+    try {
+      await requireValidClient(data.clientId);
+    } catch (clientError) {
+      if (clientError instanceof Error) {
+        return errorResponse(clientError.message, 404);
+      }
+      return errorResponse("Client validation failed", 404);
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

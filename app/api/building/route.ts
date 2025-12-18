@@ -1,6 +1,7 @@
 import { Building } from "@/lib/models/Building";
 import { Projects } from "@/lib/models/Project";
-import { connectDB } from "@/lib/utils/db-connection";
+import connect from "@/lib/db";
+import mongoose from "mongoose";
 import { NextRequest } from "next/server";
 import { errorResponse, successResponse } from "@/lib/utils/api-response";
 import { isValidObjectId } from "@/lib/utils/validation";
@@ -9,10 +10,11 @@ import {
   createPaginationMeta,
 } from "@/lib/utils/pagination";
 import { logger } from "@/lib/utils/logger";
+import { logActivity, extractUserInfo } from "@/lib/utils/activity-logger";
 
 export const GET = async (req: NextRequest) => {
   try {
-    await connectDB();
+    await connect();
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     const projectId = searchParams.get("projectId");
@@ -63,7 +65,7 @@ export const GET = async (req: NextRequest) => {
 
 export const POST = async (req: NextRequest) => {
   try {
-    await connectDB();
+    await connect();
 
     const body = await req.json();
 
@@ -81,7 +83,8 @@ export const POST = async (req: NextRequest) => {
     }
 
     // Use transaction for atomicity
-    const session = await connectDB().then((m) => m.startSession());
+    await connect();
+    const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
@@ -108,6 +111,32 @@ export const POST = async (req: NextRequest) => {
       }
 
       await session.commitTransaction();
+
+      // ✅ Log activity for building creation (consistent with section creation)
+      const userInfo = extractUserInfo(req, body);
+      if (userInfo && updatedProject) {
+        await logActivity({
+          user: userInfo,
+          clientId: updatedProject.clientId?.toString() || 'unknown',
+          projectId: savedBuilding.projectId.toString(),
+          projectName: updatedProject.projectName || updatedProject.name || 'Unknown Project',
+          sectionId: savedBuilding._id.toString(),
+          sectionName: savedBuilding.name || 'Unnamed Building',
+          activityType: "section_created",
+          category: "section",
+          action: "create",
+          description: `Created section "${savedBuilding.name || 'Unnamed Building'}" in project "${updatedProject.projectName || updatedProject.name || 'Unknown Project'}"`,
+          message: `Section created successfully in project`,
+          metadata: {
+            sectionData: {
+              name: savedBuilding.name,
+              type: 'Buildings',
+              projectId: savedBuilding.projectId,
+              floors: savedBuilding.floors
+            }
+          }
+        });
+      }
 
       return successResponse(
         savedBuilding,
@@ -138,7 +167,7 @@ export const POST = async (req: NextRequest) => {
 
 export const DELETE = async (req: NextRequest) => {
   try {
-    await connectDB();
+    await connect();
 
     const { searchParams } = new URL(req.url);
     const projectId = searchParams.get("projectId");
@@ -153,7 +182,8 @@ export const DELETE = async (req: NextRequest) => {
     }
 
     // Use transaction for atomicity
-    const session = await connectDB().then((m) => m.startSession());
+    await connect();
+    const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
@@ -194,7 +224,7 @@ export const DELETE = async (req: NextRequest) => {
 
 export const PUT = async (req: NextRequest) => {
   try {
-    await connectDB();
+    await connect();
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
 

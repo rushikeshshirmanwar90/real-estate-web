@@ -24,13 +24,25 @@ interface ImportedMaterialPayload {
   message?: string;
 }
 
-// GET: Fetch imported materials by projectId or clientId
+// GET: Fetch material activities with date-based pagination
 export const GET = async (req: NextRequest | Request) => {
   const { searchParams } = new URL(req.url);
   const projectId = searchParams.get("projectId");
   const clientId = searchParams.get("clientId");
   const userId = searchParams.get("userId");
   const activity = searchParams.get("activity");
+  
+  // Date-based pagination parameters
+  const beforeDate = searchParams.get("beforeDate"); // Get activities before this date
+  const afterDate = searchParams.get("afterDate");   // Get activities after this date
+  const dateLimit = Math.max(1, Math.min(50, parseInt(searchParams.get("dateLimit") || "10"))); // Number of dates to return
+  
+  // Traditional pagination (fallback)
+  const limit = Math.max(1, Math.min(1000, parseInt(searchParams.get("limit") || "50")));
+  const skip = Math.max(0, parseInt(searchParams.get("skip") || "0"));
+  
+  // Pagination mode
+  const paginationMode = searchParams.get("paginationMode") || "traditional"; // "traditional" or "date"
 
   try {
     await connect();
@@ -39,21 +51,105 @@ export const GET = async (req: NextRequest | Request) => {
       return errorResponse("projectId or clientId is required", 406);
     }
 
-    const query: Record<string, string> = {};
+    const query: Record<string, any> = {};
     if (projectId) query.projectId = projectId;
     if (clientId) query.clientId = clientId;
     if (activity) query.activity = activity;
     if (userId) query["user.userId"] = userId;
 
-    const getMaterials = await MaterialActivity.find(query).sort({
-      createdAt: -1,
-    });
-
-    if (!getMaterials || getMaterials.length === 0) {
-      return successResponse([], "No imported materials found", 200);
+    // Handle date filtering
+    if (beforeDate || afterDate) {
+      query.date = {};
+      if (beforeDate) query.date.$lt = beforeDate;
+      if (afterDate) query.date.$gt = afterDate;
     }
 
-    return successResponse(getMaterials, "Data fetched successfully", 200);
+    if (paginationMode === "date") {
+      // Date-based pagination
+      const materials = await MaterialActivity.find(query)
+        .sort({ date: -1, createdAt: -1 })
+        .limit(1000); // Get more activities to group by date
+
+      if (!materials || materials.length === 0) {
+        return successResponse({
+          dateGroups: [],
+          totalActivities: 0,
+          totalDates: 0,
+          dateLimit,
+          hasMoreDates: false,
+          nextDate: null,
+          paginationMode: "date"
+        }, "No material activities found", 200);
+      }
+
+      // Group activities by date
+      const groupedByDate: { [date: string]: any[] } = {};
+      materials.forEach(material => {
+        const dateKey = material.date ? material.date.split('T')[0] : new Date(material.createdAt).toISOString().split('T')[0];
+        if (!groupedByDate[dateKey]) {
+          groupedByDate[dateKey] = [];
+        }
+        groupedByDate[dateKey].push(material);
+      });
+
+      // Get sorted date keys (newest first)
+      const sortedDates = Object.keys(groupedByDate).sort((a, b) => b.localeCompare(a));
+      
+      // Apply date limit
+      const limitedDates = sortedDates.slice(0, dateLimit);
+      
+      // Build response with date groups
+      const dateGroups = limitedDates.map(date => ({
+        date,
+        activities: groupedByDate[date].sort((a, b) => 
+          new Date(b.date || b.createdAt).getTime() - new Date(a.date || a.createdAt).getTime()
+        ),
+        count: groupedByDate[date].length
+      }));
+
+      const totalActivities = limitedDates.reduce((sum, date) => sum + groupedByDate[date].length, 0);
+      const hasMoreDates = sortedDates.length > dateLimit;
+      const nextDate = hasMoreDates ? sortedDates[dateLimit] : null;
+
+      return successResponse(
+        {
+          dateGroups,
+          totalActivities,
+          totalDates: sortedDates.length,
+          dateLimit,
+          hasMoreDates,
+          nextDate,
+          paginationMode: "date"
+        },
+        "Material activities fetched successfully with date-based pagination",
+        200
+      );
+    } else {
+      // Traditional pagination
+      const materials = await MaterialActivity.find(query)
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .skip(skip);
+
+      if (!materials || materials.length === 0) {
+        return successResponse([], "No material activities found", 200);
+      }
+
+      const total = await MaterialActivity.countDocuments(query);
+
+      return successResponse(
+        {
+          activities: materials,
+          total,
+          limit,
+          skip,
+          hasMore: total > skip + limit,
+          paginationMode: "traditional"
+        },
+        "Material activities fetched successfully",
+        200
+      );
+    }
   } catch (error: unknown) {
     if (error instanceof Error) {
       return errorResponse("Something went wrong", 500, error.message);

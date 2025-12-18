@@ -165,7 +165,15 @@ export const POST = async (req: NextRequest | Request) => {
     }
 
     const available = project.MaterialAvailable![availIndex] as MaterialSubdoc;
-    const costOfUsedMaterial = Number(available.cost || 0);
+    // CONFIRMED: available.cost is per-unit cost (from frontend MaterialFormModal)
+    const costPerUnit = Number(available.cost || 0);
+    const costOfUsedMaterial = costPerUnit * qnt;
+
+    console.log('\n💰 COST CALCULATION:');
+    console.log('  - Per-unit cost (from available.cost):', costPerUnit);
+    console.log('  - Quantity being used:', qnt);
+    console.log('  - Total cost for quantity used:', costOfUsedMaterial);
+    console.log('  - Available quantity:', Number(available.qnt || 0));
 
     // Check sufficient quantity (coerce stored qnt to Number)
     if (Number(available.qnt || 0) < qnt) {
@@ -186,7 +194,7 @@ export const POST = async (req: NextRequest | Request) => {
       unit: available.unit,
       specs: available.specs || {},
       qnt: qnt,
-      cost: available.cost || 0,
+      cost: costOfUsedMaterial, // ✅ Use calculated cost for the specific quantity
       sectionId: String(sectionId),
       miniSectionId:
         miniSectionId ||

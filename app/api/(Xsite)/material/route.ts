@@ -194,15 +194,25 @@ export const POST = async (req: NextRequest | Request) => {
             existingIndex
           ];
           const oldQnt = Number(existing.qnt || 0);
-          const oldCost = Number(existing.cost || 0);
+          const oldCostPerUnit = Number(existing.cost || 0);
           const newQnt = oldQnt + qnt;
-          const newCost = oldCost + cost;
-          const costDifference = newCost - oldCost; // Only add the new cost amount
+          // Calculate weighted average per-unit cost
+          const totalOldCost = oldCostPerUnit * oldQnt;
+          const totalNewCost = cost * qnt;
+          const combinedTotalCost = totalOldCost + totalNewCost;
+          const newCostPerUnit = newQnt > 0 ? combinedTotalCost / newQnt : 0;
+
+          console.log('\n💰 MERGE COST CALCULATION:');
+          console.log('  - Material:', materialName);
+          console.log('  - Old quantity:', oldQnt, '@ ₹', oldCostPerUnit, 'per unit = ₹', totalOldCost);
+          console.log('  - New quantity:', qnt, '@ ₹', cost, 'per unit = ₹', totalNewCost);
+          console.log('  - Combined quantity:', newQnt, '@ ₹', newCostPerUnit.toFixed(2), 'per unit = ₹', combinedTotalCost);
+          console.log('  - Adding to spent:', totalNewCost);
 
           // update fields on the document and save
           existing.qnt = newQnt;
-          existing.cost = newCost;
-          project.spent = (project.spent || 0) + costDifference;
+          existing.cost = newCostPerUnit; // Store weighted average per-unit cost
+          project.spent = (project.spent || 0) + totalNewCost; // Add only the new total cost
 
           const saved = await project.save();
 
@@ -229,13 +239,21 @@ export const POST = async (req: NextRequest | Request) => {
 
       // Create new batch using findByIdAndUpdate
       // Assign an explicit _id to material subdocuments so other APIs can reference them reliably
+      const totalCostForImport = cost * qnt;
+      
+      console.log('\n💰 IMPORT COST CALCULATION:');
+      console.log('  - Material:', materialName);
+      console.log('  - Per-unit cost:', cost);
+      console.log('  - Quantity:', qnt);
+      console.log('  - Total cost for import:', totalCostForImport);
+      
       const newMaterial: MaterialSubdoc = {
         _id: new ObjectId(),
         name: materialName,
         unit,
         specs: specs || {},
         qnt: Number(qnt),
-        cost: Number(cost),
+        cost: Number(cost), // Store per-unit cost
       };
 
       const updatedProject = await Projects.findByIdAndUpdate(
@@ -245,7 +263,7 @@ export const POST = async (req: NextRequest | Request) => {
             MaterialAvailable: newMaterial,
           },
           $inc: {
-            spent: cost,
+            spent: cost * qnt, // FIXED: Add total cost (per-unit cost × quantity) to spent
           },
         },
         { new: true }
