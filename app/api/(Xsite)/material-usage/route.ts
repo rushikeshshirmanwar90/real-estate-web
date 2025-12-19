@@ -194,7 +194,7 @@ export const POST = async (req: NextRequest | Request) => {
       unit: available.unit,
       specs: available.specs || {},
       qnt: qnt,
-      cost: costOfUsedMaterial, // ✅ Use calculated cost for the specific quantity
+      cost: costPerUnit, // ✅ FIXED: Store per-unit cost, not total cost
       sectionId: String(sectionId),
       miniSectionId:
         miniSectionId ||
